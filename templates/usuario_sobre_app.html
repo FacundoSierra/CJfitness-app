@@ -1,461 +1,99 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sobre la App - Fitness App</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-            --info-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-            --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-            --light-gradient: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.1);
-            --shadow-hover: 0 15px 40px rgba(0, 0, 0, 0.15);
-            --border-radius: 15px;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+{% extends "base.html" %}
+{% block title %}Sobre la App{% endblock %}
+{% block page_title %}Sobre la App{% endblock %}
 
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+{% block content %}
+<!-- Descripción -->
+<div class="card" style="margin-bottom: var(--space-6);">
+    <h2 class="section-title" style="margin-bottom: var(--space-4);">¿Qué es FitnessApp?</h2>
+    <p style="font-size:var(--text-lg); font-weight:500; margin-bottom:var(--space-3);">
+        FitnessApp es una aplicación web diseñada para ayudarte a alcanzar tus objetivos fitness de manera organizada y eficiente.
+    </p>
+    <p style="color:var(--color-text-secondary);">
+        Nuestra plataforma te permite gestionar tus rutinas de entrenamiento, registrar tu progreso y mantener un seguimiento detallado de tu evolución física.
+    </p>
+</div>
 
-        .about-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-soft);
-            margin: 2rem auto;
-            padding: 2rem;
-            max-width: 1000px;
-        }
+<!-- Stats -->
+<div class="stats-grid" style="margin-bottom: var(--space-6);">
+    <div class="card card-stat">
+        <span class="card-stat-value">100+</span>
+        <span class="card-stat-label">Ejercicios</span>
+    </div>
+    <div class="card card-stat">
+        <span class="card-stat-value">24/7</span>
+        <span class="card-stat-label">Disponibilidad</span>
+    </div>
+    <div class="card card-stat">
+        <span class="card-stat-value">100%</span>
+        <span class="card-stat-label">Gratuito</span>
+    </div>
+    <div class="card card-stat">
+        <span class="card-stat-value">∞</span>
+        <span class="card-stat-label">Rutinas Personalizadas</span>
+    </div>
+</div>
 
-        .header-section {
-            text-align: center;
-            margin-bottom: 3rem;
-            padding: 2rem 0;
-            background: var(--primary-gradient);
-            color: white;
-            border-radius: var(--border-radius);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-            opacity: 0.3;
-        }
-
-        .header-section h1 {
-            font-size: 2.2rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .header-section p {
-            font-size: 1rem;
-            opacity: 0.9;
-            position: relative;
-            z-index: 1;
-        }
-
-        .back-btn {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            border-radius: 50px;
-            padding: 0.5rem 1rem;
-            text-decoration: none;
-            transition: var(--transition);
-            backdrop-filter: blur(10px);
-        }
-
-        .back-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            color: white;
-            transform: translateX(-3px);
-        }
-
-        .info-card {
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-soft);
-            margin-bottom: 2rem;
-            overflow: hidden;
-            border: none;
-        }
-
-        .info-card-header {
-            background: var(--primary-gradient);
-            color: white;
-            padding: 1.5rem;
-            font-weight: 600;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .info-card-body {
-            padding: 2rem;
-        }
-
-        .feature-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .feature-list li {
-            padding: 0.75rem 0;
-            border-bottom: 1px solid #f8f9fa;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .feature-list li:last-child {
-            border-bottom: none;
-        }
-
-        .feature-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            color: white;
-            flex-shrink: 0;
-        }
-
-        .feature-text {
-            flex: 1;
-        }
-
-        .feature-title {
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 0.25rem;
-        }
-
-        .feature-description {
-            color: #6c757d;
-            font-size: 0.9rem;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin: 2rem 0;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-soft);
-            padding: 1.5rem;
-            text-align: center;
-            transition: var(--transition);
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-hover);
-        }
-
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-label {
-            color: #6c757d;
-            font-size: 0.9rem;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .version-info {
-            background: var(--light-gradient);
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-            text-align: center;
-            margin-top: 2rem;
-        }
-
-        .version-badge {
-            background: var(--success-gradient);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 50px;
-            font-weight: 600;
-            display: inline-block;
-            margin-bottom: 1rem;
-        }
-
-        .fade-in {
-            animation: fadeIn 0.6s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .about-container {
-                margin: 1rem;
-                padding: 1.5rem;
-            }
-            
-            .header-section h1 {
-                font-size: 1.8rem;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
-<body>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div aria-live="polite" aria-atomic="true" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1200;">
-          {% for category, message in messages %}
-          <div class="toast show align-items-center text-bg-{{ 'success' if category=='success' else 'danger' }} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2500">
-            <div class="d-flex">
-              <div class="toast-body">
-                {{ message }}
-              </div>
-              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
-            </div>
-          </div>
-          {% endfor %}
+<!-- Características -->
+<div class="card" style="margin-bottom: var(--space-6);">
+    <h2 class="section-title" style="margin-bottom: var(--space-4);">Características Principales</h2>
+    {% set features = [
+        ('bi bi-calendar-check', 'color-primary', 'Rutinas Personalizadas', 'Accede a rutinas de entrenamiento diseñadas específicamente para ti'),
+        ('bi bi-graph-up', 'color-success', 'Seguimiento de Progreso', 'Registra y visualiza tu evolución con métricas detalladas'),
+        ('bi bi-book', 'color-accent', 'Base de Datos de Ejercicios', 'Información completa sobre cada ejercicio de tu rutina'),
+        ('bi bi-person-gear', 'color-primary', 'Perfil Personalizado', 'Gestiona tu información personal y preferencias'),
+        ('bi bi-calendar-week', 'color-success', 'Vistas Múltiples', 'Visualiza tus rutinas por día, semana o mes'),
+        ('bi bi-shield-check', 'color-text-secondary', 'Seguridad y Privacidad', 'Tus datos están protegidos con las mejores prácticas de seguridad')
+    ] %}
+    {% for icon, color, titulo, desc in features %}
+    <div style="display:flex; align-items:center; gap:var(--space-4); padding:var(--space-3) 0; border-bottom:1px solid var(--color-border);">
+        <div class="avatar" style="background:var(--{{ color }}); opacity:{{ '1' if color != 'color-text-secondary' else '0.6' }}; flex-shrink:0;">
+            <i class="{{ icon }}"></i>
         </div>
-      {% endif %}
-    {% endwith %}
-
-    <div class="about-container fade-in">
-        <!-- Header -->
-        <div class="header-section">
-            <a href="{{ url_for('dashboard') }}" class="back-btn">
-                <i class="bi bi-arrow-left me-1"></i>
-                <span class="d-none d-md-inline">Volver al Dashboard</span>
-                <span class="d-md-none">Volver</span>
-            </a>
-            <h1><i class="bi bi-info-circle me-3"></i>Sobre la App</h1>
-            <p>Conoce más sobre FitnessApp y sus funcionalidades</p>
-        </div>
-
-        <!-- Información Principal -->
-        <div class="info-card">
-            <div class="info-card-header">
-                <i class="bi bi-app"></i>¿Qué es FitnessApp?
-            </div>
-            <div class="info-card-body">
-                <p class="lead">FitnessApp es una aplicación web diseñada para ayudarte a alcanzar tus objetivos fitness de manera organizada y eficiente.</p>
-                <p>Nuestra plataforma te permite gestionar tus rutinas de entrenamiento, registrar tu progreso y mantener un seguimiento detallado de tu evolución física.</p>
-            </div>
-        </div>
-
-        <!-- Características Principales -->
-        <div class="info-card">
-            <div class="info-card-header">
-                <i class="bi bi-star"></i>Características Principales
-            </div>
-            <div class="info-card-body">
-                <ul class="feature-list">
-                    <li>
-                        <div class="feature-icon" style="background: var(--primary-gradient);">
-                            <i class="bi bi-calendar-check"></i>
-                        </div>
-                        <div class="feature-text">
-                            <div class="feature-title">Rutinas Personalizadas</div>
-                            <div class="feature-description">Accede a rutinas de entrenamiento diseñadas específicamente para ti</div>
-                        </div>
-                    </li>
-                    <li>
-                        <div class="feature-icon" style="background: var(--success-gradient);">
-                            <i class="bi bi-graph-up"></i>
-                        </div>
-                        <div class="feature-text">
-                            <div class="feature-title">Seguimiento de Progreso</div>
-                            <div class="feature-description">Registra y visualiza tu evolución con métricas detalladas</div>
-                        </div>
-                    </li>
-                    <li>
-                        <div class="feature-icon" style="background: var(--warning-gradient);">
-                            <i class="bi bi-book"></i>
-                        </div>
-                        <div class="feature-text">
-                            <div class="feature-title">Base de Datos de Ejercicios</div>
-                            <div class="feature-description">Información completa sobre cada ejercicio de tu rutina</div>
-                        </div>
-                    </li>
-                    <li>
-                        <div class="feature-icon" style="background: var(--info-gradient);">
-                            <i class="bi bi-person-gear"></i>
-                        </div>
-                        <div class="feature-text">
-                            <div class="feature-title">Perfil Personalizado</div>
-                            <div class="feature-description">Gestiona tu información personal y preferencias</div>
-                        </div>
-                    </li>
-                    <li>
-                        <div class="feature-icon" style="background: var(--secondary-gradient);">
-                            <i class="bi bi-calendar-week"></i>
-                        </div>
-                        <div class="feature-text">
-                            <div class="feature-title">Vistas Múltiples</div>
-                            <div class="feature-description">Visualiza tus rutinas por día, semana o mes</div>
-                        </div>
-                    </li>
-                    <li>
-                        <div class="feature-icon" style="background: var(--dark-gradient);">
-                            <i class="bi bi-shield-check"></i>
-                        </div>
-                        <div class="feature-text">
-                            <div class="feature-title">Seguridad y Privacidad</div>
-                            <div class="feature-description">Tus datos están protegidos con las mejores prácticas de seguridad</div>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Estadísticas -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-number">100+</div>
-                <div class="stat-label">Ejercicios Disponibles</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">24/7</div>
-                <div class="stat-label">Disponibilidad</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">100%</div>
-                <div class="stat-label">Gratuito</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">∞</div>
-                <div class="stat-label">Rutinas Personalizadas</div>
-            </div>
-        </div>
-
-        <!-- Cómo Funciona -->
-        <div class="info-card">
-            <div class="info-card-header">
-                <i class="bi bi-gear"></i>¿Cómo Funciona?
-            </div>
-            <div class="info-card-body">
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <div class="text-center">
-                            <div class="feature-icon mx-auto mb-3" style="background: var(--primary-gradient);">
-                                <i class="bi bi-person-plus"></i>
-                            </div>
-                            <h5>1. Regístrate</h5>
-                            <p class="text-muted">Crea tu cuenta y completa tu perfil personal</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <div class="text-center">
-                            <div class="feature-icon mx-auto mb-3" style="background: var(--success-gradient);">
-                                <i class="bi bi-calendar-check"></i>
-                            </div>
-                            <h5>2. Recibe tu Rutina</h5>
-                            <p class="text-muted">Un entrenador personal te asigna rutinas específicas</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <div class="text-center">
-                            <div class="feature-icon mx-auto mb-3" style="background: var(--warning-gradient);">
-                                <i class="bi bi-graph-up"></i>
-                            </div>
-                            <h5>3. Entrena y Progreso</h5>
-                            <p class="text-muted">Sigue tu rutina y registra tu progreso diario</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Información Técnica -->
-        <div class="version-info">
-            <div class="version-badge">Versión 2.0</div>
-            <h5>Información Técnica</h5>
-            <p class="mb-0">
-                <strong>Desarrollado con:</strong> Python, Flask, Bootstrap 5<br>
-                <strong>Base de datos:</strong> PostgreSQL<br>
-                <strong>Última actualización:</strong> {{ moment_actual }}
-            </p>
-        </div>
-
-        <!-- Footer -->
-        <div class="text-center mt-5 pt-4" style="border-top: 1px solid #e9ecef;">
-            <p class="text-muted mb-0">
-                <i class="bi bi-heart-fill text-danger me-1"></i>
-                Desarrollado con pasión para tu bienestar
-            </p>
+        <div>
+            <p style="font-weight:600; margin:0; font-size:var(--text-sm);">{{ titulo }}</p>
+            <p style="color:var(--color-text-secondary); margin:0; font-size:var(--text-sm);">{{ desc }}</p>
         </div>
     </div>
+    {% endfor %}
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Efecto de aparición escalonada para las tarjetas
-            const cards = document.querySelectorAll('.info-card, .stat-card');
-            cards.forEach((card, index) => {
-                card.style.animationDelay = `${index * 0.1}s`;
-            });
+<!-- Cómo funciona -->
+<div class="card" style="margin-bottom: var(--space-6);">
+    <h2 class="section-title" style="margin-bottom: var(--space-6);">¿Cómo Funciona?</h2>
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-6); text-align:center;">
+        <div>
+            <div class="avatar" style="margin: 0 auto var(--space-3); background:var(--color-primary); width:56px; height:56px; font-size:1.5rem;">
+                <i class="bi bi-person-plus"></i>
+            </div>
+            <h3 style="font-size:var(--text-base); font-weight:600; margin-bottom:var(--space-1);">1. Regístrate</h3>
+            <p style="color:var(--color-text-secondary); font-size:var(--text-sm); margin:0;">Crea tu cuenta y completa tu perfil personal</p>
+        </div>
+        <div>
+            <div class="avatar" style="margin: 0 auto var(--space-3); background:var(--color-success); width:56px; height:56px; font-size:1.5rem;">
+                <i class="bi bi-calendar-check"></i>
+            </div>
+            <h3 style="font-size:var(--text-base); font-weight:600; margin-bottom:var(--space-1);">2. Recibe tu Rutina</h3>
+            <p style="color:var(--color-text-secondary); font-size:var(--text-sm); margin:0;">Tu entrenador te asigna rutinas específicas</p>
+        </div>
+        <div>
+            <div class="avatar" style="margin: 0 auto var(--space-3); background:var(--color-accent); width:56px; height:56px; font-size:1.5rem;">
+                <i class="bi bi-graph-up"></i>
+            </div>
+            <h3 style="font-size:var(--text-base); font-weight:600; margin-bottom:var(--space-1);">3. Entrena y Progresa</h3>
+            <p style="color:var(--color-text-secondary); font-size:var(--text-sm); margin:0;">Sigue tu rutina y registra tu progreso</p>
+        </div>
+    </div>
+</div>
 
-            // Efecto hover mejorado para las tarjetas de estadísticas
-            const statCards = document.querySelectorAll('.stat-card');
-            statCards.forEach(card => {
-                card.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-8px) scale(1.02)';
-                });
-                
-                card.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0) scale(1)';
-                });
-            });
-        });
-    </script>
-</body>
-</html>
+<!-- Versión -->
+<div class="card" style="text-align:center; background:var(--color-bg);">
+    <span class="badge badge-success" style="font-size:var(--text-sm); margin-bottom:var(--space-3); display:inline-block;">Versión 2.0</span>
+    <h3 style="font-size:var(--text-base); font-weight:600; margin-bottom:var(--space-2);">Información Técnica</h3>
+    <p style="color:var(--color-text-secondary); font-size:var(--text-sm); margin:0;">
+        <strong>Desarrollado con:</strong> Python, Flask, Bootstrap 5<br>
+        <strong>Base de datos:</strong> PostgreSQL<br>
+        <strong>Última actualización:</strong> {{ moment_actual }}
+    </p>
+</div>
+{% endblock %}

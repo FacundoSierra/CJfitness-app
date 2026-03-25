@@ -1,543 +1,176 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Información - Fitness App</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <style>
-        :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-            --info-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-            --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-            --light-gradient: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.1);
-            --shadow-hover: 0 15px 40px rgba(0, 0, 0, 0.15);
-            --border-radius: 15px;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+{% extends "base.html" %}
+{% block title %}Mi Información{% endblock %}
+{% block page_title %}Mi Información{% endblock %}
 
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+{% block head_extra %}
+<style>
+.info-section {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: var(--space-6);
+}
+.info-section-header {
+    background: var(--color-primary-light);
+    padding: var(--space-3) var(--space-4);
+    font-weight: 600;
+    font-size: var(--text-sm);
+    color: var(--color-primary-dark);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+.info-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+}
+.info-row:last-child { border-bottom: none; }
+.info-label {
+    font-weight: 600;
+    font-size: var(--text-sm);
+    min-width: 140px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-text);
+    flex-shrink: 0;
+}
+.info-value { flex: 1; }
+.lock-icon { color: var(--color-danger); font-size: var(--text-sm); flex-shrink: 0; }
+</style>
+{% endblock %}
 
-        .info-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-soft);
-            margin: 2rem auto;
-            padding: 2rem;
-            max-width: 800px;
-        }
-
-        .header-section {
-            text-align: center;
-            margin-bottom: 3rem;
-            padding: 2rem 0;
-            background: var(--primary-gradient);
-            color: white;
-            border-radius: var(--border-radius);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-            opacity: 0.3;
-        }
-
-        .header-section h1 {
-            font-size: 2.2rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .header-section p {
-            font-size: 1rem;
-            opacity: 0.9;
-            position: relative;
-            z-index: 1;
-        }
-
-        .back-btn {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
-            display: inline-flex;
-            align-items: center;
-            gap: .4rem;
-            background: var(--primary-gradient);
-            color: #fff;
-            border: none;
-            border-radius: 40px;
-            padding: .35rem .9rem;
-            text-decoration: none;
-            box-shadow: var(--shadow-soft);
-            transition: var(--transition);
-        }
-
-        .back-btn:hover {
-            transform: translateX(-2px);
-            box-shadow: var(--shadow-hover);
-            color: #fff;
-        }
-
-        .info-card {
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-soft);
-            margin-bottom: 2rem;
-            overflow: hidden;
-            border: none;
-        }
-
-        .info-card-header {
-            background: var(--primary-gradient);
-            color: white;
-            padding: 1.5rem;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        .info-item {
-            padding: 1.5rem;
-            border-bottom: 1px solid #f8f9fa;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            transition: var(--transition);
-        }
-
-        .info-item:last-child {
-            border-bottom: none;
-        }
-
-        .info-item:hover {
-            background: #f8f9fa;
-        }
-
-        .info-label {
-            font-weight: 600;
-            color: #2c3e50;
-            min-width: 150px;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .info-value {
-            flex: 1;
-            color: #6c757d;
-        }
-
-        .form-control {
-            border: 2px solid #e9ecef;
-            border-radius: 10px;
-            padding: 0.75rem 1rem;
-            transition: var(--transition);
-            font-size: 0.95rem;
-        }
-
-        .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        }
-
-        .form-control:disabled {
-            background: #f8f9fa;
-            color: #6c757d;
-        }
-
-        .edit-btn {
-            background: var(--success-gradient);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            padding: 0.5rem 1.5rem;
-            font-weight: 600;
-            transition: var(--transition);
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .edit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-hover);
-            color: white;
-        }
-
-        .save-btn {
-            background: var(--primary-gradient);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            padding: 0.75rem 2rem;
-            font-weight: 600;
-            transition: var(--transition);
-            font-size: 1rem;
-        }
-
-        .save-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-hover);
-        }
-
-        .cancel-btn {
-            background: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 50px;
-            padding: 0.75rem 2rem;
-            font-weight: 600;
-            transition: var(--transition);
-            font-size: 1rem;
-            margin-left: 1rem;
-        }
-
-        .cancel-btn:hover {
-            background: #5a6268;
-            transform: translateY(-2px);
-        }
-
-        .lock-icon {
-            color: #dc3545;
-            font-size: 1.1rem;
-        }
-
-        .fade-in {
-            animation: fadeIn 0.6s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .pulse {
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.05);
-            }
-            100% {
-                transform: scale(1);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .info-container {
-                margin: 1rem;
-                padding: 1.5rem;
-            }
-            
-            .header-section h1 {
-                font-size: 1.8rem;
-            }
-            
-            .info-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 0.5rem;
-            }
-            
-            .info-label {
-                min-width: auto;
-            }
-        }
-    </style>
-</head>
-<body>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div aria-live="polite" aria-atomic="true" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1200;">
-          {% for category, message in messages %}
-          <div class="toast show align-items-center text-bg-{{ 'success' if category=='success' else 'danger' }} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2500">
-            <div class="d-flex">
-              <div class="toast-body">
-                {{ message }}
-              </div>
-              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+{% block content %}
+<div style="max-width: 760px;">
+    <form method="POST" action="/update_info" id="infoForm">
+        <!-- Datos Personales -->
+        <div class="info-section">
+            <div class="info-section-header">
+                <i class="bi bi-person-circle"></i>Datos Personales
             </div>
-          </div>
-          {% endfor %}
+            <div class="info-row">
+                <div class="info-label"><i class="bi bi-person-badge"></i>Usuario</div>
+                <div class="info-value"><input type="text" name="username" class="form-control" value="{{ user.username }}" disabled></div>
+                <i class="bi bi-lock-fill lock-icon"></i>
+            </div>
+            <div class="info-row">
+                <div class="info-label"><i class="bi bi-person"></i>Nombre</div>
+                <div class="info-value"><input type="text" name="nombre" class="form-control" value="{{ user.nombre }}" disabled></div>
+                <i class="bi bi-lock-fill lock-icon"></i>
+            </div>
+            <div class="info-row">
+                <div class="info-label"><i class="bi bi-person-badge"></i>Apellidos</div>
+                <div class="info-value"><input type="text" name="apellidos" class="form-control" value="{{ user.apellidos }}" disabled></div>
+                <i class="bi bi-lock-fill lock-icon"></i>
+            </div>
+            <div class="info-row">
+                <div class="info-label"><i class="bi bi-envelope"></i>Email</div>
+                <div class="info-value"><input type="email" name="email" class="form-control" value="{{ user.email }}" disabled></div>
+                <i class="bi bi-lock-fill lock-icon"></i>
+            </div>
+            <div class="info-row">
+                <div class="info-label"><i class="bi bi-telephone"></i>Teléfono</div>
+                <div class="info-value"><input type="tel" name="telefono" class="form-control" value="{{ user.telefono or '' }}" disabled></div>
+                <i class="bi bi-lock-fill lock-icon"></i>
+            </div>
+            <div class="info-row">
+                <div class="info-label"><i class="bi bi-calendar"></i>Nacimiento</div>
+                <div class="info-value"><input type="date" name="fecha_nacimiento" class="form-control" value="{{ user.fecha_nacimiento or '' }}" disabled></div>
+                <i class="bi bi-lock-fill lock-icon"></i>
+            </div>
+            <div class="info-row">
+                <div class="info-label"><i class="bi bi-gender-ambiguous"></i>Género</div>
+                <div class="info-value">
+                    <select name="genero" class="form-control" disabled>
+                        <option value="">Seleccionar...</option>
+                        <option value="masculino" {{ 'selected' if user.genero == 'masculino' }}>Masculino</option>
+                        <option value="femenino" {{ 'selected' if user.genero == 'femenino' }}>Femenino</option>
+                        <option value="otro" {{ 'selected' if user.genero == 'otro' }}>Otro</option>
+                    </select>
+                </div>
+                <i class="bi bi-lock-fill lock-icon"></i>
+            </div>
         </div>
-      {% endif %}
-    {% endwith %}
 
-    <div class="info-container fade-in">
-        <!-- Header -->
-        <div class="header-section">
-            <a href="{{ url_for('dashboard') }}" class="back-btn">
-                <i class="bi bi-arrow-left me-1"></i>
-                <span class="d-none d-md-inline">Volver al Dashboard</span>
-                <span class="d-md-none">Volver</span>
+        <!-- Contacto -->
+        <div class="info-section">
+            <div class="info-section-header">
+                <i class="bi bi-geo-alt"></i>Contacto
+            </div>
+            <div class="info-row">
+                <div class="info-label"><i class="bi bi-geo-alt-fill"></i>Dirección</div>
+                <div class="info-value"><input type="text" name="direccion" class="form-control" value="{{ user.direccion or '' }}" disabled></div>
+                <i class="bi bi-lock-fill lock-icon"></i>
+            </div>
+            <div class="info-row">
+                <div class="info-label"><i class="bi bi-building"></i>Ciudad</div>
+                <div class="info-value"><input type="text" name="ciudad" class="form-control" value="{{ user.ciudad or '' }}" disabled></div>
+                <i class="bi bi-lock-fill lock-icon"></i>
+            </div>
+            <div class="info-row">
+                <div class="info-label"><i class="bi bi-postcode"></i>C.P.</div>
+                <div class="info-value"><input type="text" name="codigo_postal" class="form-control" value="{{ user.codigo_postal or '' }}" disabled></div>
+                <i class="bi bi-lock-fill lock-icon"></i>
+            </div>
+        </div>
+
+        <!-- Info adicional -->
+        <div class="info-section">
+            <div class="info-section-header">
+                <i class="bi bi-info-circle"></i>Información Adicional
+            </div>
+            <div class="info-row">
+                <div class="info-label"><i class="bi bi-calendar-check"></i>Registro</div>
+                <div class="info-value">
+                    <input type="text" class="form-control" value="{{ user.fecha_registro.strftime('%d/%m/%Y') if user.fecha_registro else 'No disponible' }}" disabled>
+                </div>
+                <i class="bi bi-lock-fill lock-icon"></i>
+            </div>
+            <div class="info-row">
+                <div class="info-label"><i class="bi bi-shield-check"></i>Estado</div>
+                <div class="info-value"><span class="badge badge-success">Activo</span></div>
+            </div>
+        </div>
+
+        <!-- Acciones -->
+        <div style="display:flex; gap:var(--space-3); flex-wrap:wrap;">
+            <button type="button" class="btn btn-primary" onclick="toggleEdit()" id="editBtn">
+                <i class="bi bi-pencil me-1"></i>Editar Información
+            </button>
+            <button type="submit" class="btn btn-success" id="saveBtn" style="display:none;">
+                <i class="bi bi-check-circle me-1"></i>Guardar Cambios
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="cancelEdit()" id="cancelBtn" style="display:none;">
+                <i class="bi bi-x-circle me-1"></i>Cancelar
+            </button>
+            <a href="{{ url_for('change_password') }}" class="btn btn-secondary">
+                <i class="bi bi-shield-lock me-1"></i>Cambiar Contraseña
             </a>
-            <h1><i class="bi bi-person-lines-fill me-3"></i>Mi Información</h1>
-            <p>Gestiona tu perfil y datos personales</p>
         </div>
+    </form>
+</div>
+{% endblock %}
 
-        <!-- Formulario de Información -->
-        <form method="POST" action="/update_info" id="infoForm">
-            <div class="info-card">
-                <div class="info-card-header">
-                    <i class="bi bi-person-circle me-2"></i>Datos Personales
-                </div>
-                
-                <!-- Username -->
-                <div class="info-item">
-                    <div class="info-label">
-                        <i class="bi bi-person-badge"></i>Usuario:
-                    </div>
-                    <div class="info-value">
-                        <input type="text" id="username" name="username" class="form-control" value="{{ user.username }}" disabled>
-                    </div>
-                    <i class="bi bi-lock-fill lock-icon" title="No editable"></i>
-                </div>
+{% block scripts_extra %}
+<script>
+function toggleEdit() {
+    document.querySelectorAll('#infoForm .form-control').forEach(el => el.disabled = false);
+    document.querySelectorAll('.lock-icon').forEach(el => el.style.display = 'none');
+    document.getElementById('editBtn').style.display = 'none';
+    document.getElementById('saveBtn').style.display = 'inline-flex';
+    document.getElementById('cancelBtn').style.display = 'inline-flex';
+}
 
-                <div class="info-item">
-                    <div class="info-label">
-                        <i class="bi bi-person"></i>Nombre:
-                    </div>
-                    <div class="info-value">
-                        <input type="text" id="nombre" name="nombre" class="form-control" value="{{ user.nombre }}" required disabled>
-                    </div>
-                    <i class="bi bi-lock-fill lock-icon" title="No editable"></i>
-                </div>
-
-                <div class="info-item">
-                    <div class="info-label">
-                        <i class="bi bi-person-badge"></i>Apellidos:
-                    </div>
-                    <div class="info-value">
-                        <input type="text" id="apellidos" name="apellidos" class="form-control" value="{{ user.apellidos }}" required disabled>
-                    </div>
-                    <i class="bi bi-lock-fill lock-icon" title="No editable"></i>
-                </div>
-
-                <div class="info-item">
-                    <div class="info-label">
-                        <i class="bi bi-envelope"></i>Email:
-                    </div>
-                    <div class="info-value">
-                        <input type="email" id="email" name="email" class="form-control" value="{{ user.email }}" required disabled>
-                    </div>
-                    <i class="bi bi-lock-fill lock-icon" title="No editable"></i>
-                </div>
-
-                <div class="info-item">
-                    <div class="info-label">
-                        <i class="bi bi-telephone"></i>Teléfono:
-                    </div>
-                    <div class="info-value">
-                        <input type="tel" id="telefono" name="telefono" class="form-control" value="{{ user.telefono or '' }}" disabled pattern="^[0-9+\-\s]{6,20}$" title="Introduce un teléfono válido (6-20 caracteres, números, espacios, + o -)">
-                    </div>
-                    <i class="bi bi-lock-fill lock-icon" title="No editable"></i>
-                </div>
-
-                <div class="info-item">
-                    <div class="info-label">
-                        <i class="bi bi-calendar"></i>Fecha de Nacimiento:
-                    </div>
-                    <div class="info-value">
-                        <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" class="form-control" value="{{ user.fecha_nacimiento or '' }}" disabled>
-                    </div>
-                    <i class="bi bi-lock-fill lock-icon" title="No editable"></i>
-                </div>
-
-                <div class="info-item">
-                    <div class="info-label">
-                        <i class="bi bi-gender-ambiguous"></i>Género:
-                    </div>
-                    <div class="info-value">
-                        <select id="genero" name="genero" class="form-control" disabled>
-                            <option value="">Seleccionar...</option>
-                            <option value="masculino" {{ 'selected' if user.genero == 'masculino' else '' }}>Masculino</option>
-                            <option value="femenino" {{ 'selected' if user.genero == 'femenino' else '' }}>Femenino</option>
-                            <option value="otro" {{ 'selected' if user.genero == 'otro' else '' }}>Otro</option>
-                        </select>
-                    </div>
-                    <i class="bi bi-lock-fill lock-icon" title="No editable"></i>
-                </div>
-            </div>
-
-            <div class="info-card">
-                <div class="info-card-header">
-                    <i class="bi bi-geo-alt"></i>Información de Contacto
-                </div>
-                
-                <div class="info-item">
-                    <div class="info-label">
-                        <i class="bi bi-geo-alt-fill"></i>Dirección:
-                    </div>
-                    <div class="info-value">
-                        <input type="text" id="direccion" name="direccion" class="form-control" value="{{ user.direccion or '' }}" disabled>
-                    </div>
-                    <i class="bi bi-lock-fill lock-icon" title="No editable"></i>
-                </div>
-
-                <div class="info-item">
-                    <div class="info-label">
-                        <i class="bi bi-building"></i>Ciudad:
-                    </div>
-                    <div class="info-value">
-                        <input type="text" id="ciudad" name="ciudad" class="form-control" value="{{ user.ciudad or '' }}" disabled>
-                    </div>
-                    <i class="bi bi-lock-fill lock-icon" title="No editable"></i>
-                </div>
-
-                <div class="info-item">
-                    <div class="info-label">
-                        <i class="bi bi-postcode"></i>Código Postal:
-                    </div>
-                    <div class="info-value">
-                        <input type="text" id="codigo_postal" name="codigo_postal" class="form-control" value="{{ user.codigo_postal or '' }}" disabled pattern="^[A-Za-z0-9\-\s]{3,10}$" title="Código postal 3-10 caracteres">
-                    </div>
-                    <i class="bi bi-lock-fill lock-icon" title="No editable"></i>
-                </div>
-            </div>
-
-            <div class="info-card">
-                <div class="info-card-header">
-                    <i class="bi bi-info-circle"></i>Información Adicional
-                </div>
-                
-                <div class="info-item">
-                    <div class="info-label">
-                        <i class="bi bi-calendar-check"></i>Fecha de Registro:
-                    </div>
-                    <div class="info-value">
-                        <input type="text" class="form-control" value="{{ user.fecha_registro.strftime('%d/%m/%Y') if user.fecha_registro else 'No disponible' }}" disabled>
-                    </div>
-                    <i class="bi bi-lock-fill lock-icon" title="No editable"></i>
-                </div>
-
-                <div class="info-item">
-                    <div class="info-label">
-                        <i class="bi bi-shield-check"></i>Estado:
-                    </div>
-                    <div class="info-value">
-                        <span class="badge bg-success">Activo</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Botones de Acción -->
-            <div class="text-center mt-4">
-                <button type="button" class="edit-btn" onclick="toggleEdit()" id="editBtn">
-                    <i class="bi bi-pencil"></i> Editar Información
-                </button>
-                <button type="submit" class="save-btn" id="saveBtn" style="display: none;">
-                    <i class="bi bi-check-circle"></i> Guardar Cambios
-                </button>
-                <button type="button" class="cancel-btn" onclick="cancelEdit()" id="cancelBtn" style="display: none;">
-                    <i class="bi bi-x-circle"></i> Cancelar
-                </button>
-            </div>
-            
-            <!-- Botón de Cambio de Contraseña -->
-            <div class="text-center mt-3">
-                <a href="{{ url_for('change_password') }}" class="btn btn-outline-warning">
-                    <i class="bi bi-shield-lock"></i> Cambiar Contraseña
-                </a>
-            </div>
-        </form>
-
-        <!-- Footer -->
-        <div class="text-center mt-5 pt-4" style="border-top: 1px solid #e9ecef;">
-            <p class="text-muted mb-0">
-                <i class="bi bi-shield-lock me-1"></i>
-                Tu información está protegida y segura
-            </p>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function toggleEdit() {
-            const inputs = document.querySelectorAll('.form-control');
-            const editBtn = document.getElementById('editBtn');
-            const saveBtn = document.getElementById('saveBtn');
-            const cancelBtn = document.getElementById('cancelBtn');
-            const lockIcons = document.querySelectorAll('.lock-icon');
-
-            // Habilitar TODOS los campos del formulario
-            inputs.forEach(input => { input.disabled = false; });
-
-            // Ocultar iconos de bloqueo
-            lockIcons.forEach(icon => { icon.style.display = 'none'; });
-
-            editBtn.style.display = 'none';
-            saveBtn.style.display = 'inline-block';
-            cancelBtn.style.display = 'inline-block';
-        }
-
-        function cancelEdit() {
-            const inputs = document.querySelectorAll('.form-control');
-            const editBtn = document.getElementById('editBtn');
-            const saveBtn = document.getElementById('saveBtn');
-            const cancelBtn = document.getElementById('cancelBtn');
-            const lockIcons = document.querySelectorAll('.lock-icon');
-
-            // Deshabilitar todos los campos
-            inputs.forEach(input => {
-                input.disabled = true;
-            });
-
-            // Mostrar todos los iconos de bloqueo
-            lockIcons.forEach(icon => {
-                icon.style.display = 'inline-block';
-            });
-
-            editBtn.style.display = 'inline-block';
-            saveBtn.style.display = 'none';
-            cancelBtn.style.display = 'none';
-
-            // Recargar la página para restaurar valores originales
-            location.reload();
-        }
-
-        // Animaciones adicionales
-        document.addEventListener('DOMContentLoaded', function() {
-            // Efecto de aparición escalonada para las tarjetas
-            const cards = document.querySelectorAll('.info-card');
-            cards.forEach((card, index) => {
-                card.style.animationDelay = `${index * 0.1}s`;
-            });
-            // Inicializar toasts si hay mensajes
-            document.querySelectorAll('.toast').forEach(function(toastEl) {
-                var toast = new bootstrap.Toast(toastEl);
-                toast.show();
-            });
-        });
-    </script>
-</body>
-</html>
+function cancelEdit() {
+    document.querySelectorAll('#infoForm .form-control').forEach(el => el.disabled = true);
+    document.querySelectorAll('.lock-icon').forEach(el => el.style.display = '');
+    document.getElementById('editBtn').style.display = 'inline-flex';
+    document.getElementById('saveBtn').style.display = 'none';
+    document.getElementById('cancelBtn').style.display = 'none';
+    location.reload();
+}
+</script>
+{% endblock %}

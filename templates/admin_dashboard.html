@@ -1,567 +1,215 @@
 {% extends "base_admin.html" %}
-{% block title %}Dashboard | Panel de Administrador{% endblock %}
-
-{% block head_extra %}
-<style>
-    /* Variables CSS para consistencia */
-    :root {
-        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-        --info-gradient: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
-        --danger-gradient: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
-        --shadow-soft: 0 8px 32px rgba(0,0,0,0.1);
-        --shadow-hover: 0 12px 40px rgba(0,0,0,0.15);
-        --border-radius: 20px;
-        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Contenedor principal */
-    .container-fluid {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        min-height: 100vh;
-        padding: 2rem 1rem;
-    }
-
-    /* Título principal */
-    .main-title {
-        background: var(--primary-gradient);
-        color: white;
-        padding: 2rem;
-        border-radius: var(--border-radius);
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-soft);
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .main-title::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        animation: shimmer 3s infinite;
-    }
-
-    @keyframes shimmer {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .main-title h2 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin: 0;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-
-    .main-title p {
-        font-size: 1.1rem;
-        margin: 0.5rem 0 0 0;
-        opacity: 0.9;
-    }
-
-    /* Tarjetas mejoradas */
-    .stats-card {
-        background: white;
-        border-radius: var(--border-radius);
-        padding: 2rem;
-        margin-bottom: 1.5rem;
-        box-shadow: var(--shadow-soft);
-        border: none;
-        position: relative;
-        overflow: hidden;
-        transition: var(--transition);
-    }
-
-    .stats-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: var(--primary-gradient);
-    }
-
-    .stats-card:hover {
-        transform: translateY(-5px);
-        box-shadow: var(--shadow-hover);
-    }
-
-    .stats-card.success::before { background: var(--success-gradient); }
-    .stats-card.warning::before { background: var(--warning-gradient); }
-    .stats-card.info::before { background: var(--info-gradient); }
-
-    .stats-card h3 {
-        font-size: 2.5rem;
-        font-weight: 800;
-        margin: 0;
-        background: var(--primary-gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .stats-card.success h3 {
-        background: var(--success-gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .stats-card.warning h3 {
-        background: var(--warning-gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .stats-card.info h3 {
-        background: var(--info-gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .stats-card p {
-        margin: 0.5rem 0 0 0;
-        color: #6c757d;
-        font-weight: 500;
-        font-size: 1rem;
-    }
-
-    .stats-icon {
-        font-size: 3rem;
-        opacity: 0.1;
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-    }
-
-    /* Panel de acciones mejorado */
-    .action-buttons {
-        background: white;
-        border-radius: var(--border-radius);
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-soft);
-        border: 1px solid rgba(0,0,0,0.05);
-    }
-
-    .btn-action {
-        border-radius: 50px;
-        padding: 1rem 2rem;
-        font-weight: 600;
-        margin: 0.5rem;
-        transition: var(--transition);
-        border: none;
-        position: relative;
-        overflow: hidden;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-size: 0.9rem;
-    }
-
-    .btn-action::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-        transition: left 0.5s;
-    }
-
-    .btn-action:hover::before {
-        left: 100%;
-    }
-
-    .btn-action:hover {
-        transform: translateY(-3px);
-        box-shadow: var(--shadow-hover);
-    }
-
-    .btn-primary {
-        background: var(--primary-gradient);
-        color: white;
-    }
-
-    .btn-success {
-        background: var(--success-gradient);
-        color: white;
-    }
-
-    .btn-info {
-        background: var(--info-gradient);
-        color: white;
-    }
-
-    /* Tarjetas de información mejoradas */
-    .info-card {
-        background: white;
-        border-radius: var(--border-radius);
-        padding: 0;
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-soft);
-        border: none;
-        position: relative;
-        overflow: hidden;
-        transition: var(--transition);
-    }
-
-    .info-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 4px;
-        height: 100%;
-        background: var(--primary-gradient);
-    }
-
-    .info-card:hover {
-        transform: translateY(-3px);
-        box-shadow: var(--shadow-hover);
-    }
-
-    .info-card .card-header {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        border: none;
-        padding: 1.5rem 2rem;
-        border-radius: var(--border-radius) var(--border-radius) 0 0;
-        font-weight: 700;
-        color: #2c3e50;
-    }
-
-    .info-card .card-body {
-        padding: 2rem;
-    }
-
-    .activity-item {
-        display: flex;
-        align-items: center;
-        padding: 1rem 0;
-        border-bottom: 1px solid #f0f0f0;
-        transition: var(--transition);
-    }
-
-    .activity-item:hover {
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }
-
-    .activity-item:last-child {
-        border-bottom: none;
-    }
-
-    .activity-item i {
-        font-size: 1.2rem;
-        width: 24px;
-        margin-right: 1rem;
-    }
-
-    .text-soft {
-        color: #6c757d;
-        font-size: 0.9rem;
-    }
-
-    /* Lista de usuarios mejorada */
-    .user-list-item {
-        display: flex;
-        align-items: center;
-        padding: 1rem 0;
-        border-bottom: 1px solid #f0f0f0;
-        transition: var(--transition);
-    }
-
-    .user-list-item:hover {
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }
-
-    .user-list-item:last-child {
-        border-bottom: none;
-    }
-
-    .user-list-item i {
-        font-size: 1.2rem;
-        width: 24px;
-        margin-right: 1rem;
-        color: var(--primary-gradient);
-    }
-
-    /* Animaciones */
-    .fade-in {
-        animation: fadeIn 0.6s ease-in-out;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .slide-in {
-        animation: slideIn 0.8s ease-out;
-    }
-
-    @keyframes slideIn {
-        from { transform: translateX(-100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .main-title h2 {
-            font-size: 2rem;
-        }
-        
-        .stats-card h3 {
-            font-size: 2rem;
-        }
-        
-        .btn-action {
-            width: 100%;
-            margin: 0.25rem 0;
-        }
-        
-        .info-card .card-header,
-        .info-card .card-body {
-            padding: 1.5rem;
-        }
-    }
-</style>
-{% endblock %}
+{% block title %}Dashboard | CJFitness Admin{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
 
 {% block content %}
-<!-- Título Principal -->
-<div class="main-title fade-in">
-    <h2><i class="bi bi-speedometer2 me-3"></i>Bienvenido {{ username }}</h2>
-    <p>Este es el panel principal del administrador. Aquí puedes acceder a las distintas secciones para gestionar la app.</p>
+
+<!-- Cabecera de página -->
+<div class="page-header">
+  <div class="page-header-text">
+    <h1 class="page-title">Bienvenido, {{ username }}</h1>
+    <p class="page-subtitle">Panel de control de CJFitness. Aquí tienes una visión general del estado de la app.</p>
+  </div>
+  <div style="display:flex; gap: var(--space-3); flex-wrap: wrap;">
+    <a href="{{ url_for('admin_usuarios') }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-people"></i> Usuarios
+    </a>
+    <a href="{{ url_for('admin_entrenamientos') }}" class="btn btn-secondary btn-sm">
+      <i class="bi bi-activity"></i> Entrenamientos
+    </a>
+  </div>
 </div>
 
-<!-- Contenedor para estadísticas avanzadas -->
+<!-- Contenedor de estadísticas dinámicas (cargado por dashboard-stats.js) -->
 <div id="dashboard-stats-container"></div>
 
-<!-- Información adicional -->
-<div class="row mt-4 g-4">
-    <div class="col-12 col-md-6">
-        <div class="info-card fade-in">
-            <div class="card-header">
-                <i class="bi bi-person-plus me-2"></i>
-                Últimos usuarios registrados
-            </div>
-            <div class="card-body">
-                {% for user in ultimos_usuarios %}
-                <div class="user-list-item">
-                    <i class="bi bi-person-circle"></i>
-                    <span>
-                        {{ user.nombre }} {{ user.apellidos }} <span class="text-soft">({{ user.email }})</span>
-                    </span>
-                </div>
-                {% else %}
-                <div class="user-list-item text-soft">
-                    <i class="bi bi-person-x"></i>
-                    <span>No hay usuarios aún.</span>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
+<!-- Grid de 2 columnas: últimos usuarios + actividad reciente -->
+<div class="grid-2" style="margin-bottom: var(--space-6);">
+
+  <!-- Últimos usuarios registrados -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title"><i class="bi bi-person-plus me-2 text-primary"></i>Últimos usuarios registrados</h3>
     </div>
-    
-    <div class="col-12 col-md-6">
-        <div class="info-card fade-in" style="animation-delay: 0.1s;">
-            <div class="card-header">
-                <i class="bi bi-activity me-2"></i>
-                Actividad Reciente
+    <div class="card-body" style="padding: 0;">
+      {% for user in ultimos_usuarios %}
+        <div style="display:flex; align-items:center; gap: var(--space-3); padding: var(--space-4) var(--space-6); border-bottom: 1px solid var(--color-border);">
+          <div class="avatar avatar-sm" style="background: var(--color-primary-light); color: var(--color-primary); font-size: var(--text-xs);">
+            {{ user.nombre[0]|upper }}
+          </div>
+          <div style="min-width:0;">
+            <div style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--color-text);">
+              {{ user.nombre }} {{ user.apellidos }}
             </div>
-            <div class="card-body">
-                <div class="activity-item">
-                    <i class="bi bi-check-circle text-success"></i>
-                    <span>Dashboard cargado correctamente</span>
-                </div>
-                <div class="activity-item">
-                    <i class="bi bi-people text-primary"></i>
-                    <span>{{ total_usuarios }} usuarios en el sistema</span>
-                </div>
-                <div class="activity-item">
-                    <i class="bi bi-clock text-warning"></i>
-                    <span>Última actualización: <span id="last-update">Ahora</span></span>
-                </div>
+            <div style="font-size: var(--text-xs); color: var(--color-text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+              {{ user.email }}
             </div>
+          </div>
         </div>
+      {% else %}
+        <div class="table-empty">
+          <i class="bi bi-person-x"></i>
+          No hay usuarios todavía.
+        </div>
+      {% endfor %}
     </div>
+  </div>
+
+  <!-- Actividad reciente -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title"><i class="bi bi-activity me-2 text-success"></i>Actividad reciente</h3>
+    </div>
+    <div class="card-body" style="padding: 0;">
+      <div style="display:flex; align-items:center; gap: var(--space-3); padding: var(--space-4) var(--space-6); border-bottom: 1px solid var(--color-border);">
+        <i class="bi bi-check-circle" style="color: var(--color-success); font-size: var(--text-lg); flex-shrink:0;"></i>
+        <span style="font-size: var(--text-sm);">Dashboard cargado correctamente</span>
+      </div>
+      <div style="display:flex; align-items:center; gap: var(--space-3); padding: var(--space-4) var(--space-6); border-bottom: 1px solid var(--color-border);">
+        <i class="bi bi-people" style="color: var(--color-primary); font-size: var(--text-lg); flex-shrink:0;"></i>
+        <span style="font-size: var(--text-sm);">{{ total_usuarios }} usuarios en el sistema</span>
+      </div>
+      <div style="display:flex; align-items:center; gap: var(--space-3); padding: var(--space-4) var(--space-6);">
+        <i class="bi bi-clock" style="color: var(--color-accent); font-size: var(--text-lg); flex-shrink:0;"></i>
+        <span style="font-size: var(--text-sm);">Última actualización: <strong id="last-update">ahora</strong></span>
+      </div>
+    </div>
+  </div>
+
 </div>
 
-<!-- Estadísticas de Seguimiento -->
-<div class="row mt-4 g-4">
-    <div class="col-12">
-        <div class="info-card fade-in" style="animation-delay: 0.2s;">
-            <div class="card-header">
-                <i class="bi bi-graph-up me-2"></i>
-                Estadísticas de Seguimiento de Ejercicios
-            </div>
-            <div class="card-body">
-                <div class="row g-4">
-                    <div class="col-md-3">
-                        <div class="text-center">
-                            <h3 class="text-primary mb-2">{{ total_seguimientos }}</h3>
-                            <p class="mb-0">Registros de Progreso</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center">
-                            <h3 class="text-success mb-2">{{ ejercicios_completados }}</h3>
-                            <p class="mb-0">Ejercicios Completados</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center">
-                            <h3 class="text-info mb-2">{{ usuarios_activos }}</h3>
-                            <p class="mb-0">Usuarios Activos</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center">
-                            <h3 class="text-warning mb-2">
-                                {% if total_seguimientos > 0 %}
-                                    {{ "%.1f"|format((ejercicios_completados / total_seguimientos) * 100) }}%
-                                {% else %}
-                                    0%
-                                {% endif %}
-                            </h3>
-                            <p class="mb-0">Tasa de Completado</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<!-- Estadísticas de seguimiento -->
+<div class="card" style="margin-bottom: var(--space-6);">
+  <div class="card-header">
+    <h3 class="card-title"><i class="bi bi-graph-up me-2 text-primary"></i>Estadísticas de seguimiento</h3>
+  </div>
+  <div class="card-body">
+    <div class="stats-grid">
+
+      <div class="card" style="border: 1px solid var(--color-border);">
+        <div class="card-stat">
+          <div class="card-stat-header">
+            <span class="card-stat-label">Registros</span>
+            <div class="card-stat-icon icon-blue"><i class="bi bi-journal-check"></i></div>
+          </div>
+          <div class="card-stat-value">{{ total_seguimientos }}</div>
+          <div class="card-stat-change neutral">Total de progreso</div>
         </div>
+      </div>
+
+      <div class="card" style="border: 1px solid var(--color-border);">
+        <div class="card-stat">
+          <div class="card-stat-header">
+            <span class="card-stat-label">Completados</span>
+            <div class="card-stat-icon icon-green"><i class="bi bi-check-circle"></i></div>
+          </div>
+          <div class="card-stat-value">{{ ejercicios_completados }}</div>
+          <div class="card-stat-change up">Ejercicios completados</div>
+        </div>
+      </div>
+
+      <div class="card" style="border: 1px solid var(--color-border);">
+        <div class="card-stat">
+          <div class="card-stat-header">
+            <span class="card-stat-label">Activos</span>
+            <div class="card-stat-icon icon-amber"><i class="bi bi-person-check"></i></div>
+          </div>
+          <div class="card-stat-value">{{ usuarios_activos }}</div>
+          <div class="card-stat-change neutral">Usuarios activos</div>
+        </div>
+      </div>
+
+      <div class="card" style="border: 1px solid var(--color-border);">
+        <div class="card-stat">
+          <div class="card-stat-header">
+            <span class="card-stat-label">Tasa</span>
+            <div class="card-stat-icon icon-green"><i class="bi bi-percent"></i></div>
+          </div>
+          <div class="card-stat-value">
+            {% if total_seguimientos > 0 %}
+              {{ "%.0f"|format((ejercicios_completados / total_seguimientos) * 100) }}%
+            {% else %}
+              0%
+            {% endif %}
+          </div>
+          <div class="card-stat-change neutral">Tasa de completado</div>
+        </div>
+      </div>
+
     </div>
+  </div>
 </div>
 
-<!-- Progreso Reciente de Usuarios -->
+<!-- Progreso reciente de usuarios -->
 {% if progreso_reciente %}
-<div class="row mt-4 g-4">
-    <div class="col-12">
-        <div class="info-card fade-in" style="animation-delay: 0.3s;">
-            <div class="card-header">
-                <i class="bi bi-person-check me-2"></i>
-                Progreso Reciente de Usuarios
+<div class="card" style="margin-bottom: var(--space-6);">
+  <div class="card-header">
+    <h3 class="card-title"><i class="bi bi-person-check me-2"></i>Progreso reciente de usuarios</h3>
+    <a href="{{ url_for('admin_progresos') }}" class="btn btn-secondary btn-sm">Ver todo</a>
+  </div>
+  <div class="table-container" style="border: none; border-radius: 0;">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Ejercicio</th>
+          <th>Fecha</th>
+          <th>Series/Reps → Realizadas</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for seg, usuario, ejercicio in progreso_reciente %}
+        <tr>
+          <td>
+            <div style="display:flex; align-items:center; gap: var(--space-2);">
+              <div class="avatar avatar-sm">{{ usuario.nombre[0]|upper }}</div>
+              <span>{{ usuario.nombre }} {{ usuario.apellidos }}</span>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Usuario</th>
-                                <th>Ejercicio</th>
-                                <th>Fecha</th>
-                                <th>Planificado vs Realizado</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for seg, usuario, ejercicio in progreso_reciente %}
-                            <tr>
-                                <td>
-                                    <i class="bi bi-person-circle me-2"></i>
-                                    {{ usuario.nombre }} {{ usuario.apellidos }}
-                                </td>
-                                <td>
-                                    <strong>{{ ejercicio.ejercicio.nombre if ejercicio.ejercicio else ejercicio.nombre_manual }}</strong>
-                                    {% if ejercicio.categoria %}
-                                        <br><small class="text-muted">{{ ejercicio.categoria }}</small>
-                                    {% endif %}
-                                </td>
-                                <td>{{ seg.fecha_ejecucion.strftime('%d/%m/%Y') }}</td>
-                                <td>
-                                    <div class="small">
-                                        <div><strong>Series/Reps:</strong> {{ seg.series_reps_planificadas or 'N/A' }} → {{ seg.series_reps_reales or 'N/A' }}</div>
-                                        <div><strong>RPE:</strong> {{ seg.rpe_planificado or 'N/A' }} → {{ seg.rpe_real or 'N/A' }}</div>
-                                        <div><strong>Carga:</strong> {{ seg.carga_planificada or 'N/A' }} → {{ seg.carga_real or 'N/A' }}</div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="badge {{ 'bg-success' if seg.completado else 'bg-warning' }}">
-                                        {{ 'Completado' if seg.completado else 'En Progreso' }}
-                                    </span>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
+          </td>
+          <td>
+            <strong>{{ ejercicio.ejercicio.nombre if ejercicio.ejercicio else ejercicio.nombre_manual }}</strong>
+            {% if ejercicio.categoria %}
+              <br><span style="font-size: var(--text-xs); color: var(--color-text-muted);">{{ ejercicio.categoria }}</span>
+            {% endif %}
+          </td>
+          <td style="white-space: nowrap;">{{ seg.fecha_ejecucion.strftime('%d/%m/%Y') }}</td>
+          <td style="font-size: var(--text-xs);">
+            {{ seg.series_reps_planificadas or '—' }} → {{ seg.series_reps_reales or '—' }}
+          </td>
+          <td>
+            <span class="badge {{ 'badge-success' if seg.completado else 'badge-warning' }}">
+              {{ 'Completado' if seg.completado else 'En progreso' }}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endif %}
-</div>
 
-<!-- Panel de Acciones -->
-<div class="action-buttons fade-in">
-    <div class="d-flex flex-wrap justify-content-center gap-2">
-        <a href="{{ url_for('admin_usuarios') }}" class="btn btn-primary btn-action" data-bs-toggle="tooltip" title="Ver y gestionar todos los usuarios">
-            <i class="bi bi-people me-2"></i>Gestionar Usuarios
-        </a>
-        <a href="{{ url_for('admin_entrenamientos') }}" class="btn btn-success btn-action" data-bs-toggle="tooltip" title="Asignar o consultar entrenamientos">
-            <i class="bi bi-dumbbell me-2"></i>Gestionar Entrenamientos
-        </a>
-        <a href="{{ url_for('admin_estadisticas') }}" class="btn btn-info btn-action" data-bs-toggle="tooltip" title="Consulta las estadísticas globales">
-            <i class="bi bi-bar-chart-line me-2"></i>Ver Estadísticas
-        </a>
-        <a href="{{ url_for('admin_progresos') }}" class="btn btn-warning btn-action" data-bs-toggle="tooltip" title="Revisar y editar progresos de usuarios">
-            <i class="bi bi-clipboard2-check me-2"></i>Progresos
-        </a>
-    </div>
-</div>
+{% endblock %}
 
-
-<!-- Scripts para dashboard avanzado -->
+{% block scripts_extra %}
 <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
 <script src="{{ url_for('static', filename='js/dashboard-stats.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar estadísticas del dashboard
-    const dashboardStats = initDashboardStats('dashboard-stats-container', {
-        refreshInterval: 30000, // 30 segundos
-        showCharts: true
-    });
+  // Inicializar estadísticas con auto-refresh cada 30s
+  initDashboardStats('dashboard-stats-container', {
+    refreshInterval: 30000,
+    showCharts: true
+  });
 
-    // Actualizar timestamp de última actualización
-    function updateTimestamp() {
-        const now = new Date();
-        const timeString = now.toLocaleTimeString('es-ES');
-        document.getElementById('last-update').textContent = timeString;
-    }
-
-    // Actualizar cada minuto
-    setInterval(updateTimestamp, 60000);
-    updateTimestamp();
-
-    // Mostrar notificación de bienvenida
-    if (window.notifications) {
-        notifications.success(
-            'Dashboard cargado correctamente con estadísticas en tiempo real',
-            'Bienvenido al Panel de Administración'
-        );
-    }
-
-    // Mejorar tooltips
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
+  // Actualizar hora de última actualización cada minuto
+  function updateTimestamp() {
+    var el = document.getElementById('last-update');
+    if (el) el.textContent = new Date().toLocaleTimeString('es-ES');
+  }
+  setInterval(updateTimestamp, 60000);
+  updateTimestamp();
 });
 </script>
-
 {% endblock %}

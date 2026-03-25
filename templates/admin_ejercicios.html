@@ -1,448 +1,144 @@
 {% extends "base_admin.html" %}
 {% block title %}Gestión de Ejercicios{% endblock %}
 
-{% block head_extra %}
-<style>
-    /* Variables CSS para consistencia */
-    :root {
-        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-        --info-gradient: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
-        --danger-gradient: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
-        --shadow-soft: 0 8px 32px rgba(0,0,0,0.1);
-        --shadow-hover: 0 12px 40px rgba(0,0,0,0.15);
-        --border-radius: 20px;
-        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Contenedor principal */
-    .container-fluid {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        min-height: 100vh;
-        padding: 2rem 1rem;
-    }
-
-    /* Título principal */
-    .main-title {
-        background: var(--primary-gradient);
-        color: white;
-        padding: 2rem;
-        border-radius: var(--border-radius);
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-soft);
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .main-title::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        animation: shimmer 3s infinite;
-    }
-
-    @keyframes shimmer {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .main-title h2 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin: 0;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-
-    .main-title p {
-        font-size: 1.1rem;
-        margin: 0.5rem 0 0 0;
-        opacity: 0.9;
-    }
-
-    /* Panel de búsqueda mejorado */
-    .search-container {
-        background: white;
-        border-radius: var(--border-radius);
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-soft);
-        border: 1px solid rgba(0,0,0,0.05);
-    }
-
-    .search-input {
-        border-radius: 25px;
-        border: 2px solid #e9ecef;
-        padding: 1rem 1.5rem;
-        font-size: 1rem;
-        transition: var(--transition);
-        background: #f8f9fa;
-        font-weight: 500;
-    }
-
-    .search-input:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        background: white;
-        outline: none;
-    }
-
-    .search-input:hover {
-        border-color: #667eea;
-        background: white;
-    }
-
-    .input-group-text {
-        background: var(--primary-gradient);
-        color: white;
-        border: none;
-        border-radius: 0 25px 25px 0;
-    }
-
-    /* Formulario de añadir mejorado */
-    .add-form {
-        background: white;
-        border-radius: var(--border-radius);
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-soft);
-        border: 1px solid rgba(0,0,0,0.05);
-    }
-
-    .form-control {
-        border: 2px solid #e9ecef;
-        border-radius: 12px;
-        padding: 0.75rem 1rem;
-        transition: var(--transition);
-        font-weight: 500;
-        background: #f8f9fa;
-    }
-
-    .form-control:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        outline: none;
-        background: white;
-    }
-
-    .form-control:hover {
-        border-color: #667eea;
-        background: white;
-    }
-
-    .btn-add {
-        background: var(--success-gradient);
-        color: white;
-        border: none;
-        border-radius: 12px;
-        padding: 0.75rem 2rem;
-        font-weight: 600;
-        transition: var(--transition);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .btn-add:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        color: white;
-    }
-
-    /* Tabla mejorada */
-    .table-container {
-        background: white;
-        border-radius: var(--border-radius);
-        padding: 0;
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-soft);
-        border: 1px solid rgba(0,0,0,0.05);
-        overflow: hidden;
-    }
-
-    .table {
-        border-radius: 0;
-        overflow: hidden;
-        box-shadow: none;
-        margin: 0;
-    }
-
-    .table thead th {
-        background: var(--primary-gradient);
-        color: white;
-        border: none;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-size: 0.9rem;
-        padding: 1.5rem 1rem;
-    }
-
-    .table tbody td {
-        padding: 1.5rem 1rem;
-        border: none;
-        border-bottom: 1px solid #f8f9fa;
-        vertical-align: middle;
-    }
-
-    .table tbody tr:hover {
-        background: #f8f9fa;
-    }
-
-    .table tbody tr:last-child td {
-        border-bottom: none;
-    }
-
-    /* Botones de acción mejorados */
-    .btn-action {
-        border-radius: 20px;
-        padding: 0.5rem 1rem;
-        font-weight: 600;
-        transition: var(--transition);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-size: 0.8rem;
-        margin: 0.1rem;
-    }
-
-    .btn-action:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-
-    .btn-edit {
-        background: var(--info-gradient);
-        color: white;
-        border: none;
-    }
-
-    .btn-delete {
-        background: var(--danger-gradient);
-        color: white;
-        border: none;
-    }
-
-    /* Paginación mejorada */
-    .pagination-container {
-        background: white;
-        border-radius: var(--border-radius);
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-soft);
-        border: 1px solid rgba(0,0,0,0.05);
-        text-align: center;
-    }
-
-    .page-link {
-        border: none;
-        color: #667eea;
-        background: transparent;
-        border-radius: 10px;
-        padding: 0.5rem 1rem;
-        margin: 0 0.25rem;
-        transition: var(--transition);
-    }
-
-    .page-link:hover {
-        background: var(--primary-gradient);
-        color: white;
-        transform: translateY(-2px);
-    }
-
-    .page-item.active .page-link {
-        background: var(--primary-gradient);
-        color: white;
-    }
-
-    /* Animaciones */
-    .fade-in {
-        animation: fadeIn 0.6s ease-in-out;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .slide-in {
-        animation: slideIn 0.8s ease-out;
-    }
-
-    @keyframes slideIn {
-        from { transform: translateX(-100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .main-title h2 {
-            font-size: 2rem;
-        }
-        
-        .btn-action {
-            width: 100%;
-            margin: 0.25rem 0;
-        }
-        
-        .table thead th,
-        .table tbody td {
-            padding: 1rem 0.5rem;
-            font-size: 0.9rem;
-        }
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<!-- Título Principal -->
-<div class="main-title fade-in">
-    <h2><i class="bi bi-dumbbell me-3"></i>Gestión de Ejercicios</h2>
-    <p>Administra y gestiona todos los ejercicios disponibles en la base de datos</p>
+<!-- Cabecera -->
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Ejercicios</h1>
+        <p class="page-subtitle">Administra los ejercicios disponibles en la base de datos</p>
+    </div>
 </div>
 
-<!-- Panel de Búsqueda -->
-<div class="search-container fade-in">
-    <div class="input-group">
-        <input type="text" 
-               class="form-control search-input" 
-               id="searchInput" 
-               placeholder="Buscar ejercicios por nombre, categoría o subcategoría..."
+<!-- Búsqueda -->
+<div class="card" style="margin-bottom: var(--space-6);">
+    <div class="search-wrapper">
+        <i class="bi bi-search search-icon"></i>
+        <input type="text"
+               class="form-control search-input"
+               id="searchInput"
+               placeholder="Buscar por nombre, categoría o subcategoría..."
                onkeyup="filterExercises()">
-        <span class="input-group-text">
-            <i class="bi bi-search"></i>
-        </span>
     </div>
-    <div class="mt-3">
-        <small class="text-muted">
-            <i class="bi bi-info-circle me-1"></i> 
-            La búsqueda busca en todos los ejercicios de la base de datos
-        </small>
-    </div>
+    <p style="margin-top: var(--space-2); font-size: var(--text-sm); color: var(--color-text-secondary);">
+        La búsqueda recorre todos los ejercicios de la base de datos
+    </p>
 </div>
 
-<!-- Formulario de Añadir -->
-<div class="add-form fade-in">
-    <h5 class="mb-3"><i class="bi bi-plus-circle me-2"></i>Añadir Nuevo Ejercicio</h5>
-    <form method="POST" action="{{ url_for('admin_ejercicios_nuevo') }}" class="row g-3 align-items-end">
-        <div class="col-md-3">
-            <label class="form-label">Nombre del Ejercicio</label>
-            <input name="nombre" required placeholder="Ej: Press de banca" class="form-control">
-        </div>
-        <div class="col-md-3">
-            <label class="form-label">Categoría</label>
-            <input name="categoria" required placeholder="Ej: Pecho" class="form-control">
-        </div>
-        <div class="col-md-3">
-            <label class="form-label">Subcategoría</label>
-            <input name="subcategoria" required placeholder="Ej: Fuerza" class="form-control">
-        </div>
-        <div class="col-md-3">
-            <button class="btn btn-add w-100">
-                <i class="bi bi-plus me-1"></i>Añadir Ejercicio
-            </button>
+<!-- Formulario añadir -->
+<div class="card" style="margin-bottom: var(--space-6);">
+    <h2 class="section-title" style="margin-bottom: var(--space-4);">
+        <i class="bi bi-plus-circle me-2"></i>Añadir nuevo ejercicio
+    </h2>
+    <form method="POST" action="{{ url_for('admin_ejercicios_nuevo') }}" id="addForm">
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: var(--space-4); align-items: end;">
+            <div class="form-group">
+                <label class="form-label">Nombre</label>
+                <input name="nombre" required placeholder="Ej: Press de banca" class="form-control">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Categoría</label>
+                <input name="categoria" required placeholder="Ej: Pecho" class="form-control">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Subcategoría</label>
+                <input name="subcategoria" required placeholder="Ej: Fuerza" class="form-control">
+            </div>
+            <div>
+                <button class="btn btn-primary" type="submit" style="width: 100%;">
+                    <i class="bi bi-plus me-1"></i>Añadir
+                </button>
+            </div>
         </div>
     </form>
 </div>
 
-<!-- Tabla de Ejercicios -->
-<div class="table-container fade-in">
+<!-- Tabla de ejercicios -->
+<div class="table-container">
     <table class="table" id="exercisesTable">
         <thead>
-        <tr>
-            <th><i class="bi bi-dumbbell me-1"></i>Nombre</th>
-            <th><i class="bi bi-tags me-1"></i>Categoría</th>
-            <th><i class="bi bi-tag me-1"></i>Subcategoría</th>
-            <th class="text-center"><i class="bi bi-gear me-1"></i>Acciones</th>
-        </tr>
+            <tr>
+                <th>Nombre</th>
+                <th>Categoría</th>
+                <th>Subcategoría</th>
+                <th style="text-align: center; width: 160px;">Acciones</th>
+            </tr>
         </thead>
-  <tbody id="exercisesTableBody">
-    {% for e in ejercicios_pagination.items %}
-    <tr class="exercise-row" data-search="{{ e.nombre.lower() }} {{ e.categoria.lower() }} {{ e.subcategoria.lower() }}">
-      <form method="POST" action="{{ url_for('admin_ejercicios_editar', e_id=e.id) }}">
-        <td><input name="nombre" value="{{ e.nombre }}" class="form-control" required></td>
-        <td><input name="categoria" value="{{ e.categoria }}" class="form-control" required></td>
-        <td><input name="subcategoria" value="{{ e.subcategoria }}" class="form-control" required></td>
-        <td class="text-center">
-            <div class="d-flex justify-content-center gap-1">
-                <button class="btn btn-edit btn-action" title="Guardar cambios">
-                    <i class="bi bi-check me-1"></i>Guardar
-                </button>
-                <form method="POST" action="{{ url_for('admin_ejercicios_eliminar', e_id=e.id) }}" style="display:inline;">
-                    <button class="btn btn-delete btn-action" onclick="return confirm('¿Eliminar ejercicio?')" title="Eliminar ejercicio">
-                        <i class="bi bi-trash me-1"></i>Eliminar
-                    </button>
+        <tbody id="exercisesTableBody">
+            {% for e in ejercicios_pagination.items %}
+            <tr class="exercise-row">
+                <form method="POST" action="{{ url_for('admin_ejercicios_editar', e_id=e.id) }}">
+                    <td><input name="nombre" value="{{ e.nombre }}" class="form-control" required></td>
+                    <td><input name="categoria" value="{{ e.categoria }}" class="form-control" required></td>
+                    <td><input name="subcategoria" value="{{ e.subcategoria }}" class="form-control" required></td>
+                    <td style="text-align: center;">
+                        <div style="display: flex; gap: var(--space-2); justify-content: center;">
+                            <button class="btn btn-sm btn-success save-btn" type="submit" title="Guardar cambios">
+                                <i class="bi bi-check-lg me-1"></i>Guardar
+                            </button>
+                            <form method="POST" action="{{ url_for('admin_ejercicios_eliminar', e_id=e.id) }}" style="display:inline;">
+                                <button class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar ejercicio?')" type="submit" title="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
                 </form>
-            </div>
-        </td>
-      </form>
-    </tr>
-    {% endfor %}
+            </tr>
+            {% endfor %}
         </tbody>
     </table>
 </div>
 
 <!-- Paginación -->
-<div class="pagination-container fade-in">
-    <nav aria-label="Ejercicios paginación" id="paginationNav">
-        <ul class="pagination justify-content-center">
-    {% if ejercicios_pagination.has_prev %}
-      <li class="page-item">
-        <a class="page-link"
-           href="{{ url_for('admin_ejercicios', page=ejercicios_pagination.prev_num, search=search, sort=sort, order=order) }}">Anterior</a>
-      </li>
-    {% else %}
-      <li class="page-item disabled"><span class="page-link">Anterior</span></li>
-    {% endif %}
-
-    {% for page_num in ejercicios_pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-      {% if page_num %}
-        {% if page_num == ejercicios_pagination.page %}
-          <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+<nav aria-label="Ejercicios paginación" id="paginationNav" style="margin-top: var(--space-6); display: flex; justify-content: center;">
+    <ul class="pagination justify-content-center">
+        {% if ejercicios_pagination.has_prev %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('admin_ejercicios', page=ejercicios_pagination.prev_num, search=search, sort=sort, order=order) }}">Anterior</a>
+        </li>
         {% else %}
-          <li class="page-item">
-            <a class="page-link"
-               href="{{ url_for('admin_ejercicios', page=page_num, search=search, sort=sort, order=order) }}">{{ page_num }}</a>
-          </li>
+        <li class="page-item disabled"><span class="page-link">Anterior</span></li>
         {% endif %}
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">…</span></li>
-      {% endif %}
-    {% endfor %}
 
-    {% if ejercicios_pagination.has_next %}
-      <li class="page-item">
-        <a class="page-link"
-           href="{{ url_for('admin_ejercicios', page=ejercicios_pagination.next_num, search=search, sort=sort, order=order) }}">Siguiente</a>
-      </li>
-    {% else %}
-      <li class="page-item disabled"><span class="page-link">Siguiente</span></li>
-    {% endif %}
-        </ul>
-    </nav>
-</div>
+        {% for page_num in ejercicios_pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+                {% if page_num == ejercicios_pagination.page %}
+                <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                {% else %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin_ejercicios', page=page_num, search=search, sort=sort, order=order) }}">{{ page_num }}</a>
+                </li>
+                {% endif %}
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+            {% endif %}
+        {% endfor %}
 
-<!-- Script para búsqueda simple -->
+        {% if ejercicios_pagination.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('admin_ejercicios', page=ejercicios_pagination.next_num, search=search, sort=sort, order=order) }}">Siguiente</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">Siguiente</span></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endblock %}
+
+{% block scripts_extra %}
 <script>
-// Función para filtrar ejercicios
 function filterExercises() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const tbody = document.getElementById('exercisesTableBody');
     const paginationNav = document.getElementById('paginationNav');
-    
+
     if (searchTerm === '') {
-        // Si no hay búsqueda, recargar la página para mostrar la vista normal
         location.reload();
         return;
     }
-    
-    // Ocultar paginación durante la búsqueda
+
     paginationNav.style.display = 'none';
-    
-    // Realizar búsqueda AJAX para obtener todos los ejercicios
+
     fetch(`/admin_ejercicios_buscar?q=${encodeURIComponent(searchTerm)}`)
         .then(response => response.json())
         .then(data => {
@@ -452,22 +148,18 @@ function filterExercises() {
                 showNoResults();
             }
         })
-        .catch(error => {
-            console.error('Error en la búsqueda:', error);
-            showNoResults();
-        });
+        .catch(() => showNoResults());
 }
 
-// Función para mostrar resultados de búsqueda
 function displaySearchResults(ejercicios) {
     const tbody = document.getElementById('exercisesTableBody');
     tbody.innerHTML = '';
-    
+
     if (ejercicios.length === 0) {
         showNoResults();
         return;
     }
-    
+
     ejercicios.forEach(ejercicio => {
         const row = document.createElement('tr');
         row.className = 'exercise-row';
@@ -476,88 +168,42 @@ function displaySearchResults(ejercicios) {
                 <td><input name="nombre" value="${ejercicio.nombre}" class="form-control" required></td>
                 <td><input name="categoria" value="${ejercicio.categoria}" class="form-control" required></td>
                 <td><input name="subcategoria" value="${ejercicio.subcategoria}" class="form-control" required></td>
-                <td>
-                    <button class="btn btn-sm btn-primary">💾</button>
-                    <form method="POST" action="/admin_ejercicios/${ejercicio.id}/eliminar" style="display:inline;">
-                        <button class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar ejercicio?')">🗑️</button>
-                    </form>
+                <td style="text-align:center;">
+                    <div style="display:flex; gap:var(--space-2); justify-content:center;">
+                        <button class="btn btn-sm btn-success save-btn" type="submit"><i class="bi bi-check-lg me-1"></i>Guardar</button>
+                        <form method="POST" action="/admin_ejercicios/${ejercicio.id}/eliminar" style="display:inline;">
+                            <button class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar ejercicio?')" type="submit"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </div>
                 </td>
             </form>
         `;
         tbody.appendChild(row);
     });
-    
-    // Reaplicar eventos a los botones
-    reapplyEventListeners();
 }
 
-// Función para mostrar mensaje de no resultados
 function showNoResults() {
-    const tbody = document.getElementById('exercisesTableBody');
-    tbody.innerHTML = `
+    document.getElementById('exercisesTableBody').innerHTML = `
         <tr>
-            <td colspan="4" class="text-center text-muted">
-                <i class="bi bi-search me-2"></i>
-                No se encontraron ejercicios que coincidan con la búsqueda
+            <td colspan="4" style="text-align:center; color:var(--color-text-secondary); padding: var(--space-8);">
+                <i class="bi bi-search me-2"></i>No se encontraron ejercicios
             </td>
         </tr>
     `;
 }
 
-// Función para reaplicar eventos
-function reapplyEventListeners() {
-    const editButtons = document.querySelectorAll('.btn-primary');
-    editButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            const form = this.closest('form');
-            const nombre = form.querySelector('input[name="nombre"]').value;
-            const categoria = form.querySelector('input[name="categoria"]').value;
-            const subcategoria = form.querySelector('input[name="subcategoria"]').value;
-            
-            if (!nombre || !categoria || !subcategoria) {
+document.addEventListener('DOMContentLoaded', function () {
+    // Validar formulario de añadir
+    document.getElementById('addForm').addEventListener('submit', function (e) {
+        const fields = ['nombre', 'categoria', 'subcategoria'];
+        for (const f of fields) {
+            if (!this.querySelector(`input[name="${f}"]`).value.trim()) {
                 e.preventDefault();
                 alert('Todos los campos son obligatorios');
                 return false;
             }
-        });
+        }
     });
-}
-
-// Event listeners cuando se carga la página
-document.addEventListener('DOMContentLoaded', function() {
-    // Mejorar la experiencia de edición
-    const editButtons = document.querySelectorAll('.btn-primary');
-    editButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            const form = this.closest('form');
-            const nombre = form.querySelector('input[name="nombre"]').value;
-            const categoria = form.querySelector('input[name="categoria"]').value;
-            const subcategoria = form.querySelector('input[name="subcategoria"]').value;
-            
-            if (!nombre || !categoria || !subcategoria) {
-                e.preventDefault();
-                alert('Todos los campos son obligatorios');
-                return false;
-            }
-        });
-    });
-
-    // Mejorar formulario de añadir
-    const addForm = document.querySelector('form[action*="nuevo"]');
-    if (addForm) {
-        addForm.addEventListener('submit', function(e) {
-            const nombre = this.querySelector('input[name="nombre"]').value;
-            const categoria = this.querySelector('input[name="categoria"]').value;
-            const subcategoria = this.querySelector('input[name="subcategoria"]').value;
-            
-            if (!nombre || !categoria || !subcategoria) {
-                e.preventDefault();
-                alert('Todos los campos son obligatorios');
-                return false;
-            }
-        });
-    }
 });
 </script>
-
 {% endblock %}

@@ -1,247 +1,44 @@
 {% extends "base_admin.html" %}
-{% block title %}Entrenamientos por Usuario - Admin{% endblock %}
-
-{% block head_extra %}
-<style>
-    /* Variables CSS para consistencia */
-    :root {
-        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-        --info-gradient: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
-        --danger-gradient: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
-        --shadow-soft: 0 8px 32px rgba(0,0,0,0.1);
-        --shadow-hover: 0 12px 40px rgba(0,0,0,0.15);
-        --border-radius: 20px;
-        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Contenedor principal */
-    .container-fluid {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        min-height: 100vh;
-        padding: 2rem 1rem;
-    }
-
-    /* Título principal */
-    .main-title {
-        background: var(--primary-gradient);
-        color: white;
-        padding: 2rem;
-        border-radius: var(--border-radius);
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-soft);
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .main-title::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        animation: shimmer 3s infinite;
-    }
-
-    @keyframes shimmer {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .main-title h2 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin: 0;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-
-    .main-title p {
-        font-size: 1.1rem;
-        margin: 0.5rem 0 0 0;
-        opacity: 0.9;
-    }
-
-    /* Tabla mejorada */
-    .table-container {
-        background: white;
-        border-radius: var(--border-radius);
-        padding: 0;
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-soft);
-        border: 1px solid rgba(0,0,0,0.05);
-        overflow: hidden;
-    }
-
-    .table {
-        border-radius: 0;
-        overflow: hidden;
-        box-shadow: none;
-        margin: 0;
-    }
-
-    .table thead th {
-        background: var(--primary-gradient);
-        color: white;
-        border: none;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-size: 0.9rem;
-        padding: 1.5rem 1rem;
-    }
-
-    .table tbody td {
-        padding: 1.5rem 1rem;
-        border: none;
-        border-bottom: 1px solid #f8f9fa;
-        vertical-align: middle;
-    }
-
-    .table tbody tr:hover {
-        background: #f8f9fa;
-    }
-
-    .table tbody tr:last-child td {
-        border-bottom: none;
-    }
-
-    /* Botones de acción mejorados */
-    .btn-action {
-        border-radius: 20px;
-        padding: 0.5rem 1rem;
-        font-weight: 600;
-        transition: var(--transition);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-size: 0.8rem;
-        margin: 0.1rem;
-    }
-
-    .btn-action:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-
-    .btn-view {
-        background: var(--info-gradient);
-        color: white;
-        border: none;
-    }
-
-    .btn-assign {
-        background: var(--success-gradient);
-        color: white;
-        border: none;
-    }
-
-    /* Estado vacío mejorado */
-    .empty-state {
-        text-align: center;
-        padding: 4rem 2rem;
-        background: white;
-        border-radius: var(--border-radius);
-        box-shadow: var(--shadow-soft);
-        margin: 2rem 0;
-    }
-
-    .empty-state i {
-        font-size: 5rem;
-        margin-bottom: 1.5rem;
-        background: var(--primary-gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .empty-state h5 {
-        color: #495057;
-        font-weight: 700;
-        margin-bottom: 1rem;
-    }
-
-    .empty-state p {
-        color: #6c757d;
-        margin-bottom: 2rem;
-    }
-
-    /* Animaciones */
-    .fade-in {
-        animation: fadeIn 0.6s ease-in-out;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .slide-in {
-        animation: slideIn 0.8s ease-out;
-    }
-
-    @keyframes slideIn {
-        from { transform: translateX(-100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .main-title h2 {
-            font-size: 2rem;
-        }
-        
-        .btn-action {
-            width: 100%;
-            margin: 0.25rem 0;
-        }
-        
-        .table thead th,
-        .table tbody td {
-            padding: 1rem 0.5rem;
-            font-size: 0.9rem;
-        }
-    }
-</style>
-{% endblock %}
+{% block title %}Entrenamientos por Usuario{% endblock %}
 
 {% block content %}
-<!-- Título Principal -->
-<div class="main-title fade-in">
-    <h2><i class="bi bi-dumbbell me-3"></i>Entrenamientos por Usuario</h2>
-    <p>Selecciona un usuario para asignar entrenamientos o consultar sus rutinas personalizadas</p>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Entrenamientos por Usuario</h1>
+        <p class="page-subtitle">Selecciona un usuario para ver o asignar su rutina personalizada</p>
+    </div>
 </div>
-<!-- Tabla de Usuarios -->
-<div class="table-container fade-in">
-    <div class="table-responsive">
-        <table class="table align-middle">
-            <thead>
+
+<div class="table-container">
+    <table class="table">
+        <thead>
             <tr>
-                <th><i class="bi bi-person me-1"></i>Usuario</th>
-                <th><i class="bi bi-person-badge me-1"></i>Nombre</th>
-                <th class="text-center"><i class="bi bi-gear me-1"></i>Acciones</th>
+                <th>Usuario</th>
+                <th>Nombre</th>
+                <th style="text-align: center; width: 220px;">Acciones</th>
             </tr>
-            </thead>
+        </thead>
         <tbody>
             {% for user in usuarios %}
             <tr>
-                <td>{{ user.username }}</td>
-                <td>{{ user.nombre }} {{ user.apellidos }}</td>
-                <td class="text-center">
-                    <div class="d-flex justify-content-center gap-1">
+                <td>
+                    <div class="avatar" style="display:inline-flex; margin-right: var(--space-2);">
+                        {{ user.username[0]|upper }}
+                    </div>
+                    <span style="font-weight: 500;">{{ user.username }}</span>
+                </td>
+                <td style="color: var(--color-text-secondary);">{{ user.nombre }} {{ user.apellidos }}</td>
+                <td style="text-align: center;">
+                    <div style="display: flex; gap: var(--space-2); justify-content: center;">
                         <a href="{{ url_for('ver_rutinas_usuario', user_id=user.id) }}"
-                           class="btn btn-view btn-action"
-                           data-bs-toggle="tooltip"
+                           class="btn btn-sm btn-secondary"
                            title="Ver rutinas asignadas">
                             <i class="bi bi-eye me-1"></i>Ver Rutina
                         </a>
                         <a href="{{ url_for('calendario_entrenamientos_usuario', user_id=user.id) }}"
-                           class="btn btn-assign btn-action"
-                           data-bs-toggle="tooltip"
-                           title="Asignar nueva rutina por calendario">
-                            <i class="bi bi-calendar-plus me-1"></i>Asignar Rutina
+                           class="btn btn-sm btn-primary"
+                           title="Asignar nueva rutina">
+                            <i class="bi bi-calendar-plus me-1"></i>Asignar
                         </a>
                     </div>
                 </td>
@@ -249,14 +46,5 @@
             {% endfor %}
         </tbody>
     </table>
-    </div>
 </div>
-{% endblock %}
-
-{% block scripts_extra %}
-<script>
-    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
-        new bootstrap.Tooltip(el);
-    });
-</script>
 {% endblock %}

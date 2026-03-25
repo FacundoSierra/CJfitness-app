@@ -1,350 +1,141 @@
 {% extends "base_admin.html" %}
-{% block title %}Asignar Rutinas - Calendario{% endblock %}
+{% block title %}Asignar Rutinas — Calendario{% endblock %}
 
 {% block head_extra %}
 <style>
-    /* Variables CSS para consistencia */
-    :root {
-        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-        --info-gradient: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
-        --danger-gradient: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
-        --shadow-soft: 0 8px 32px rgba(0,0,0,0.1);
-        --shadow-hover: 0 12px 40px rgba(0,0,0,0.15);
-        --border-radius: 20px;
-        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Contenedor principal */
-    .container-fluid {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        min-height: 100vh;
-        padding: 2rem 1rem;
-    }
-
-    /* Título principal */
-    .main-title {
-        background: var(--primary-gradient);
-        color: white;
-        padding: 2rem;
-        border-radius: var(--border-radius);
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-soft);
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .main-title::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        animation: shimmer 3s infinite;
-    }
-
-    @keyframes shimmer {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .main-title h2 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin: 0;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-
-    .main-title p {
-        font-size: 1.1rem;
-        margin: 0.5rem 0 0 0;
-        opacity: 0.9;
-    }
-    /* Contenedor principal del calendario */
-    .calendar-container {
-        background: white;
-        border-radius: var(--border-radius);
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-soft);
-        border: 1px solid rgba(0,0,0,0.05);
-    }
-    
-    .calendar-container h5 {
-        text-align: center;
-        margin-bottom: 2rem;
-        color: #2c3e50;
-        font-weight: 700;
-        font-size: 1.8rem;
-        background: var(--primary-gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-    
-    .calendar-grid {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-    
-    .calendar-day {
-        aspect-ratio: 1;
-        min-height: 120px;
-        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-        border: 2px solid #e9ecef;
-        border-radius: 12px;
-        padding: 1rem;
-        transition: var(--transition);
-        position: relative;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        text-align: center;
-    }
-    
-    .calendar-day::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: var(--primary-gradient);
-        opacity: 0;
-        transition: var(--transition);
-    }
-    
-    .calendar-day:hover {
-        border-color: #667eea;
-        box-shadow: var(--shadow-hover);
-        transform: translateY(-3px);
-    }
-    
-    .calendar-day:hover::before {
-        opacity: 1;
-    }
-    
-    .calendar-day.outside-month {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        opacity: 0.7;
-        border-color: #dee2e6;
-    }
-    
-    .calendar-day.outside-month:hover {
-        opacity: 1;
-        border-color: #6c757d;
-        box-shadow: var(--shadow-soft);
-    }
-    
-    .calendar-day h6 {
-        font-size: 1.1rem;
-        margin-bottom: 10px;
-        color: #495057;
-        font-weight: bold;
-    }
-    
-    .calendar-day .btn {
-        font-size: 0.85rem;
-        padding: 8px 12px;
-        border-radius: 20px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        margin-top: auto;
-    }
-    
-    .calendar-day .btn:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 12px rgba(0,123,255,0.3);
-    }
-    
-    .calendar-day .mb-1 {
-        color: #28a745;
-        font-weight: bold;
-        padding: 4px 8px;
-        background: rgba(40,167,69,0.1);
-        border-radius: 10px;
-        display: inline-block;
-        margin: 8px 0;
-        font-size: 0.8rem;
-    }
-    
-    .calendar-day .btn-outline-primary {
-        border-width: 2px;
-    }
-    
-    /* Responsive para diferentes tamaños de pantalla */
-    @media (max-width: 1200px) {
-        .calendar-container {
-            max-width: 95%;
-            padding: 0 10px;
-        }
-        
-        .calendar-grid {
-            gap: 10px;
-        }
-        
-        .calendar-day {
-            padding: 15px;
-            min-height: 100px;
-        }
-    }
-    
-    @media (max-width: 900px) {
-        .calendar-grid {
-            grid-template-columns: repeat(7, 1fr);
-            gap: 8px;
-        }
-        
-        .calendar-day {
-            padding: 12px;
-            min-height: 100px;
-        }
-        
-        .calendar-day h6 {
-            font-size: 0.9rem;
-        }
-        
-        .calendar-day .btn {
-            font-size: 0.75rem;
-            padding: 6px 8px;
-        }
-    }
-    
-    @media (max-width: 600px) {
-        .calendar-grid {
-            grid-template-columns: repeat(7, 1fr);
-        }
-        
-        .calendar-day {
-            min-height: 80px;
-            font-size: 0.9rem;
-            padding: 8px;
-        }
-        
-        .calendar-day h6 {
-            font-size: 0.85rem;
-            margin-bottom: 5px;
-        }
-        
-        .calendar-day .btn {
-            font-size: 0.7rem;
-            padding: 4px 6px;
-        }
-        
-        .calendar-day .mb-1 {
-            font-size: 0.75rem;
-        }
-    }
-    
-    /* Animaciones */
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    .calendar-day {
-        animation: fadeInUp 0.5s ease forwards;
-    }
-    
-    .calendar-day:nth-child(1) { animation-delay: 0.1s; }
-    .calendar-day:nth-child(2) { animation-delay: 0.2s; }
-    .calendar-day:nth-child(3) { animation-delay: 0.3s; }
-    .calendar-day:nth-child(4) { animation-delay: 0.4s; }
-    .calendar-day:nth-child(5) { animation-delay: 0.5s; }
-    .calendar-day:nth-child(6) { animation-delay: 0.6s; }
-    .calendar-day:nth-child(7) { animation-delay: 0.7s; }
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: var(--space-2);
+}
+.calendar-day-header {
+    text-align: center;
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: var(--space-2) 0;
+}
+.calendar-day {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-2);
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    background: var(--color-surface);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.calendar-day:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-hover);
+}
+.calendar-day.outside-month {
+    background: var(--color-bg);
+    opacity: 0.6;
+}
+.calendar-day-num {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text);
+    text-align: center;
+}
+.calendar-day .assigned-badge {
+    font-size: var(--text-xs);
+    color: var(--color-success);
+    text-align: center;
+    font-weight: 500;
+}
+.calendar-day .btn-assign-day {
+    margin-top: auto;
+    font-size: var(--text-xs);
+    padding: 4px 8px;
+    border-radius: var(--radius-full);
+}
+@media (max-width: 768px) {
+    .calendar-day { min-height: 70px; padding: var(--space-1); }
+    .calendar-day-num { font-size: var(--text-xs); }
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Título Principal -->
-<div class="main-title fade-in">
-    <h2><i class="bi bi-calendar-plus me-3"></i>Asignar Rutinas</h2>
-    <p>Selecciona un día del calendario para asignar rutinas a {{ usuario.nombre }} {{ usuario.apellidos }}</p>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Asignar Rutinas</h1>
+        <p class="page-subtitle">{{ usuario.nombre }} {{ usuario.apellidos }}</p>
+    </div>
+    <a href="{{ url_for('ver_rutinas_usuario', user_id=usuario.id) }}" class="btn btn-secondary">
+        <i class="bi bi-eye me-1"></i>Ver Rutinas
+    </a>
 </div>
 
-<!-- Panel de Acciones -->
-<div class="calendar-container fade-in">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h5 class="mb-0">
-            <i class="bi bi-calendar3 me-2"></i>Calendario de {{ nombre_mes | capitalize }}
-        </h5>
-        <a href="{{ url_for('ver_rutinas_usuario', user_id=usuario.id) }}" class="btn btn-primary btn-action" data-bs-toggle="tooltip" title="Ver rutinas asignadas a este usuario">
-            <i class="bi bi-eye me-2"></i>Ver Rutinas
-        </a>
+<div class="card" style="margin-bottom: var(--space-6);">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:var(--space-3);">
+        <h2 class="section-title" style="margin:0;">{{ nombre_mes | capitalize }}</h2>
+        <form method="get" style="display:flex; align-items:center; gap:var(--space-2);">
+            <label class="form-label" style="margin:0;" for="mes">Filtrar por mes:</label>
+            <input type="month" id="mes" name="mes" class="form-control"
+                   value="{{ mes_actual }}" onchange="this.form.submit()" style="width:auto;">
+        </form>
+    </div>
+</div>
+
+<!-- Calendario -->
+<div class="card">
+    <!-- Cabecera días semana -->
+    <div class="calendar-grid" style="margin-bottom: var(--space-2);">
+        {% for dia in ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'] %}
+        <div class="calendar-day-header">{{ dia }}</div>
+        {% endfor %}
     </div>
 
-<div class="text-center mb-4">
-    <h5 class="mb-2 text-main">{{ usuario.nombre }} {{ usuario.apellidos }}</h5>
-    <form method="get" class="d-inline-block">
-        <div class="d-flex align-items-center gap-2">
-            <label class="mb-0 text-main" for="mes">Filtrar por mes:</label>
-            <input type="month" id="mes" name="mes" class="form-control" value="{{ mes_actual }}" onchange="this.form.submit()" style="max-width: 160px;">
-        </div>
-    </form>
-</div>
-<div class="calendar-container">
-    <h5 class="mb-3 text-main text-center">{{ nombre_mes }}</h5>
-    <div class="calendar-grid mb-2 fw-bold text-center">
-        <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
-    </div>
+    <!-- Semanas -->
     {% for semana in dias_calendario %}
-        <div class="calendar-grid mb-2">
-            {% for dia in semana %}
-                <div class="calendar-day {% if not dia.es_del_mes %}outside-month{% endif %}">
-                    <h6>{{ dia.fecha.day }}/{{ dia.fecha.month }}</h6>
-                    {% if dia.rutina %}
-                        <div class="mb-1 small">Ya asignado</div>
-                    {% endif %}
-                    <button class="btn btn-sm btn-primary btn-action"
-                            onclick="abrirModalAsignacion('{{ dia.fecha }}')"
-                            type="button"
-                            data-bs-toggle="tooltip"
-                            title="Asignar rutina para este día">
-                        <i class="bi bi-plus-circle me-1"></i>Asignar
-                    </button>
-                </div>
-            {% endfor %}
+    <div class="calendar-grid" style="margin-bottom: var(--space-2);">
+        {% for dia in semana %}
+        <div class="calendar-day {% if not dia.es_del_mes %}outside-month{% endif %}">
+            <div class="calendar-day-num">{{ dia.fecha.day }}/{{ dia.fecha.month }}</div>
+            {% if dia.rutina %}
+            <div class="assigned-badge"><i class="bi bi-check-circle-fill me-1"></i>Asignado</div>
+            {% endif %}
+            <button class="btn btn-sm btn-primary btn-assign-day"
+                    onclick="abrirModalAsignacion('{{ dia.fecha }}')"
+                    type="button">
+                <i class="bi bi-plus"></i>
+            </button>
         </div>
+        {% endfor %}
+    </div>
     {% endfor %}
 </div>
 
-<!-- Modal para asignar rutina -->
-<div class="modal fade" id="modalAsignarRutina" tabindex="-1" aria-labelledby="modalAsignarLabel" aria-hidden="true">
+<!-- Modal asignar rutina -->
+<div class="modal fade" id="modalAsignarRutina" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <form id="formAsignarRutina" method="POST" action="{{ url_for('guardar_rutina_fecha', user_id=usuario.id) }}">
+        <form id="formAsignarRutina" method="POST"
+              action="{{ url_for('guardar_rutina_fecha', user_id=usuario.id) }}">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="modalAsignarLabel">Asignar Rutina para <span id="modalFecha"></span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    <h5 class="modal-title">Asignar Rutina — <span id="modalFecha"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div id="contenedorBloques"></div>
-                    <button type="button" class="btn btn-outline-primary btn-sm mt-3"
-                        onclick="agregarBloque()"
-                        data-bs-toggle="tooltip"
-                        title="Agregar un bloque de ejercicios">
-                        <i class="bi bi-plus-lg"></i> Agregar Bloque
+                    <button type="button" class="btn btn-secondary btn-sm"
+                            onclick="agregarBloque()" style="margin-top:var(--space-3);">
+                        <i class="bi bi-plus-lg me-1"></i>Agregar Bloque
                     </button>
                 </div>
                 <div class="modal-footer">
                     <input type="hidden" name="fecha" id="inputFecha">
                     <input type="hidden" name="user_id" value="{{ usuario.id }}">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-success">Guardar Rutina</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>Guardar Rutina
+                    </button>
                 </div>
             </div>
         </form>
@@ -354,9 +145,4 @@
 
 {% block scripts_extra %}
 <script src="{{ url_for('static', filename='js/calendario_rutinas.js') }}"></script>
-<script>
-    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
-        new bootstrap.Tooltip(el);
-    });
-</script>
 {% endblock %}

@@ -1,417 +1,67 @@
 {% extends "base_admin.html" %}
-
-{% block title %}Registrar Pago - Admin{% endblock %}
-
-{% block head_extra %}
-<style>
-    /* Variables CSS para consistencia */
-    :root {
-        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-        --info-gradient: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
-        --danger-gradient: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
-        --shadow-soft: 0 8px 32px rgba(0,0,0,0.1);
-        --shadow-hover: 0 12px 40px rgba(0,0,0,0.15);
-        --border-radius: 20px;
-        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Contenedor principal */
-    .container-fluid {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        min-height: 100vh;
-        padding: 2rem 1rem;
-    }
-
-    /* Título principal */
-    .main-title {
-        background: var(--primary-gradient);
-        color: white;
-        padding: 2rem;
-        border-radius: var(--border-radius);
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-soft);
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .main-title::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        animation: shimmer 3s infinite;
-    }
-
-    @keyframes shimmer {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .main-title h2 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin: 0;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-
-    .main-title p {
-        font-size: 1.1rem;
-        margin: 0.5rem 0 0 0;
-        opacity: 0.9;
-    }
-
-    .form-container {
-        background: white;
-        border-radius: var(--border-radius);
-        padding: 3rem;
-        box-shadow: var(--shadow-soft);
-        margin: 2rem 0;
-        border: 1px solid rgba(0,0,0,0.05);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .form-container::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: var(--primary-gradient);
-    }
-    
-    .form-header {
-        text-align: center;
-        margin-bottom: 3rem;
-        padding-bottom: 2rem;
-        border-bottom: 2px solid #e9ecef;
-        position: relative;
-    }
-
-    .form-header::after {
-        content: '';
-        position: absolute;
-        bottom: -2px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 60px;
-        height: 2px;
-        background: var(--primary-gradient);
-    }
-    
-    .form-header h4 {
-        color: #2c3e50;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-        font-size: 2rem;
-    }
-    
-    .form-header p {
-        color: #7f8c8d;
-        margin: 0;
-        font-size: 1.1rem;
-    }
-    
-    .form-group {
-        margin-bottom: 2rem;
-    }
-    
-    .form-group label {
-        font-weight: 700;
-        color: #2c3e50;
-        margin-bottom: 0.75rem;
-        display: block;
-        font-size: 1rem;
-    }
-    
-    .form-control {
-        border: 2px solid #e9ecef;
-        border-radius: 12px;
-        padding: 1rem 1.25rem;
-        transition: var(--transition);
-        font-size: 1rem;
-        font-weight: 500;
-        background: #f8f9fa;
-    }
-    
-    .form-control:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        outline: none;
-        background: white;
-    }
-
-    .form-control:hover {
-        border-color: #667eea;
-        background: white;
-    }
-    
-    .form-control:invalid {
-        border-color: #dc3545;
-    }
-    
-    .form-control:valid {
-        border-color: #28a745;
-    }
-    
-    .btn-submit {
-        background: var(--primary-gradient);
-        border: none;
-        color: white;
-        padding: 1.25rem 3rem;
-        font-size: 1.1rem;
-        font-weight: 700;
-        border-radius: 50px;
-        transition: var(--transition);
-        box-shadow: var(--shadow-soft);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .btn-submit::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-        transition: left 0.5s;
-    }
-
-    .btn-submit:hover::before {
-        left: 100%;
-    }
-    
-    .btn-submit:hover {
-        transform: translateY(-3px);
-        box-shadow: var(--shadow-hover);
-        color: white;
-    }
-    
-    .btn-secondary {
-        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-        border: none;
-        color: white;
-        padding: 1.25rem 3rem;
-        font-size: 1.1rem;
-        font-weight: 700;
-        border-radius: 50px;
-        transition: var(--transition);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .btn-secondary:hover {
-        transform: translateY(-3px);
-        box-shadow: var(--shadow-hover);
-        color: white;
-        transform: translateY(-2px);
-    }
-    
-    .form-row {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    .form-row .form-group {
-        flex: 1;
-        margin-bottom: 0;
-    }
-    
-    .required-field::after {
-        content: " *";
-        color: #dc3545;
-        font-weight: bold;
-    }
-    
-    .help-text {
-        font-size: 0.875rem;
-        color: #6c757d;
-        margin-top: 0.25rem;
-    }
-    
-    .plan-info {
-        background: #f8f9fa;
-        border: 1px solid #e9ecef;
-        border-radius: 10px;
-        padding: 1rem;
-        margin-top: 0.5rem;
-        font-size: 0.9rem;
-        color: #495057;
-    }
-    
-    .plan-info strong {
-        color: #667eea;
-    }
-    
-    @media (max-width: 768px) {
-        .form-row {
-            flex-direction: column;
-            gap: 0;
-        }
-        
-        .form-container {
-            padding: 1.5rem;
-        }
-    }
-</style>
-{% endblock %}
+{% block title %}Registrar Pago{% endblock %}
 
 {% block content %}
-<!-- Título Principal -->
-<div class="main-title fade-in">
-    <h2><i class="bi bi-credit-card me-3"></i>Registrar Nuevo Pago</h2>
-    <p>Completa la información del pago para registrarlo en el sistema</p>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Registrar Pago</h1>
+        <p class="page-subtitle">Completa la información del pago para registrarlo en el sistema</p>
+    </div>
+    <a href="{{ url_for('admin_pagos') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Volver
+    </a>
 </div>
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="form-container fade-in">
-                <div class="form-header">
-                    <h4><i class="bi bi-credit-card me-2"></i>Información del Pago</h4>
-                    <p>Rellena todos los campos requeridos para registrar el pago</p>
-                </div>
-                
-                <form method="POST" action="{{ url_for('admin_registrar_pago') }}">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="usuario_id" class="required-field">Usuario</label>
-                            <select class="form-control" id="usuario_id" name="usuario_id" required>
-                                <option value="">Seleccionar usuario...</option>
-                                {% for usuario in usuarios %}
-                                <option value="{{ usuario.id }}">{{ usuario.nombre }} {{ usuario.apellidos }} ({{ usuario.email }})</option>
-                                {% endfor %}
-                            </select>
-                            <div class="help-text">Selecciona el usuario que realizó el pago</div>
-                        </div>
-                        <div class="form-group">
-                            <label for="cantidad" class="required-field">Cantidad (€)</label>
-                            <input type="number" class="form-control" id="cantidad" name="cantidad" 
-                                   step="0.01" min="0" required>
-                            <div class="help-text">Importe del pago en euros</div>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="metodo_pago" class="required-field">Método de Pago</label>
-                            <select class="form-control" id="metodo_pago" name="metodo_pago" required>
-                                <option value="">Seleccionar método...</option>
-                                <option value="efectivo">Efectivo</option>
-                                <option value="transferencia">Transferencia</option>
-                                <option value="tarjeta">Tarjeta</option>
-                                <option value="paypal">PayPal</option>
-                                <option value="bizum">Bizum</option>
-                                <option value="manual">Manual</option>
-                            </select>
-                            <div class="help-text">Forma en que se realizó el pago</div>
-                        </div>
-                        <div class="form-group">
-                            <label for="forma_pago">Forma de Pago (Opcional)</label>
-                            <input type="text" class="form-control" id="forma_pago" name="forma_pago" 
-                                   placeholder="Ej: Transferencia a cuenta, Pago en efectivo en gimnasio...">
-                            <div class="help-text">Descripción específica de cómo se paga</div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="observaciones">Observaciones</label>
-                        <textarea class="form-control" id="observaciones" name="observaciones" 
-                                  rows="3" placeholder="Observaciones adicionales, notas especiales..."></textarea>
-                        <div class="help-text">Información adicional relevante</div>
-                    </div>
-
-                    <div class="form-group text-center">
-                        <button type="submit" class="btn btn-submit me-3">
-                            <i class="fas fa-save me-2"></i>Registrar Pago
-                        </button>
-                        <a href="{{ url_for('admin_pagos') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>Volver
-                        </a>
-                    </div>
-                </form>
+<div class="card" style="max-width: 800px;">
+    <form method="POST" action="{{ url_for('admin_registrar_pago') }}">
+        <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap: var(--space-4);">
+            <div class="form-group">
+                <label class="form-label">Usuario <span style="color:var(--color-danger);">*</span></label>
+                <select class="form-control" name="usuario_id" required>
+                    <option value="">Seleccionar usuario...</option>
+                    {% for usuario in usuarios %}
+                    <option value="{{ usuario.id }}">{{ usuario.nombre }} {{ usuario.apellidos }} ({{ usuario.email }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Cantidad (€) <span style="color:var(--color-danger);">*</span></label>
+                <input type="number" class="form-control" name="cantidad" step="0.01" min="0" required>
             </div>
         </div>
-    </div>
-</div>
-{% endblock %}
 
-{% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const planSelect = document.getElementById('plan_id');
-    const cantidadInput = document.getElementById('cantidad');
-    const tipoPagoSelect = document.getElementById('tipo_pago');
-    
-    // Auto-completar cantidad cuando se selecciona un plan
-    planSelect.addEventListener('change', function() {
-        if (this.value) {
-            const option = this.options[this.selectedIndex];
-            const precio = option.dataset.precio;
-            cantidadInput.value = precio;
-            
-            // Mostrar información del plan
-            mostrarInfoPlan(option);
-        } else {
-            ocultarInfoPlan();
-        }
-    });
-    
-    // Auto-completar tipo de pago cuando se selecciona un plan
-    planSelect.addEventListener('change', function() {
-        if (this.value) {
-            const option = this.options[this.selectedIndex];
-            const nombre = option.text.toLowerCase();
-            
-            if (nombre.includes('básico')) {
-                tipoPagoSelect.value = 'plan_basico';
-            } else if (nombre.includes('pro')) {
-                tipoPagoSelect.value = 'plan_pro';
-            } else if (nombre.includes('anual')) {
-                tipoPagoSelect.value = 'plan_anual';
-            }
-        }
-    });
-    
-    function mostrarInfoPlan(option) {
-        const precio = option.dataset.precio;
-        const duracion = option.dataset.duracion;
-        
-        let infoHTML = `<div class="plan-info">
-            <strong>Plan seleccionado:</strong> ${option.text}<br>
-            <strong>Precio:</strong> €${precio}<br>
-            <strong>Duración:</strong> ${duracion} días
-        </div>`;
-        
-        // Insertar después del select de plan
-        const planGroup = planSelect.closest('.form-group');
-        const existingInfo = planGroup.querySelector('.plan-info');
-        
-        if (existingInfo) {
-            existingInfo.remove();
-        }
-        
-        planGroup.insertAdjacentHTML('beforeend', infoHTML);
-    }
-    
-    function ocultarInfoPlan() {
-        const planInfo = document.querySelector('.plan-info');
-        if (planInfo) {
-            planInfo.remove();
-        }
-    }
-});
-</script>
+        <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap: var(--space-4);">
+            <div class="form-group">
+                <label class="form-label">Método de Pago <span style="color:var(--color-danger);">*</span></label>
+                <select class="form-control" name="metodo_pago" required>
+                    <option value="">Seleccionar método...</option>
+                    <option value="efectivo">Efectivo</option>
+                    <option value="transferencia">Transferencia</option>
+                    <option value="tarjeta">Tarjeta</option>
+                    <option value="paypal">PayPal</option>
+                    <option value="bizum">Bizum</option>
+                    <option value="manual">Manual</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Forma de Pago <span style="color:var(--color-text-secondary); font-weight:400;">(opcional)</span></label>
+                <input type="text" class="form-control" name="forma_pago"
+                       placeholder="Ej: Transferencia a cuenta, efectivo en gimnasio...">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Observaciones</label>
+            <textarea class="form-control" name="observaciones" rows="3"
+                      placeholder="Notas adicionales..."></textarea>
+        </div>
+
+        <div style="display:flex; gap: var(--space-2);">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save me-1"></i>Registrar Pago
+            </button>
+            <a href="{{ url_for('admin_pagos') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
 {% endblock %}

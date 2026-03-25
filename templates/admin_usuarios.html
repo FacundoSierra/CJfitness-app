@@ -1,483 +1,205 @@
 {% extends "base_admin.html" %}
-{% block title %}Gestión de Usuarios - Admin{% endblock %}
-
-{% block head_extra %}
-<style>
-    /* Variables CSS para consistencia */
-    :root {
-        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-        --info-gradient: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
-        --danger-gradient: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
-        --shadow-soft: 0 8px 32px rgba(0,0,0,0.1);
-        --shadow-hover: 0 12px 40px rgba(0,0,0,0.15);
-        --border-radius: 20px;
-        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Contenedor principal */
-    .container-fluid {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        min-height: 100vh;
-        padding: 2rem 1rem;
-    }
-
-    /* Título principal */
-    .main-title {
-        background: var(--primary-gradient);
-        color: white;
-        padding: 2rem;
-        border-radius: var(--border-radius);
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-soft);
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .main-title::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        animation: shimmer 3s infinite;
-    }
-
-    @keyframes shimmer {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .main-title h2 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin: 0;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-
-    .main-title p {
-        font-size: 1.1rem;
-        margin: 0.5rem 0 0 0;
-        opacity: 0.9;
-    }
-
-    /* Panel de búsqueda mejorado */
-    .search-container {
-        background: white;
-        border-radius: var(--border-radius);
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-soft);
-        border: 1px solid rgba(0,0,0,0.05);
-    }
-
-    .search-input {
-        border-radius: 25px;
-        border: 2px solid #e9ecef;
-        padding: 1rem 1.5rem;
-        font-size: 1rem;
-        transition: var(--transition);
-        background: #f8f9fa;
-        font-weight: 500;
-    }
-
-    .search-input:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        background: white;
-        outline: none;
-    }
-
-    .search-input:hover {
-        border-color: #667eea;
-        background: white;
-    }
-
-    /* Tabla mejorada */
-    .table-container {
-        background: white;
-        border-radius: var(--border-radius);
-        padding: 0;
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-soft);
-        border: 1px solid rgba(0,0,0,0.05);
-        overflow: hidden;
-    }
-
-    .table {
-        border-radius: 0;
-        overflow: hidden;
-        box-shadow: none;
-        margin: 0;
-    }
-
-    .table thead th {
-        background: var(--primary-gradient);
-        color: white;
-        border: none;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-size: 0.9rem;
-        padding: 1.5rem 1rem;
-    }
-
-    .table tbody td {
-        padding: 1.5rem 1rem;
-        border: none;
-        border-bottom: 1px solid #f8f9fa;
-        vertical-align: middle;
-    }
-
-    .table tbody tr:hover {
-        background: #f8f9fa;
-    }
-
-    .table tbody tr:last-child td {
-        border-bottom: none;
-    }
-
-    /* Botones de acción mejorados */
-    .btn-action {
-        border-radius: 20px;
-        padding: 0.5rem 1rem;
-        font-weight: 600;
-        transition: var(--transition);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-size: 0.8rem;
-        margin: 0.1rem;
-    }
-
-    .btn-action:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-
-    .btn-edit {
-        background: var(--info-gradient);
-        color: white;
-        border: none;
-    }
-
-    .btn-delete {
-        background: var(--danger-gradient);
-        color: white;
-        border: none;
-    }
-
-    .btn-view {
-        background: var(--success-gradient);
-        color: white;
-        border: none;
-    }
-
-    /* Modal mejorado */
-    .modal-content {
-        border-radius: var(--border-radius);
-        border: none;
-        box-shadow: var(--shadow-hover);
-    }
-
-    .modal-header {
-        background: var(--primary-gradient);
-        color: white;
-        border-radius: var(--border-radius) var(--border-radius) 0 0;
-        border: none;
-    }
-
-    .modal-title {
-        font-weight: 700;
-    }
-
-    .btn-close {
-        filter: invert(1);
-    }
-
-    .form-control {
-        border: 2px solid #e9ecef;
-        border-radius: 12px;
-        padding: 0.75rem 1rem;
-        transition: var(--transition);
-        font-weight: 500;
-        background: #f8f9fa;
-    }
-
-    .form-control:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        outline: none;
-        background: white;
-    }
-
-    .form-control:hover {
-        border-color: #667eea;
-        background: white;
-    }
-
-    .form-label {
-        font-weight: 700;
-        color: #2c3e50;
-        margin-bottom: 0.5rem;
-    }
-
-    /* Estado vacío mejorado */
-    .empty-state {
-        text-align: center;
-        padding: 4rem 2rem;
-        background: white;
-        border-radius: var(--border-radius);
-        box-shadow: var(--shadow-soft);
-        margin: 2rem 0;
-    }
-
-    .empty-state i {
-        font-size: 5rem;
-        margin-bottom: 1.5rem;
-        background: var(--primary-gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .empty-state h5 {
-        color: #495057;
-        font-weight: 700;
-        margin-bottom: 1rem;
-    }
-
-    .empty-state p {
-        color: #6c757d;
-        margin-bottom: 2rem;
-    }
-
-    /* Animaciones */
-    .fade-in {
-        animation: fadeIn 0.6s ease-in-out;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .slide-in {
-        animation: slideIn 0.8s ease-out;
-    }
-
-    @keyframes slideIn {
-        from { transform: translateX(-100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .main-title h2 {
-            font-size: 2rem;
-        }
-        
-        .btn-action {
-            width: 100%;
-            margin: 0.25rem 0;
-        }
-        
-        .table thead th,
-        .table tbody td {
-            padding: 1rem 0.5rem;
-            font-size: 0.9rem;
-        }
-    }
-</style>
-{% endblock %}
+{% block title %}Usuarios | CJFitness Admin{% endblock %}
+{% block page_title %}Usuarios{% endblock %}
 
 {% block content %}
-<!-- Título Principal -->
-<div class="main-title fade-in">
-    <h2><i class="bi bi-people me-3"></i>Gestión de Usuarios</h2>
-    <p>Aquí puedes ver, buscar, editar o borrar usuarios registrados en la app</p>
+
+<!-- Cabecera de página -->
+<div class="page-header">
+  <div class="page-header-text">
+    <h1 class="page-title">Gestión de Usuarios</h1>
+    <p class="page-subtitle">Visualiza, edita o elimina los usuarios registrados en la app.</p>
+  </div>
 </div>
 
-<!-- Panel de Búsqueda -->
-<div class="search-container fade-in">
-    <div class="position-relative">
-        <input type="text" class="form-control search-input" id="buscadorUsuarios" placeholder="Buscar usuario por nombre, email o usuario..." aria-label="Buscar usuario">
-        <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-3 text-muted"></i>
+<!-- Buscador -->
+<div class="card" style="margin-bottom: var(--space-5);">
+  <div class="card-body" style="padding: var(--space-4) var(--space-6);">
+    <div class="search-wrapper" style="max-width: 100%;">
+      <i class="bi bi-search search-icon"></i>
+      <input type="text"
+             class="search-input"
+             id="buscadorUsuarios"
+             placeholder="Buscar por nombre, email o usuario..."
+             aria-label="Buscar usuario"
+             style="max-width: 480px; border-radius: var(--radius-md);">
     </div>
+  </div>
 </div>
-<!-- Tabla de Usuarios -->
-<div class="table-container fade-in">
-    <div class="table-responsive">
-        <table class="table align-middle">
-            <thead>
-            <tr>
-                <th><i class="bi bi-person me-1"></i>Usuario</th>
-                <th><i class="bi bi-envelope me-1"></i>Email</th>
-                <th><i class="bi bi-person-badge me-1"></i>Nombre</th>
-                <th><i class="bi bi-person-lines-fill me-1"></i>Apellidos</th>
-                <th><i class="bi bi-telephone me-1"></i>Teléfono</th>
-                <th class="text-center"><i class="bi bi-gear me-1"></i>Acciones</th>
-            </tr>
-            </thead>
-        <tbody>
-        {% for user in usuarios %}
-        <tr>
-            <td>{{ user.username }}</td>
-            <td>{{ user.email }}</td>
-            <td>{{ user.nombre }}</td>
-            <td>{{ user.apellidos }}</td>
-            <td>{{ user.telefono }}</td>
-            <td class="text-center">
-                <div class="d-flex justify-content-center gap-1">
-                    <!-- Botón EDITAR: abre modal con datos -->
-                    <button type="button"
-                            class="btn btn-edit btn-action"
-                            data-bs-toggle="modal"
-                            data-bs-target="#editUserModal"
-                            data-id="{{ user.id }}"
-                            data-username="{{ user.username }}"
-                            data-nombre="{{ user.nombre }}"
-                            data-apellidos="{{ user.apellidos }}"
-                            data-email="{{ user.email }}"
-                            data-telefono="{{ user.telefono }}"
-                            title="Editar usuario">
-                        <i class="bi bi-pencil me-1"></i>Editar
-                    </button>
-                    <!-- Botón BORRAR: abre modal de confirmación -->
-                    <button class="btn btn-delete btn-action"
-                            data-bs-toggle="modal"
-                            data-bs-target="#deleteUserModal"
-                            data-user-id="{{ user.id }}"
-                            data-user-name="{{ user.nombre }} {{ user.apellidos }}"
-                            title="Borrar usuario">
-                        <i class="bi bi-trash me-1"></i>Borrar
-                    </button>
-                </div>
-            </td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    </div>
+
+<!-- Tabla de usuarios -->
+<div class="table-container">
+  <table class="table" id="tablaUsuarios">
+    <thead>
+      <tr>
+        <th>Usuario</th>
+        <th>Email</th>
+        <th>Nombre</th>
+        <th>Apellidos</th>
+        <th>Teléfono</th>
+        <th style="text-align: right;">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in usuarios %}
+      <tr>
+        <td>
+          <div style="display:flex; align-items:center; gap: var(--space-2);">
+            <div class="avatar avatar-sm">{{ user.nombre[0]|upper if user.nombre else 'U' }}</div>
+            <span style="font-weight: var(--font-medium);">{{ user.username }}</span>
+          </div>
+        </td>
+        <td style="color: var(--color-text-secondary);">{{ user.email }}</td>
+        <td>{{ user.nombre }}</td>
+        <td>{{ user.apellidos }}</td>
+        <td style="color: var(--color-text-secondary);">{{ user.telefono or '—' }}</td>
+        <td>
+          <div class="table-actions">
+            <button type="button"
+                    class="btn btn-secondary btn-sm"
+                    data-bs-toggle="modal"
+                    data-bs-target="#editUserModal"
+                    data-id="{{ user.id }}"
+                    data-username="{{ user.username }}"
+                    data-nombre="{{ user.nombre }}"
+                    data-apellidos="{{ user.apellidos }}"
+                    data-email="{{ user.email }}"
+                    data-telefono="{{ user.telefono }}">
+              <i class="bi bi-pencil"></i> Editar
+            </button>
+            <button class="btn btn-danger btn-sm"
+                    data-bs-toggle="modal"
+                    data-bs-target="#deleteUserModal"
+                    data-user-id="{{ user.id }}"
+                    data-user-name="{{ user.nombre }} {{ user.apellidos }}">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="6">
+          <div class="table-empty">
+            <i class="bi bi-people"></i>
+            No hay usuarios registrados todavía.
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
+
 <!-- Modal EDITAR usuario -->
-<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+<div class="modal fade" id="editUserModal" tabindex="-1"
+     aria-labelledby="editUserModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <form id="editUserForm" method="POST">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="editUserModalLabel"><i class="bi bi-pencil"></i> Editar Usuario</h5>
+          <h5 class="modal-title" id="editUserModalLabel">
+            <i class="bi bi-pencil me-2"></i>Editar Usuario
+          </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
         <div class="modal-body">
           <input type="hidden" id="editarId" name="user_id">
-          <div class="mb-2">
-            <label for="editarUsername" class="form-label">Usuario</label>
+          <div class="form-group">
+            <label class="form-label">Usuario</label>
             <input type="text" class="form-control" id="editarUsername" name="username" required readonly>
           </div>
-          <div class="mb-2">
-            <label for="editarNombre" class="form-label">Nombre</label>
-            <input type="text" class="form-control" id="editarNombre" name="nombre" required>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Nombre</label>
+              <input type="text" class="form-control" id="editarNombre" name="nombre" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Apellidos</label>
+              <input type="text" class="form-control" id="editarApellidos" name="apellidos" required>
+            </div>
           </div>
-          <div class="mb-2">
-            <label for="editarApellidos" class="form-label">Apellidos</label>
-            <input type="text" class="form-control" id="editarApellidos" name="apellidos" required>
-          </div>
-          <div class="mb-2">
-            <label for="editarEmail" class="form-label">Email</label>
+          <div class="form-group">
+            <label class="form-label">Email</label>
             <input type="email" class="form-control" id="editarEmail" name="email" required>
           </div>
-          <div class="mb-2">
-            <label for="editarTelefono" class="form-label">Teléfono</label>
-            <input type="text" class="form-control" id="editarTelefono" name="telefono" required>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Teléfono</label>
+            <input type="text" class="form-control" id="editarTelefono" name="telefono">
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-success" id="confirmEditUserBtn">Guardar Cambios</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="confirmEditUserBtn">
+            <i class="bi bi-check2 me-1"></i>Guardar cambios
+          </button>
         </div>
       </div>
     </form>
   </div>
 </div>
 
-<!-- Modal confirmación de borrado usuario -->
-<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+<!-- Modal BORRAR usuario -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1"
+     aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="deleteUserModalLabel">¿Eliminar usuario?</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cancelar"></button>
       </div>
       <div class="modal-body">
-        ¿Seguro que quieres borrar a <strong id="userNameToDelete"></strong>? Esta acción no se puede deshacer.
+        ¿Seguro que quieres borrar a <strong id="userNameToDelete"></strong>?
+        Esta acción no se puede deshacer.
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <form id="deleteUserForm" method="POST" action="">
-            <button type="submit" class="btn btn-danger">Borrar usuario</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <form id="deleteUserForm" method="POST">
+          <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash me-1"></i>Borrar
+          </button>
         </form>
       </div>
     </div>
   </div>
 </div>
+
 {% endblock %}
 
 {% block scripts_extra %}
 <script>
-  // Tooltips Bootstrap
-  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
-      new bootstrap.Tooltip(el);
+  // Buscador en vivo
+  document.getElementById('buscadorUsuarios').addEventListener('input', function() {
+    const filtro = this.value.toLowerCase();
+    document.querySelectorAll('#tablaUsuarios tbody tr').forEach(function(row) {
+      row.style.display = row.textContent.toLowerCase().includes(filtro) ? '' : 'none';
+    });
   });
 
-  // Modal de borrar usuario dinámico
-  var deleteUserModal = document.getElementById('deleteUserModal');
-  if (deleteUserModal) {
-    deleteUserModal.addEventListener('show.bs.modal', function (event) {
-      var button = event.relatedTarget;
-      var userId = button.getAttribute('data-user-id');
-      var userName = button.getAttribute('data-user-name');
-      document.getElementById('userNameToDelete').textContent = userName;
-      document.getElementById('deleteUserForm').action = '/admin/usuarios/borrar/' + userId;
-    });
-  }
+  // Modal borrar — rellenar datos dinámicamente
+  document.getElementById('deleteUserModal').addEventListener('show.bs.modal', function(event) {
+    var btn = event.relatedTarget;
+    document.getElementById('userNameToDelete').textContent = btn.getAttribute('data-user-name');
+    document.getElementById('deleteUserForm').action = '/admin/usuarios/borrar/' + btn.getAttribute('data-user-id');
+  });
 
-  // Modal EDITAR usuario: Rellenar con datos de la fila
-  var editUserModal = document.getElementById('editUserModal');
-  if (editUserModal) {
-    editUserModal.addEventListener('show.bs.modal', function (event) {
-      var button = event.relatedTarget;
-      document.getElementById('editarId').value = button.getAttribute('data-id');
-      document.getElementById('editarUsername').value = button.getAttribute('data-username');
-      document.getElementById('editarNombre').value = button.getAttribute('data-nombre');
-      document.getElementById('editarApellidos').value = button.getAttribute('data-apellidos');
-      document.getElementById('editarEmail').value = button.getAttribute('data-email');
-      document.getElementById('editarTelefono').value = button.getAttribute('data-telefono');
-      document.getElementById('editUserForm').action = '/admin/usuarios/editar/' + button.getAttribute('data-id');
-    });
-  }
+  // Modal editar — rellenar datos dinámicamente
+  document.getElementById('editUserModal').addEventListener('show.bs.modal', function(event) {
+    var btn = event.relatedTarget;
+    document.getElementById('editarId').value       = btn.getAttribute('data-id');
+    document.getElementById('editarUsername').value  = btn.getAttribute('data-username');
+    document.getElementById('editarNombre').value    = btn.getAttribute('data-nombre');
+    document.getElementById('editarApellidos').value = btn.getAttribute('data-apellidos');
+    document.getElementById('editarEmail').value     = btn.getAttribute('data-email');
+    document.getElementById('editarTelefono').value  = btn.getAttribute('data-telefono');
+    document.getElementById('editUserForm').action   = '/admin/usuarios/editar/' + btn.getAttribute('data-id');
+  });
 
-  // Confirmar edición (con modal de confirmación)
-  document.getElementById('confirmEditUserBtn').addEventListener('click', function () {
-    if (confirm('¿Seguro que quieres guardar los cambios de este usuario?')) {
+  // Confirmar edición
+  document.getElementById('confirmEditUserBtn').addEventListener('click', function() {
+    if (confirm('¿Guardar los cambios de este usuario?')) {
       document.getElementById('editUserForm').submit();
     }
-  });
-    // BUSCADOR EN VIVO PARA TABLA DE USUARIOS
-  document.getElementById('buscadorUsuarios').addEventListener('input', function () {
-      const filtro = this.value.toLowerCase();
-      document.querySelectorAll('tbody tr').forEach(function(row) {
-          // Chequea si alguna celda contiene el texto buscado
-          const rowText = row.textContent.toLowerCase();
-          if (rowText.includes(filtro)) {
-              row.style.display = '';
-          } else {
-              row.style.display = 'none';
-          }
-      });
   });
 </script>
 {% endblock %}

@@ -1,95 +1,89 @@
 {% extends 'base_admin.html' %}
+{% block title %}Progresos de Usuarios{% endblock %}
+
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="mb-0">Progresos de Usuarios</h3>
-    <form class="d-flex gap-2" method="get" action="{{ url_for('admin_progresos') }}">
-      <input type="number" class="form-control" name="usuario_id" placeholder="Usuario ID" value="{{ request.args.get('usuario_id','') }}" style="max-width: 140px;">
-      <input type="date" class="form-control" name="fecha" value="{{ request.args.get('fecha','') }}" style="max-width: 180px;">
-      <button class="btn btn-primary">Filtrar</button>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Progresos</h1>
+        <p class="page-subtitle">Consulta y edita los registros de progreso por usuario</p>
+    </div>
+    <form style="display:flex; gap: var(--space-2); align-items:center;" method="get" action="{{ url_for('admin_progresos') }}">
+        <input type="number" class="form-control" name="usuario_id"
+               placeholder="ID usuario" value="{{ request.args.get('usuario_id','') }}"
+               style="width: 120px;">
+        <input type="date" class="form-control" name="fecha"
+               value="{{ request.args.get('fecha','') }}"
+               style="width: 160px;">
+        <button class="btn btn-primary" type="submit">Filtrar</button>
     </form>
-  </div>
+</div>
 
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      {% for category, message in messages %}
-        <div class="alert alert-{{ category }}">{{ message }}</div>
-      {% endfor %}
-    {% endif %}
-  {% endwith %}
-
-  {% if progresos and progresos|length > 0 %}
-    <div class="table-responsive">
-      <table class="table align-middle">
+{% if progresos and progresos|length > 0 %}
+<div class="table-container">
+    <table class="table">
         <thead>
-          <tr>
-            <th>ID</th>
-            <th>Usuario</th>
-            <th>Fecha</th>
-            <th>Ejercicio</th>
-            <th>Planificado</th>
-            <th>Realizado</th>
-            <th>Completado</th>
-            <th>Acciones</th>
-          </tr>
+            <tr>
+                <th>ID</th>
+                <th>Usuario</th>
+                <th>Fecha</th>
+                <th>Ejercicio</th>
+                <th>Planificado</th>
+                <th>Realizado / Editar</th>
+                <th>Estado</th>
+                <th>Registro</th>
+            </tr>
         </thead>
         <tbody>
-          {% for seg in progresos %}
+            {% for seg in progresos %}
             <tr>
-              <td>{{ seg.id }}</td>
-              <td>{{ seg.usuario_id }}</td>
-              <td>{{ seg.fecha_ejecucion.strftime('%Y-%m-%d') }}</td>
-              <td>{{ seg.ejercicio_asignado.ejercicio.nombre if seg.ejercicio_asignado.ejercicio else seg.ejercicio_asignado.nombre_manual }}</td>
-              <td>
-                <div><small class="text-muted">S/R:</small> {{ seg.series_reps_planificadas or '-' }}</div>
-                <div><small class="text-muted">RPE:</small> {{ seg.rpe_planificado or '-' }}</div>
-                <div><small class="text-muted">Carga:</small> {{ seg.carga_planificada or '-' }}</div>
-              </td>
-              <td>
-                <form class="row g-1" method="post" action="{{ url_for('admin_actualizar_progreso', seg_id=seg.id) }}">
-                  <div class="col-12">
-                    <input type="text" class="form-control form-control-sm" name="series" placeholder="S/R" value="{{ seg.series_reps_reales or '' }}">
-                  </div>
-                  <div class="col-4">
-                    <input type="text" class="form-control form-control-sm" name="rpe" placeholder="RPE" value="{{ seg.rpe_real or '' }}">
-                  </div>
-                  <div class="col-4">
-                    <input type="text" class="form-control form-control-sm" name="carga" placeholder="Carga" value="{{ seg.carga_real or '' }}">
-                  </div>
-                  <div class="col-4 d-flex align-items-center">
-                    <div class="form-check ms-2">
-                      <input class="form-check-input" type="checkbox" name="completado" id="c{{ seg.id }}" {% if seg.completado %}checked{% endif %}>
-                      <label class="form-check-label" for="c{{ seg.id }}">OK</label>
-                    </div>
-                  </div>
-                  <div class="col-12">
-                    <input type="text" class="form-control form-control-sm" name="notas" placeholder="Notas" value="{{ seg.notas or '' }}">
-                  </div>
-                  <div class="col-12 mt-1">
-                    <button class="btn btn-sm btn-success">Guardar</button>
-                    <button class="btn btn-sm btn-outline-danger" form="del{{ seg.id }}" type="submit">Eliminar</button>
-                  </div>
-                </form>
-                <form id="del{{ seg.id }}" method="post" action="{{ url_for('admin_eliminar_progreso', seg_id=seg.id) }}"></form>
-              </td>
-              <td>
-                {% if seg.completado %}
-                  <span class="badge bg-success">Sí</span>
-                {% else %}
-                  <span class="badge bg-warning text-dark">No</span>
-                {% endif %}
-              </td>
-              <td>
-                <small>Creado: {{ seg.fecha_creacion.strftime('%Y-%m-%d %H:%M') if seg.fecha_creacion else '-' }}</small><br>
-                <small>Act.: {{ seg.fecha_actualizacion.strftime('%Y-%m-%d %H:%M') if seg.fecha_actualizacion else '-' }}</small>
-              </td>
+                <td style="color:var(--color-text-secondary);">{{ seg.id }}</td>
+                <td style="font-weight:500;">{{ seg.usuario_id }}</td>
+                <td style="color:var(--color-text-secondary);">{{ seg.fecha_ejecucion.strftime('%Y-%m-%d') }}</td>
+                <td style="font-weight:500;">{{ seg.ejercicio_asignado.ejercicio.nombre if seg.ejercicio_asignado.ejercicio else seg.ejercicio_asignado.nombre_manual }}</td>
+                <td style="font-size:var(--text-sm); color:var(--color-text-secondary);">
+                    <div>S/R: {{ seg.series_reps_planificadas or '—' }}</div>
+                    <div>RPE: {{ seg.rpe_planificado or '—' }}</div>
+                    <div>Carga: {{ seg.carga_planificada or '—' }}</div>
+                </td>
+                <td>
+                    <form style="display:flex; flex-direction:column; gap:var(--space-1);"
+                          method="post" action="{{ url_for('admin_actualizar_progreso', seg_id=seg.id) }}">
+                        <input type="text" class="form-control" name="series" placeholder="S/R" value="{{ seg.series_reps_reales or '' }}">
+                        <div style="display:flex; gap:var(--space-1);">
+                            <input type="text" class="form-control" name="rpe" placeholder="RPE" value="{{ seg.rpe_real or '' }}" style="flex:1;">
+                            <input type="text" class="form-control" name="carga" placeholder="Carga" value="{{ seg.carga_real or '' }}" style="flex:1;">
+                            <label style="display:flex; align-items:center; gap:4px; font-size:var(--text-sm); white-space:nowrap;">
+                                <input type="checkbox" name="completado" id="c{{ seg.id }}" {% if seg.completado %}checked{% endif %}>OK
+                            </label>
+                        </div>
+                        <input type="text" class="form-control" name="notas" placeholder="Notas" value="{{ seg.notas or '' }}">
+                        <div style="display:flex; gap:var(--space-1); margin-top:var(--space-1);">
+                            <button class="btn btn-sm btn-success" type="submit">Guardar</button>
+                            <button class="btn btn-sm btn-danger" form="del{{ seg.id }}" type="submit">Eliminar</button>
+                        </div>
+                    </form>
+                    <form id="del{{ seg.id }}" method="post" action="{{ url_for('admin_eliminar_progreso', seg_id=seg.id) }}"></form>
+                </td>
+                <td>
+                    {% if seg.completado %}
+                    <span class="badge badge-success">Sí</span>
+                    {% else %}
+                    <span class="badge badge-warning">No</span>
+                    {% endif %}
+                </td>
+                <td style="font-size:var(--text-xs); color:var(--color-text-secondary);">
+                    <div>Creado: {{ seg.fecha_creacion.strftime('%d/%m %H:%M') if seg.fecha_creacion else '—' }}</div>
+                    <div>Act.: {{ seg.fecha_actualizacion.strftime('%d/%m %H:%M') if seg.fecha_actualizacion else '—' }}</div>
+                </td>
             </tr>
-          {% endfor %}
+            {% endfor %}
         </tbody>
-      </table>
-    </div>
-  {% else %}
-    <div class="alert alert-info">No hay progresos aún.</div>
-  {% endif %}
+    </table>
 </div>
+{% else %}
+<div class="card" style="text-align:center; padding: var(--space-8);">
+    <i class="bi bi-graph-up" style="font-size:3rem; color:var(--color-border); margin-bottom:var(--space-4); display:block;"></i>
+    <p style="color:var(--color-text-secondary);">No hay progresos registrados con ese filtro.</p>
+</div>
+{% endif %}
 {% endblock %}

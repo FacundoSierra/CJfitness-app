@@ -1,1020 +1,316 @@
 {% extends "base_admin.html" %}
-{% block title %}Rutinas asignadas - Admin{% endblock %}
+{% block title %}Rutinas — {{ usuario.nombre }}{% endblock %}
 
 {% block head_extra %}
 <style>
-    /* Variables CSS para consistencia */
-    :root {
-        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-        --info-gradient: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
-        --danger-gradient: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
-        --shadow-soft: 0 8px 32px rgba(0,0,0,0.1);
-        --shadow-hover: 0 12px 40px rgba(0,0,0,0.15);
-        --border-radius: 20px;
-        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Contenedor principal */
-    .container-fluid {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        min-height: 100vh;
-        padding: 2rem 1rem;
-    }
-
-    /* Título principal */
-    .main-title {
-        background: var(--primary-gradient);
-        color: white;
-        padding: 2rem;
-        border-radius: var(--border-radius);
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-soft);
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .main-title::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        animation: shimmer 3s infinite;
-    }
-
-    @keyframes shimmer {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .main-title h2 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin: 0;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-
-    .main-title p {
-        font-size: 1.1rem;
-        margin: 0.5rem 0 0 0;
-        opacity: 0.9;
-    }
-
-    /* Panel de controles mejorado */
-    .controls-panel {
-        background: white;
-        border-radius: var(--border-radius);
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-soft);
-        border: 1px solid rgba(0,0,0,0.05);
-    }
-
-    .form-control, .form-select {
-        border: 2px solid #e9ecef;
-        border-radius: 12px;
-        padding: 0.75rem 1rem;
-        transition: var(--transition);
-        font-weight: 500;
-        background: #f8f9fa;
-    }
-
-    .form-control:focus, .form-select:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        outline: none;
-        background: white;
-    }
-
-    .form-control:hover, .form-select:hover {
-        border-color: #667eea;
-        background: white;
-    }
-
-    .form-label {
-        font-weight: 700;
-        color: #2c3e50;
-        margin-bottom: 0.5rem;
-    }
-
-    /* Botones mejorados */
-    .btn-action {
-        border-radius: 20px;
-        padding: 0.75rem 1.5rem;
-        font-weight: 600;
-        transition: var(--transition);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-size: 0.9rem;
-        border: none;
-    }
-
-    .btn-action:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-
-    .btn-assign {
-        background: var(--success-gradient);
-        color: white;
-    }
-
-    .btn-primary {
-        background: var(--primary-gradient);
-        color: white;
-    }
-
-    /* Tarjetas de rutina mejoradas */
-    .routine-card {
-        background: white;
-        border-radius: var(--border-radius);
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-soft);
-        border: none;
-        position: relative;
-        overflow: hidden;
-        transition: var(--transition);
-    }
-
-    .routine-card:hover {
-        transform: translateY(-5px);
-        box-shadow: var(--shadow-hover);
-    }
-
-    .routine-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 6px;
-        background: var(--warning-gradient);
-    }
-
-    .routine-card .card-header {
-        background: linear-gradient(135deg, #ffe48b 0%, #ffd700 100%);
-        color: #2e68a8;
-        border: none;
-        font-weight: 700;
-        padding: 2rem;
-        border-radius: var(--border-radius) var(--border-radius) 0 0;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .routine-card .card-header::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        animation: shimmer 4s infinite;
-    }
-
-    .routine-card .card-header h6 {
-        margin: 0;
-        font-size: 1.3rem;
-        position: relative;
-        z-index: 1;
-    }
-
-    .routine-card .card-body {
-        padding: 2.5rem;
-    }
-
-    /* Botones de acción en las tarjetas */
-    .routine-actions {
-        display: flex;
-        gap: 0.5rem;
-        align-items: center;
-    }
-
-    .btn-routine {
-        border-radius: 15px;
-        padding: 0.5rem 1rem;
-        font-weight: 600;
-        transition: var(--transition);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-size: 0.8rem;
-        border: none;
-    }
-
-    .btn-routine:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-
-    .btn-edit-routine {
-        background: var(--info-gradient);
-        color: white;
-    }
-
-    .btn-delete-routine {
-        background: var(--danger-gradient);
-        color: white;
-    }
-
-    /* Ejercicios en la rutina */
-    .exercise-item {
-        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-        border-radius: 15px;
-        padding: 2rem;
-        margin-bottom: 1.5rem;
-        border-left: 6px solid var(--primary-gradient);
-        transition: var(--transition);
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-
-    .exercise-item::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 100px;
-        height: 100px;
-        background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
-        border-radius: 50%;
-        transform: translate(30px, -30px);
-    }
-
-    .exercise-item:hover {
-        background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
-        transform: translateX(8px) translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-    }
-
-    .exercise-item:last-child {
-        margin-bottom: 0;
-    }
-
-    .exercise-name {
-        font-weight: 700;
-        color: #2c3e50;
-        margin-bottom: 1rem;
-        font-size: 1.2rem;
-        position: relative;
-        z-index: 1;
-    }
-
-    .exercise-details {
-        color: #6c757d;
-        font-size: 1rem;
-        margin: 0;
-        position: relative;
-        z-index: 1;
-        line-height: 1.6;
-    }
-
-    .exercise-details i {
-        color: var(--primary-gradient);
-        margin-right: 0.5rem;
-        width: 16px;
-        text-align: center;
-    }
-
-    /* Badges mejorados */
-    .badge {
-        border-radius: 20px;
-        padding: 0.5rem 1rem;
-        font-weight: 600;
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .badge.bg-secondary {
-        background: var(--info-gradient) !important;
-        color: white;
-    }
-
-    .badge.bg-info {
-        background: var(--success-gradient) !important;
-        color: white;
-    }
-
-    /* Estilos para el modal de edición */
-    .bloque-container {
-        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-        border: 2px solid #e9ecef;
-        border-radius: 15px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        transition: var(--transition);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .bloque-container::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: var(--primary-gradient);
-    }
-
-    .bloque-container:hover {
-        border-color: var(--primary-color);
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
-        transform: translateY(-2px);
-    }
-
-    .ejercicio-entry {
-        background: white;
-        border: 1px solid #e9ecef;
-        border-radius: 10px;
-        padding: 1rem;
-        margin-bottom: 0.5rem;
-        transition: var(--transition);
-    }
-
-    .ejercicio-entry:hover {
-        border-color: var(--primary-color);
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
-    }
-
-    .ejercicio-entry .form-select,
-    .ejercicio-entry .form-control {
-        border-radius: 8px;
-        border: 1px solid #dee2e6;
-        transition: var(--transition);
-    }
-
-    .ejercicio-entry .form-select:focus,
-    .ejercicio-entry .form-control:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-    }
-
-    .btn-close {
-        background: var(--danger-gradient);
-        border-radius: 50%;
-        width: 30px;
-        height: 30px;
-        opacity: 1;
-        transition: var(--transition);
-    }
-
-    .btn-close:hover {
-        transform: scale(1.1);
-        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
-    }
-
-    /* Vista de fecha mejorada */
-    .date-header {
-        background: var(--primary-gradient);
-        color: white;
-        padding: 2rem;
-        border-radius: var(--border-radius);
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-soft);
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .date-header::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        animation: shimmer 3s infinite;
-    }
-
-    .date-header h5 {
-        margin: 0;
-        font-weight: 700;
-        font-size: 1.8rem;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        position: relative;
-        z-index: 1;
-    }
-
-    /* Mejoras para las vistas semanal y mensual */
-    .week-header {
-        background: var(--info-gradient);
-        color: white;
-        padding: 1.5rem;
-        border-radius: var(--border-radius);
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-soft);
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .week-header::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        animation: shimmer 3s infinite;
-    }
-
-    .week-header h5 {
-        margin: 0;
-        font-weight: 700;
-        font-size: 1.6rem;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        position: relative;
-        z-index: 1;
-    }
-
-    .month-header {
-        background: var(--success-gradient);
-        color: white;
-        padding: 1.5rem;
-        border-radius: var(--border-radius);
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-soft);
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .month-header::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        animation: shimmer 3s infinite;
-    }
-
-    .month-header h5 {
-        margin: 0;
-        font-weight: 700;
-        font-size: 1.6rem;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        position: relative;
-        z-index: 1;
-    }
-
-    /* Estado vacío mejorado */
-    .empty-state {
-        text-align: center;
-        padding: 4rem 2rem;
-        background: white;
-        border-radius: var(--border-radius);
-        box-shadow: var(--shadow-soft);
-        margin: 2rem 0;
-    }
-
-    .empty-state i {
-        font-size: 5rem;
-        margin-bottom: 1.5rem;
-        background: var(--primary-gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .empty-state h5 {
-        color: #495057;
-        font-weight: 700;
-        margin-bottom: 1rem;
-    }
-
-    .empty-state p {
-        color: #6c757d;
-        margin-bottom: 2rem;
-    }
-
-    /* Animaciones */
-    .fade-in {
-        animation: fadeIn 0.6s ease-in-out;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .slide-in {
-        animation: slideIn 0.8s ease-out;
-    }
-
-    @keyframes slideIn {
-        from { transform: translateX(-100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .main-title h2 {
-            font-size: 2rem;
-        }
-        
-        .btn-action {
-            width: 100%;
-            margin: 0.25rem 0;
-        }
-        
-        .controls-panel {
-            padding: 1.5rem;
-        }
-    }
+.routine-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-4);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+.routine-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-primary-light);
+    border-bottom: 1px solid var(--color-border);
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+.routine-card-header h6 {
+    margin: 0;
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    font-size: var(--text-sm);
+}
+.routine-card-body { padding: var(--space-4); }
+.exercise-item {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-2);
+}
+.exercise-item:last-child { margin-bottom: 0; }
+.exercise-name { font-weight: 600; margin-bottom: var(--space-1); }
+.exercise-details { font-size: var(--text-sm); color: var(--color-text-secondary); line-height: 1.7; }
+.bloque-section { margin-bottom: var(--space-4); }
+.bloque-section:last-child { margin-bottom: 0; }
+.bloque-title {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-2);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+/* Modal bloque/ejercicio containers */
+.bloque-container {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    margin-bottom: var(--space-4);
+    position: relative;
+}
+.ejercicio-entry {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    margin-bottom: var(--space-2);
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Título Principal -->
-<div class="main-title fade-in">
-    <h2><i class="bi bi-list-check me-3"></i>Rutinas de {{ usuario.nombre }} {{ usuario.apellidos }}</h2>
-    <p>Gestiona y visualiza las rutinas asignadas a este usuario</p>
+<div class="page-header">
+    <div style="display:flex; align-items:center; gap: var(--space-3);">
+        <a href="{{ url_for('admin_entrenamientos') }}" class="btn btn-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h1 class="page-title">{{ usuario.nombre }} {{ usuario.apellidos }}</h1>
+            <p class="page-subtitle">Gestión de rutinas asignadas</p>
+        </div>
+    </div>
+    <a href="{{ url_for('calendario_entrenamientos_usuario', user_id=usuario.id) }}" class="btn btn-primary">
+        <i class="bi bi-calendar-plus me-1"></i>Asignar Nueva Rutina
+    </a>
 </div>
 
-<!-- Panel de Controles -->
-<div class="controls-panel fade-in">
-    <div class="row align-items-center g-3">
-        <div class="col-md-3">
-            <label class="form-label" for="vista">Vista:</label>
-            <select id="vista" name="vista" class="form-select" onchange="cambiarVista()">
+<!-- Controles de vista -->
+<div class="card" style="margin-bottom: var(--space-6);">
+    <div style="display:flex; gap:var(--space-4); align-items:flex-end; flex-wrap:wrap;">
+        <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Vista</label>
+            <select id="vista" class="form-control" onchange="cambiarVista()" style="width:auto;">
                 <option value="mensual" {% if vista_actual == 'mensual' %}selected{% endif %}>Mensual</option>
                 <option value="semanal" {% if vista_actual == 'semanal' %}selected{% endif %}>Semanal</option>
                 <option value="diaria" {% if vista_actual == 'diaria' %}selected{% endif %}>Diaria</option>
             </select>
         </div>
-        
-        <div class="col-md-3">
+        <div class="form-group" style="margin-bottom:0;">
             {% if vista_actual == 'diaria' %}
-                <label class="form-label" for="fecha">Fecha:</label>
-                <input type="date" id="fecha" name="fecha" class="form-control" value="{{ fecha_actual }}" onchange="cambiarFecha()">
+            <label class="form-label">Fecha</label>
+            <input type="date" id="fecha" class="form-control" value="{{ fecha_actual }}" onchange="cambiarFecha()" style="width:auto;">
             {% elif vista_actual == 'semanal' %}
-                <label class="form-label" for="fecha_semana">Semana del:</label>
-                <input type="date" id="fecha_semana" name="fecha" class="form-control" value="{{ fecha_actual }}" onchange="cambiarFecha()">
+            <label class="form-label">Semana del</label>
+            <input type="date" id="fecha_semana" class="form-control" value="{{ fecha_actual }}" onchange="cambiarFecha()" style="width:auto;">
             {% else %}
-                <label class="form-label" for="mes">Mes:</label>
-                <input type="month" id="mes" name="mes" class="form-control" value="{{ mes_actual }}" onchange="cambiarMes()">
+            <label class="form-label">Mes</label>
+            <input type="month" id="mes" class="form-control" value="{{ mes_actual }}" onchange="cambiarMes()" style="width:auto;">
             {% endif %}
-        </div>
-        
-        <div class="col-md-6 text-end">
-            <a href="{{ url_for('calendario_entrenamientos_usuario', user_id=usuario.id) }}" class="btn btn-assign btn-action" data-bs-toggle="tooltip" title="Asignar una nueva rutina por calendario">
-                <i class="bi bi-calendar-plus me-2"></i>Asignar Nueva Rutina
-            </a>
         </div>
     </div>
 </div>
 
-{% if datos_vista.tipo == 'diaria' %}
-    <!-- Vista Diaria -->
-    <div class="date-header fade-in">
-        <h5><i class="bi bi-calendar-event me-2"></i>Rutina del {{ datos_vista.fecha.strftime('%A %d/%m/%Y') | capitalize }}</h5>
+{% macro ejercicio_card(ejercicio) %}
+<div class="exercise-item">
+    <div class="exercise-name">
+        {{ ejercicio.ejercicio.nombre if ejercicio.ejercicio else ejercicio.nombre_manual }}
     </div>
-        {% if datos_vista.bloques %}
-            {% for bloque in datos_vista.bloques %}
-                <div class="routine-card fade-in">
-                    <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                        <span>
-                            <i class="bi bi-collection me-2"></i> {{ bloque.nombre_bloque }}
-                            {% if bloque.categoria %}
-                                <span class="badge bg-primary ms-2">{{ bloque.categoria }}</span>
-                            {% endif %}
-                        </span>
-                        <div class="btn-group" role="group">
-                            <button
-                                type="button"
-                                class="btn btn-outline-primary btn-sm"
-                                data-bs-toggle="modal"
-                                data-bs-target="#modalEditarRutina"
-                                data-fecha="{{ datos_vista.fecha.strftime('%Y-%m-%d') }}"
-                                title="Editar rutina del día">
-                                <i class="bi bi-pencil"></i> Editar
-                            </button>
-                            <button
-                                type="button"
-                                class="btn btn-outline-danger btn-sm"
-                                onclick="eliminarRutina('{{ datos_vista.fecha.strftime('%Y-%m-%d') }}')"
-                                title="Eliminar rutina del día">
-                                <i class="bi bi-trash"></i> Eliminar
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        {% if bloque.ejercicios %}
-                            <div class="row">
-                                {% for ejercicio in bloque.ejercicios %}
-                                    <div class="col-12 mb-3">
-                                        <div class="exercise-item">
-                                            <div class="exercise-name">
-                                                {{ ejercicio.ejercicio.nombre if ejercicio.ejercicio else ejercicio.nombre_manual }}
-                                            </div>
-                                            <div class="d-flex flex-wrap gap-2 mb-2">
-                                                {% if ejercicio.categoria %}
-                                                    <span class="badge bg-secondary">{{ ejercicio.categoria }}</span>
-                                                {% endif %}
-                                                {% if ejercicio.subcategoria %}
-                                                    <span class="badge bg-info">{{ ejercicio.subcategoria }}</span>
-                                                {% endif %}
-                                            </div>
-                                            <div class="exercise-details">
-                                                <i class="bi bi-arrow-repeat"></i>
-                                                <strong>Series/Reps:</strong> {{ ejercicio.series_reps }}<br>
-                                                <i class="bi bi-speedometer2"></i>
-                                                <strong>RPE:</strong> {{ ejercicio.rpe }}<br>
-                                                <i class="bi bi-weight"></i>
-                                                <strong>Carga:</strong> {{ ejercicio.carga }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <div class="empty-state">
-                                <i class="bi bi-dumbbell text-muted" style="font-size: 2rem;"></i>
-                                <h5 class="text-muted">Sin ejercicios</h5>
-                                <p class="text-muted">No hay ejercicios asignados para este bloque.</p>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            {% endfor %}
+    <div style="display:flex; gap:var(--space-1); margin-bottom:var(--space-1); flex-wrap:wrap;">
+        {% if ejercicio.categoria %}<span class="badge badge-info">{{ ejercicio.categoria }}</span>{% endif %}
+        {% if ejercicio.subcategoria %}<span class="badge" style="background:var(--color-surface); border:1px solid var(--color-border); color:var(--color-text-secondary);">{{ ejercicio.subcategoria }}</span>{% endif %}
+    </div>
+    <div class="exercise-details">
+        <i class="bi bi-arrow-repeat me-1"></i><strong>S/R:</strong> {{ ejercicio.series_reps }}<br>
+        <i class="bi bi-speedometer2 me-1"></i><strong>RPE:</strong> {{ ejercicio.rpe }}<br>
+        <i class="bi bi-weight me-1"></i><strong>Carga:</strong> {{ ejercicio.carga }}
+    </div>
+</div>
+{% endmacro %}
+
+{% macro bloque_section(bloque) %}
+<div class="bloque-section">
+    <div class="bloque-title">
+        <i class="bi bi-collection"></i>
+        {{ bloque.nombre_bloque }}
+        {% if bloque.categoria %}<span class="badge badge-info">{{ bloque.categoria }}</span>{% endif %}
+    </div>
+    {% if bloque.ejercicios %}
+        {% for ejercicio in bloque.ejercicios %}{{ ejercicio_card(ejercicio) }}{% endfor %}
+    {% else %}
+        <p style="color:var(--color-text-secondary); font-size:var(--text-sm);">Sin ejercicios en este bloque.</p>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro rutina_card(fecha_str, bloques, fecha_display) %}
+<div class="routine-card">
+    <div class="routine-card-header">
+        <h6><i class="bi bi-calendar-event me-2"></i>{{ fecha_display }}</h6>
+        <div style="display:flex; gap:var(--space-1);">
+            <button type="button" class="btn btn-sm btn-secondary"
+                    data-bs-toggle="modal" data-bs-target="#modalEditarRutina"
+                    data-fecha="{{ fecha_str }}">
+                <i class="bi bi-pencil me-1"></i>Editar
+            </button>
+            <button type="button" class="btn btn-sm btn-danger"
+                    onclick="eliminarRutina('{{ fecha_str }}')">
+                <i class="bi bi-trash me-1"></i>Eliminar
+            </button>
+        </div>
+    </div>
+    <div class="routine-card-body">
+        {% if bloques %}
+            {% for bloque in bloques %}{{ bloque_section(bloque) }}{% endfor %}
         {% else %}
-            <div class="empty-state fade-in">
-                <i class="bi bi-calendar-x text-muted" style="font-size: 4rem;"></i>
-                <h5 class="text-muted">Sin rutina asignada</h5>
-                <p class="text-muted">No hay rutina asignada para este día.</p>
-            </div>
+            <p style="color:var(--color-text-secondary); font-size:var(--text-sm);">Sin rutina asignada para este día.</p>
         {% endif %}
     </div>
+</div>
+{% endmacro %}
 
-{% elif datos_vista.tipo == 'semanal' %}
-    <!-- Vista Semanal -->
-    <div class="week-header fade-in">
-        <h5><i class="bi bi-calendar-week me-2"></i>Semana del {{ datos_vista.inicio.strftime('%d/%m') }} al {{ datos_vista.fin.strftime('%d/%m') }}</h5>
-    </div>
-        {% for fecha, bloques in datos_vista.dias.items() %}
-            <div class="routine-card fade-in">
-                <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                    <h6>
-                        <i class="bi bi-calendar-event me-2"></i>{{ fecha.strftime('%A %d/%m') | capitalize }}
-                    </h6>
-                    <div class="routine-actions">
-                        <button
-                            type="button"
-                            class="btn btn-edit-routine btn-routine"
-                            data-bs-toggle="modal"
-                            data-bs-target="#modalEditarRutina"
-                            data-fecha="{{ fecha.strftime('%Y-%m-%d') }}"
-                            title="Editar rutina del día">
-                            <i class="bi bi-pencil me-1"></i>Editar
-                        </button>
-                        <button
-                            type="button"
-                            class="btn btn-delete-routine btn-routine"
-                            onclick="eliminarRutina('{{ fecha.strftime('%Y-%m-%d') }}')"
-                            title="Eliminar rutina del día">
-                            <i class="bi bi-trash me-1"></i>Eliminar
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    {% if bloques %}
-                        {% for bloque in bloques %}
-                            <div class="mb-4">
-                                <h6 class="mb-3 d-flex align-items-center">
-                                    <i class="bi bi-collection me-2"></i>
-                                    <strong>{{ bloque.nombre_bloque }}</strong>
-                                    {% if bloque.categoria %}
-                                        <span class="badge bg-secondary ms-2">{{ bloque.categoria }}</span>
-                                    {% endif %}
-                                </h6>
-                                {% if bloque.ejercicios %}
-                                    <div class="row">
-                                        {% for ejercicio in bloque.ejercicios %}
-                                            <div class="col-12 mb-3">
-                                                <div class="exercise-item">
-                                                    <div class="exercise-name">
-                                                        {{ ejercicio.ejercicio.nombre if ejercicio.ejercicio else ejercicio.nombre_manual }}
-                                                    </div>
-                                                    <div class="d-flex flex-wrap gap-2 mb-2">
-                                                        {% if ejercicio.categoria %}
-                                                            <span class="badge bg-secondary">{{ ejercicio.categoria }}</span>
-                                                        {% endif %}
-                                                        {% if ejercicio.subcategoria %}
-                                                            <span class="badge bg-info">{{ ejercicio.subcategoria }}</span>
-                                                        {% endif %}
-                                                    </div>
-                                                    <div class="exercise-details">
-                                                        <i class="bi bi-arrow-repeat"></i>
-                                                        <strong>Series/Reps:</strong> {{ ejercicio.series_reps }}<br>
-                                                        <i class="bi bi-speedometer2"></i>
-                                                        <strong>RPE:</strong> {{ ejercicio.rpe }}<br>
-                                                        <i class="bi bi-weight"></i>
-                                                        <strong>Carga:</strong> {{ ejercicio.carga }}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-                                {% else %}
-                                    <div class="empty-state">
-                                        <i class="bi bi-exclamation-circle text-muted" style="font-size: 2rem;"></i>
-                                        <p class="text-muted mb-0">No hay ejercicios asignados a este bloque.</p>
-                                    </div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="empty-state">
-                            <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
-                            <h5 class="text-muted">No tienes rutina asignada este día</h5>
-                            <p class="text-muted">Contacta con tu entrenador para asignar una rutina.</p>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        {% endfor %}
-    </div>
-
+<!-- VISTA DIARIA -->
+{% if datos_vista.tipo == 'diaria' %}
+<p style="font-weight:600; color:var(--color-text-secondary); margin-bottom:var(--space-4);">
+    {{ datos_vista.fecha.strftime('%A %d/%m/%Y')|capitalize }}
+</p>
+{% if datos_vista.bloques %}
+    {% for bloque in datos_vista.bloques %}
+    {{ rutina_card(datos_vista.fecha.strftime('%Y-%m-%d'), [bloque], bloque.nombre_bloque) }}
+    {% endfor %}
 {% else %}
-    <!-- Vista Mensual (por semanas) -->
-    {% if datos_vista.semanas %}
-        {% for semana in datos_vista.semanas %}
-            <div class="week-header fade-in">
-                <h5><i class="bi bi-calendar-week me-2"></i>Semana del {{ semana.inicio.strftime('%d/%m') }} al {{ semana.fin.strftime('%d/%m') }}</h5>
-            </div>
-                {% for rutina in semana.rutinas %}
-                    <div class="routine-card fade-in">
-                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                            <h6>
-                                <i class="bi bi-calendar-event me-2"></i>Fecha: {{ rutina.fecha }}
-                            </h6>
-                            <div class="routine-actions">
-                                <button
-                                    type="button"
-                                    class="btn btn-edit-routine btn-routine"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#modalEditarRutina"
-                                    data-fecha="{{ rutina.fecha }}"
-                                    title="Editar rutina del día">
-                                    <i class="bi bi-pencil me-1"></i>Editar
-                                </button>
-                                <button
-                                    type="button"
-                                    class="btn btn-delete-routine btn-routine"
-                                    onclick="eliminarRutina('{{ rutina.fecha }}')"
-                                    title="Eliminar rutina del día">
-                                    <i class="bi bi-trash me-1"></i>Eliminar
-                                </button>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            {% for bloque in rutina.bloques %}
-                                <div class="mb-4">
-                                    <h6 class="mb-3 d-flex align-items-center">
-                                        <i class="bi bi-collection me-2"></i>
-                                        <strong>{{ bloque.nombre_bloque }}</strong>
-                                        {% if bloque.categoria %}
-                                            <span class="badge bg-secondary ms-2">{{ bloque.categoria }}</span>
-                                        {% endif %}
-                                    </h6>
-                                    {% if bloque.ejercicios %}
-                                        <div class="row">
-                                            {% for ejercicio in bloque.ejercicios %}
-                                                <div class="col-12 mb-3">
-                                                    <div class="exercise-item">
-                                                        <div class="exercise-name">
-                                                            {{ ejercicio.ejercicio.nombre if ejercicio.ejercicio else ejercicio.nombre_manual }}
-                                                        </div>
-                                                        <div class="d-flex flex-wrap gap-2 mb-2">
-                                                            {% if ejercicio.categoria %}
-                                                                <span class="badge bg-secondary">{{ ejercicio.categoria }}</span>
-                                                            {% endif %}
-                                                            {% if ejercicio.subcategoria %}
-                                                                <span class="badge bg-info">{{ ejercicio.subcategoria }}</span>
-                                                            {% endif %}
-                                                        </div>
-                                                        <div class="exercise-details">
-                                                            <i class="bi bi-arrow-repeat"></i>
-                                                            <strong>Series/Reps:</strong> {{ ejercicio.series_reps }}<br>
-                                                            <i class="bi bi-speedometer2"></i>
-                                                            <strong>RPE:</strong> {{ ejercicio.rpe }}<br>
-                                                            <i class="bi bi-weight"></i>
-                                                            <strong>Carga:</strong> {{ ejercicio.carga }}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            {% endfor %}
-                                        </div>
-                                    {% else %}
-                                        <div class="empty-state">
-                                            <i class="bi bi-exclamation-circle text-muted" style="font-size: 2rem;"></i>
-                                            <p class="text-muted mb-0">No hay ejercicios asignados a este bloque.</p>
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endfor %}
-    {% else %}
-        <div class="empty-state fade-in">
-            <i class="bi bi-calendar-x text-muted" style="font-size: 4rem;"></i>
-            <h5 class="text-muted">Sin rutinas asignadas</h5>
-            <p class="text-muted">No hay rutinas asignadas aún para este usuario.</p>
-        </div>
-    {% endif %}
+<div class="card" style="text-align:center; padding: var(--space-8);">
+    <p style="color:var(--color-text-secondary);">Sin rutina asignada para este día.</p>
+</div>
 {% endif %}
 
-<!-- Formulario oculto para eliminar rutinas -->
-<form id="formEliminarRutina" method="POST" action="/admin_entrenamientos/{{ usuario.id }}/eliminar" style="display: none;">
+<!-- VISTA SEMANAL -->
+{% elif datos_vista.tipo == 'semanal' %}
+<p style="font-weight:600; color:var(--color-text-secondary); margin-bottom:var(--space-4);">
+    Semana del {{ datos_vista.inicio.strftime('%d/%m') }} al {{ datos_vista.fin.strftime('%d/%m') }}
+</p>
+{% for fecha, bloques in datos_vista.dias.items() %}
+{{ rutina_card(fecha.strftime('%Y-%m-%d'), bloques, fecha.strftime('%A %d/%m')|capitalize) }}
+{% endfor %}
+
+<!-- VISTA MENSUAL -->
+{% else %}
+{% if datos_vista.semanas %}
+    {% for semana in datos_vista.semanas %}
+    <p style="font-weight:600; color:var(--color-text-secondary); margin-bottom:var(--space-3); margin-top:var(--space-4);">
+        Semana del {{ semana.inicio.strftime('%d/%m') }} al {{ semana.fin.strftime('%d/%m') }}
+    </p>
+    {% for rutina in semana.rutinas %}
+    {{ rutina_card(rutina.fecha|string, rutina.bloques, rutina.fecha|string) }}
+    {% endfor %}
+    {% endfor %}
+{% else %}
+<div class="card" style="text-align:center; padding: var(--space-8);">
+    <i class="bi bi-calendar-x" style="font-size:3rem; color:var(--color-border); margin-bottom:var(--space-4); display:block;"></i>
+    <p style="color:var(--color-text-secondary);">Sin rutinas asignadas para este período.</p>
+</div>
+{% endif %}
+{% endif %}
+
+<!-- Form oculto para eliminar -->
+<form id="formEliminarRutina" method="POST"
+      action="/admin_entrenamientos/{{ usuario.id }}/eliminar" style="display:none;">
     <input type="hidden" name="fecha_eliminar" id="fechaEliminarHidden">
 </form>
 
-<div class="modal fade" id="modalEditarRutina" tabindex="-1" aria-labelledby="modalEditarRutinaLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-scrollable">
-    <form id="formEditarRutina" method="POST" action="/admin_entrenamientos/{{ usuario.id }}/editar">
-      <div class="modal-content rounded-4" style="box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
-        <div class="modal-header border-0 pb-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-          <h5 class="modal-title fw-bold" id="modalEditarRutinaLabel">
-            <i class="bi bi-pencil me-2"></i>Editar Rutina del <span id="editarFechaTexto"></span>
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cancelar"></button>
-        </div>
-        <div class="modal-body p-4">
-          <input type="hidden" name="fecha_editar" id="fechaEditarHidden">
-          
-          <!-- Instrucciones -->
-          <div class="alert alert-info mb-4" role="alert">
-            <i class="bi bi-info-circle me-2"></i>
-            <strong>Instrucciones:</strong> Puedes editar, añadir o eliminar bloques y ejercicios. Los cambios se guardarán al hacer clic en "Guardar cambios".
-          </div>
-          
-          <div id="bloquesEditarContainer"></div>
-          
-          <!-- Botón para agregar bloque -->
-          <div class="text-center mt-4">
-            <button type="button" class="btn btn-outline-primary btn-lg" onclick="agregarBloqueEditar(this, 99)">
-              <i class="bi bi-plus-circle me-2"></i>Agregar Nuevo Bloque
-            </button>
-          </div>
-        </div>
-        <div class="modal-footer border-0 justify-content-center gap-3 p-4" style="background: #f8f9fa;">
-          <button type="button" class="btn btn-outline-secondary btn-lg" id="btnCancelarEditar" data-bs-dismiss="modal">
-            <i class="bi bi-x-circle me-2"></i>Cancelar
-          </button>
-          <button type="submit" class="btn btn-success btn-lg" id="btnGuardarEditar">
-            <i class="bi bi-check-circle me-2"></i>Guardar Cambios
-          </button>
-        </div>
-      </div>
-    </form>
-  </div>
+<!-- Modal editar rutina -->
+<div class="modal fade" id="modalEditarRutina" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <form id="formEditarRutina" method="POST"
+              action="/admin_entrenamientos/{{ usuario.id }}/editar">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil me-2"></i>Editar Rutina — <span id="editarFechaTexto"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="fecha_editar" id="fechaEditarHidden">
+                    <div class="alert alert-info" style="font-size:var(--text-sm);">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Edita, añade o elimina bloques y ejercicios. Los cambios se guardarán al hacer clic en "Guardar".
+                    </div>
+                    <div id="bloquesEditarContainer"></div>
+                    <div style="text-align:center; margin-top:var(--space-4);">
+                        <button type="button" class="btn btn-secondary" onclick="agregarBloqueEditar(this, 99)">
+                            <i class="bi bi-plus-circle me-1"></i>Agregar Bloque
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>Guardar Cambios
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}
 
 {% block scripts_extra %}
 <script>
-    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
-        new bootstrap.Tooltip(el);
-    });
-    
-    // Funciones para cambiar vista y filtros
-    function cambiarVista() {
-        const vista = document.getElementById('vista').value;
-        const url = new URL(window.location);
-        url.searchParams.set('vista', vista);
-        
-        // Resetear filtros según la vista
-        if (vista === 'diaria' || vista === 'semanal') {
-            url.searchParams.delete('mes');
-            url.searchParams.set('fecha', '{{ fecha_actual }}');
-        } else {
-            url.searchParams.delete('fecha');
-            url.searchParams.set('mes', '{{ mes_actual }}');
-        }
-        
-        window.location.href = url.toString();
-    }
-    
-    function cambiarFecha() {
-        const vista = document.getElementById('vista').value;
-        const fecha = document.getElementById('fecha') ? document.getElementById('fecha').value : 
-                     document.getElementById('fecha_semana').value;
-        
-        const url = new URL(window.location);
-        url.searchParams.set('vista', vista);
-        url.searchParams.set('fecha', fecha);
+function cambiarVista() {
+    const vista = document.getElementById('vista').value;
+    const url = new URL(window.location);
+    url.searchParams.set('vista', vista);
+    if (vista === 'diaria' || vista === 'semanal') {
         url.searchParams.delete('mes');
-        
-        window.location.href = url.toString();
-    }
-    
-    function cambiarMes() {
-        const vista = document.getElementById('vista').value;
-        const mes = document.getElementById('mes').value;
-        
-        const url = new URL(window.location);
-        url.searchParams.set('vista', vista);
-        url.searchParams.set('mes', mes);
+        url.searchParams.set('fecha', '{{ fecha_actual }}');
+    } else {
         url.searchParams.delete('fecha');
-        
-        window.location.href = url.toString();
+        url.searchParams.set('mes', '{{ mes_actual }}');
     }
+    window.location.href = url.toString();
+}
+
+function cambiarFecha() {
+    const vista = document.getElementById('vista').value;
+    const el = document.getElementById('fecha') || document.getElementById('fecha_semana');
+    const url = new URL(window.location);
+    url.searchParams.set('vista', vista);
+    url.searchParams.set('fecha', el.value);
+    url.searchParams.delete('mes');
+    window.location.href = url.toString();
+}
+
+function cambiarMes() {
+    const url = new URL(window.location);
+    url.searchParams.set('vista', document.getElementById('vista').value);
+    url.searchParams.set('mes', document.getElementById('mes').value);
+    url.searchParams.delete('fecha');
+    window.location.href = url.toString();
+}
+
+function eliminarRutina(fecha) {
+    if (!confirm(`¿Eliminar la rutina del ${fecha}? Esta acción no se puede deshacer.`)) return;
+    document.getElementById('fechaEliminarHidden').value = fecha;
+    document.getElementById('formEliminarRutina').submit();
+}
 </script>
 
-<!-- Solo cargar JavaScript si es vista mensual (para editar) -->
 {% if datos_vista.tipo == 'mensual' %}
-<script> 
-    let rutinasPorFecha = {{ datos_vista.semanas|tojson|safe }}; 
+<script>
+let rutinasPorFecha = {{ datos_vista.semanas|tojson|safe }};
 </script>
 <script src="{{ url_for('static', filename='js/editar_rutinas.js') }}"></script>
-
 <script>
-    // Al abrir el modal de editar rutina, llama a tu función
-    var modalEditarRutina = document.getElementById('modalEditarRutina');
-    if (modalEditarRutina) {
-        modalEditarRutina.addEventListener('show.bs.modal', function (event) {
-            var button = event.relatedTarget;
-            var fecha = button.getAttribute('data-fecha');
-            console.log("🎯 Modal abierto para fecha:", fecha);
-            
-            // Limpiar el contenedor antes de cargar
-            document.getElementById("bloquesEditarContainer").innerHTML = "";
-            
-            // Cargar los ejercicios primero
-            fetchEjercicios().then(() => {
-                abrirModalEdicion(fecha);
-            });
-        });
-    }
-
-    // Función para eliminar rutina
-    function eliminarRutina(fecha) {
-        // Crear un modal de confirmación más elegante
-        const confirmModal = `
-            <div class="modal fade" id="confirmDeleteModal" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header bg-danger text-white">
-                            <h5 class="modal-title">
-                                <i class="bi bi-exclamation-triangle me-2"></i>Confirmar Eliminación
-                            </h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p><strong>¿Estás seguro de que quieres eliminar la rutina del ${fecha}?</strong></p>
-                            <p class="text-muted">Esta acción no se puede deshacer y se eliminarán todos los ejercicios asociados.</p>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="button" class="btn btn-danger" onclick="confirmarEliminacion('${fecha}')">
-                                <i class="bi bi-trash me-2"></i>Eliminar Rutina
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Remover modal anterior si existe
-        const existingModal = document.getElementById('confirmDeleteModal');
-        if (existingModal) {
-            existingModal.remove();
-        }
-        
-        // Agregar el nuevo modal al DOM
-        document.body.insertAdjacentHTML('beforeend', confirmModal);
-        
-        // Mostrar el modal
-        const modal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
-        modal.show();
-    }
-    
-    // Función para confirmar la eliminación
-    function confirmarEliminacion(fecha) {
-        document.getElementById('fechaEliminarHidden').value = fecha;
-        document.getElementById('formEliminarRutina').submit();
-    }
-    
-    // Debug: Ver qué se envía en el formulario
-    document.getElementById('formEditarRutina').addEventListener('submit', function(e) {
-        console.log('Formulario enviado:', new FormData(this));
-        // No prevenir el envío, solo debug
+const modalEditarRutina = document.getElementById('modalEditarRutina');
+if (modalEditarRutina) {
+    modalEditarRutina.addEventListener('show.bs.modal', function (event) {
+        const fecha = event.relatedTarget.getAttribute('data-fecha');
+        document.getElementById('bloquesEditarContainer').innerHTML = '';
+        fetchEjercicios().then(() => abrirModalEdicion(fecha));
     });
+}
 </script>
 {% endif %}
 {% endblock %}
