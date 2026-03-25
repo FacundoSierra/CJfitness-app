@@ -1,0 +1,403 @@
+/*
+ * layout.css
+ * ─────────────────────────────────────────────────────────────────────────────
+ * ESTRUCTURA PRINCIPAL DE LA APLICACIÓN
+ *
+ * Define la "carcasa" de la app: sidebar + topbar + área de contenido.
+ * Este patrón es el estándar en apps SaaS modernas (Notion, Linear, Vercel).
+ *
+ * Estructura visual:
+ * ┌─────────────────────────────────────────┐
+ * │  SIDEBAR (fijo)  │  TOPBAR (fijo arriba)│
+ * │                  ├─────────────────────│
+ * │  nav links       │  MAIN CONTENT        │
+ * │                  │  (scrollable)        │
+ * │                  │                      │
+ * └─────────────────────────────────────────┘
+ *
+ * En móvil:
+ * ┌─────────────────────────────────────────┐
+ * │  TOPBAR (con botón hamburguesa)          │
+ * ├─────────────────────────────────────────┤
+ * │  MAIN CONTENT                           │
+ * └─────────────────────────────────────────┘
+ * [SIDEBAR como drawer desde la izquierda]
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+
+/* ── LAYOUT PRINCIPAL ─────────────────────────────────────────────────────────
+ *
+ * .app-layout es el contenedor raíz que envuelve toda la app.
+ * Usamos display:flex en el eje horizontal (row) para que el sidebar
+ * quede a la izquierda y el contenido a la derecha.
+ * min-height: 100dvh garantiza que ocupe toda la pantalla verticalmente.
+ * ─────────────────────────────────────────────────────────────────────────────*/
+.app-layout {
+  display: flex;
+  flex-direction: row;
+  min-height: 100dvh;
+  background-color: var(--color-bg);
+}
+
+/* El contenedor de topbar + contenido ocupa el espacio restante */
+.app-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* Evita overflow en flexbox cuando hay texto largo */
+  margin-left: var(--sidebar-width);
+  transition: margin-left var(--transition-normal);
+}
+
+
+/* ── SIDEBAR ──────────────────────────────────────────────────────────────────
+ *
+ * El sidebar es fixed (no se mueve al hacer scroll) y ocupa todo el alto.
+ * z-index: 100 para que quede por encima del contenido pero debajo de modales.
+ *
+ * ¿Por qué position: fixed y no sticky?
+ * fixed = siempre visible aunque hagas scroll en el contenido.
+ * sticky = se queda fijo DENTRO de su contenedor, lo que en este layout
+ * causaría que desaparezca al scrollear porque el contenedor padre scrollea.
+ * ─────────────────────────────────────────────────────────────────────────────*/
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--sidebar-width);
+  background-color: var(--color-sidebar);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: transform var(--transition-normal);
+}
+
+/* ── LOGO DEL SIDEBAR ─────────────────────────────────────────────────────────*/
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.sidebar-brand-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--color-primary);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-lg);
+  color: white;
+  flex-shrink: 0;
+}
+
+.sidebar-brand-name {
+  font-size: var(--text-base);
+  font-weight: var(--font-bold);
+  color: var(--color-text-inverse);
+  letter-spacing: -0.01em;
+}
+
+/* ── NAVEGACIÓN DEL SIDEBAR ───────────────────────────────────────────────────*/
+.sidebar-nav {
+  flex: 1;
+  padding: var(--space-4) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* Etiqueta de sección (ej: "ADMINISTRACIÓN", "USUARIO") */
+.sidebar-section-label {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: var(--space-4) var(--space-3) var(--space-2);
+  margin-top: var(--space-2);
+}
+
+/* Cada enlace del sidebar */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-sidebar-text);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  text-decoration: none;
+  transition: background-color var(--transition-fast),
+              color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.sidebar-link i {
+  font-size: var(--text-base);
+  flex-shrink: 0;
+  width: 20px;           /* ancho fijo para que los textos estén alineados */
+  text-align: center;
+}
+
+.sidebar-link:hover {
+  background-color: var(--color-sidebar-hover);
+  color: var(--color-text-inverse);
+  text-decoration: none;
+}
+
+/* Estado activo — la página en la que estamos */
+.sidebar-link.active {
+  background-color: var(--color-primary);
+  color: var(--color-text-inverse);
+}
+
+.sidebar-link.active i {
+  color: var(--color-text-inverse);
+}
+
+/* Enlace de cerrar sesión — al fondo del sidebar */
+.sidebar-footer {
+  padding: var(--space-4) var(--space-3);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.sidebar-link.danger:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+}
+
+
+/* ── TOPBAR ───────────────────────────────────────────────────────────────────
+ *
+ * Barra horizontal fija en la parte superior del área de contenido.
+ * Contiene: título de la página actual, acciones rápidas, usuario.
+ * ─────────────────────────────────────────────────────────────────────────────*/
+.topbar {
+  position: sticky;   /* Se queda fija al hacer scroll en el contenido */
+  top: 0;
+  height: var(--topbar-height);
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-6);
+  gap: var(--space-4);
+  z-index: 50;
+  flex-shrink: 0;
+}
+
+/* Botón hamburguesa — solo visible en móvil */
+.topbar-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: none;
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: var(--text-lg);
+  transition: background-color var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.topbar-menu-btn:hover {
+  background-color: var(--color-bg-alt);
+  color: var(--color-text);
+}
+
+/* Título de la página actual */
+.topbar-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--color-text);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Área derecha del topbar (usuario, notificaciones...) */
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+/* Avatar / nombre de usuario */
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-text-secondary);
+}
+
+.topbar-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  font-weight: var(--font-bold);
+  flex-shrink: 0;
+}
+
+
+/* ── CONTENIDO PRINCIPAL ──────────────────────────────────────────────────────
+ *
+ * El área donde se renderiza el contenido de cada página.
+ * overflow-y: auto permite scroll solo en esta área, no en el sidebar.
+ * ─────────────────────────────────────────────────────────────────────────────*/
+.main-content {
+  flex: 1;
+  padding: var(--space-8);
+  overflow-y: auto;
+}
+
+/* Título de página dentro del contenido */
+.page-title {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text);
+  margin-bottom: var(--space-2);
+}
+
+.page-subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-8);
+}
+
+/* Cabecera de página (título + botón de acción) */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.page-header-text {
+  flex: 1;
+}
+
+
+/* ── TOASTS DE FEEDBACK ───────────────────────────────────────────────────────
+ * Mensajes flash de Flask — aparecen en la esquina inferior derecha
+ * ─────────────────────────────────────────────────────────────────────────────*/
+.toast-container-app {
+  position: fixed;
+  bottom: var(--space-6);
+  right: var(--space-6);
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.toast-app {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  background-color: var(--color-sidebar);
+  color: var(--color-text-inverse);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  min-width: 280px;
+  max-width: 380px;
+}
+
+.toast-app.toast-success { border-left: 4px solid var(--color-success); }
+.toast-app.toast-danger  { border-left: 4px solid var(--color-danger); }
+.toast-app.toast-warning { border-left: 4px solid var(--color-warning); }
+
+
+/* ── SIDEBAR MÓVIL (OVERLAY) ──────────────────────────────────────────────────
+ *
+ * En móvil, el sidebar se convierte en un drawer que se abre desde la izquierda.
+ * Por defecto está oculto (transform: translateX(-100%)).
+ * La clase .sidebar-open lo hace visible.
+ * El overlay oscuro (.sidebar-overlay) bloquea el contenido de fondo.
+ * ─────────────────────────────────────────────────────────────────────────────*/
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;            /* shorthand para top/right/bottom/left: 0 */
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.sidebar-overlay.active {
+  display: block;
+  opacity: 1;
+}
+
+
+/* ── RESPONSIVE ───────────────────────────────────────────────────────────────
+ *
+ * En tablets y móvil:
+ * - El sidebar desaparece del flujo normal (transform: translateX(-100%))
+ * - El contenido ocupa toda la pantalla (margin-left: 0)
+ * - Aparece el botón hamburguesa en la topbar
+ * - Al pulsar hamburguesa, el sidebar se desliza desde la izquierda
+ * ─────────────────────────────────────────────────────────────────────────────*/
+@media (max-width: 768px) {
+
+  /* Sidebar oculto por defecto en móvil */
+  .sidebar {
+    transform: translateX(-100%);
+    z-index: 200;
+  }
+
+  /* Clase que se añade con JS para mostrar el sidebar */
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+
+  /* El contenido ocupa todo el ancho */
+  .app-body {
+    margin-left: 0;
+  }
+
+  /* Mostrar botón hamburguesa */
+  .topbar-menu-btn {
+    display: flex;
+  }
+
+  /* Reducir padding del contenido en móvil */
+  .main-content {
+    padding: var(--space-4);
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

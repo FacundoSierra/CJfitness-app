@@ -3,14 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Panel Admin — CJFitness{% endblock %}</title>
+  <title>{% block title %}CJFitness{% endblock %}</title>
 
-  <!-- Bootstrap 5 -->
+  <!-- Bootstrap 5 (grid, modales, utilidades) -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-  <!-- Sistema de diseño — mismo orden que base.html -->
+  <!-- Sistema de diseño propio — ORDEN IMPORTANTE:
+       1. variables.css  → tokens (colores, espaciados, etc.)
+       2. base.css       → reset y tipografía global
+       3. layout.css     → estructura sidebar + topbar + contenido
+       4. components.css → cards, botones, tablas, formularios... -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
@@ -20,7 +24,10 @@
 </head>
 <body>
 
-  <!-- Toasts Flask -->
+  <!-- ── TOASTS (mensajes flash de Flask) ──────────────────────────────────
+       Flask permite enviar mensajes de feedback con flash().
+       Aquí los convertimos en notificaciones visuales que aparecen
+       en la esquina inferior derecha y desaparecen solos. -->
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       <div class="toast-container-app" aria-live="polite" aria-atomic="true">
@@ -34,76 +41,69 @@
     {% endif %}
   {% endwith %}
 
+  <!-- ── LAYOUT PRINCIPAL ──────────────────────────────────────────────────
+       .app-layout → flex row: sidebar izquierda + cuerpo derecha
+       .app-body   → flex column: topbar arriba + contenido abajo -->
   <div class="app-layout">
 
+    <!-- Overlay para cerrar sidebar en móvil al tocar fuera -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-    <!-- ── SIDEBAR ADMIN ─────────────────────────────────────────────────── -->
-    <aside class="sidebar" id="sidebar" aria-label="Menú de administración">
+    <!-- ── SIDEBAR ──────────────────────────────────────────────────────── -->
+    <aside class="sidebar" id="sidebar" aria-label="Menú de navegación">
 
-      <a href="{{ url_for('admin_dashboard') }}" class="sidebar-brand">
+      <!-- Logo / nombre de la app -->
+      <a href="{{ url_for('dashboard') }}" class="sidebar-brand">
         <div class="sidebar-brand-icon">
           <i class="bi bi-lightning-charge-fill"></i>
         </div>
         <span class="sidebar-brand-name">CJFitness</span>
       </a>
 
+      <!-- Navegación principal -->
       <nav class="sidebar-nav">
-        <span class="sidebar-section-label">Administración</span>
+        <span class="sidebar-section-label">Principal</span>
 
-        <a href="{{ url_for('admin_dashboard') }}"
-           class="sidebar-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
-          <i class="bi bi-speedometer2"></i>
+        <a href="{{ url_for('dashboard') }}"
+           class="sidebar-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+          <i class="bi bi-grid-1x2"></i>
           Dashboard
         </a>
 
-        <a href="{{ url_for('admin_usuarios') }}"
-           class="sidebar-link {% if request.endpoint == 'admin_usuarios' %}active{% endif %}">
-          <i class="bi bi-people"></i>
-          Usuarios
+        <a href="{{ url_for('mis_rutinas') }}"
+           class="sidebar-link {% if request.endpoint == 'mis_rutinas' %}active{% endif %}">
+          <i class="bi bi-calendar-week"></i>
+          Mis Entrenamientos
         </a>
 
-        <a href="{{ url_for('admin_entrenamientos') }}"
-           class="sidebar-link {% if request.endpoint == 'admin_entrenamientos' %}active{% endif %}">
-          <i class="bi bi-activity"></i>
-          Entrenamientos
-        </a>
-
-        <a href="{{ url_for('admin_estadisticas') }}"
-           class="sidebar-link {% if request.endpoint == 'admin_estadisticas' %}active{% endif %}">
-          <i class="bi bi-bar-chart-line"></i>
-          Estadísticas
-        </a>
-
-        <span class="sidebar-section-label">Finanzas</span>
-
-        <a href="{{ url_for('admin_pagos') }}"
-           class="sidebar-link {% if request.endpoint == 'admin_pagos' %}active{% endif %}">
-          <i class="bi bi-cash-coin"></i>
-          Pagos
-        </a>
-
-        <a href="{{ url_for('admin_pagos_mensuales') }}"
-           class="sidebar-link {% if request.endpoint == 'admin_pagos_mensuales' %}active{% endif %}">
-          <i class="bi bi-calendar-check"></i>
-          Pagos Mensuales
-        </a>
-
-        <span class="sidebar-section-label">Seguimiento</span>
-
-        <a href="{{ url_for('admin_progresos') }}"
-           class="sidebar-link {% if request.endpoint == 'admin_progresos' %}active{% endif %}">
-          <i class="bi bi-clipboard2-check"></i>
-          Progresos
-        </a>
-
-        <a href="{{ url_for('admin_ejercicios') }}"
-           class="sidebar-link {% if request.endpoint == 'admin_ejercicios' %}active{% endif %}">
-          <i class="bi bi-bicycle"></i>
+        <a href="{{ url_for('exercises') }}"
+           class="sidebar-link {% if request.endpoint == 'exercises' %}active{% endif %}">
+          <i class="bi bi-book"></i>
           Ejercicios
+        </a>
+
+        <span class="sidebar-section-label">Perfil</span>
+
+        <a href="{{ url_for('my_info') }}"
+           class="sidebar-link {% if request.endpoint == 'my_info' %}active{% endif %}">
+          <i class="bi bi-person"></i>
+          Mi Información
+        </a>
+
+        <a href="{{ url_for('sobre_mi') }}"
+           class="sidebar-link {% if request.endpoint == 'sobre_mi' %}active{% endif %}">
+          <i class="bi bi-heart"></i>
+          Sobre Mí
+        </a>
+
+        <a href="{{ url_for('soporte_usuario') }}"
+           class="sidebar-link {% if request.endpoint == 'soporte_usuario' %}active{% endif %}">
+          <i class="bi bi-headset"></i>
+          Soporte
         </a>
       </nav>
 
+      <!-- Cerrar sesión al pie del sidebar -->
       <div class="sidebar-footer">
         <a href="#" class="sidebar-link danger"
            data-bs-toggle="modal" data-bs-target="#logoutModal">
@@ -113,39 +113,48 @@
       </div>
 
     </aside>
+    <!-- fin sidebar -->
 
     <!-- ── CUERPO PRINCIPAL ──────────────────────────────────────────────── -->
     <div class="app-body">
 
+      <!-- Topbar -->
       <header class="topbar">
+        <!-- Botón hamburguesa (solo en móvil) -->
         <button class="topbar-menu-btn" onclick="openSidebar()"
                 aria-label="Abrir menú" aria-expanded="false">
           <i class="bi bi-list"></i>
         </button>
 
-        <span class="topbar-title">{% block page_title %}Admin{% endblock %}</span>
+        <!-- Título de la página actual -->
+        <span class="topbar-title">{% block page_title %}{% endblock %}</span>
 
+        <!-- Acciones del topbar (usuario) -->
         <div class="topbar-actions">
-          <span class="badge badge-warning" style="font-size: var(--text-xs);">
-            <i class="bi bi-shield-check me-1"></i>Admin
-          </span>
           <div class="topbar-user">
-            <div class="topbar-avatar" style="background: var(--color-accent);">
-              A
+            <div class="topbar-avatar">
+              {{ username[0]|upper if username else 'U' }}
             </div>
+            <span class="d-none d-sm-inline">{{ username }}</span>
           </div>
         </div>
       </header>
 
+      <!-- Contenido de la página -->
       <main class="main-content" id="main-content">
         {% block content %}{% endblock %}
       </main>
 
     </div>
+    <!-- fin app-body -->
 
   </div>
+  <!-- fin app-layout -->
 
-  <!-- Modal cerrar sesión -->
+
+  <!-- ── MODAL CERRAR SESIÓN ───────────────────────────────────────────────
+       Confirmación antes de hacer logout — buena práctica UX para evitar
+       cierres accidentales de sesión. -->
   <div class="modal fade" id="logoutModal" tabindex="-1"
        aria-labelledby="logoutModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -156,7 +165,7 @@
                   aria-label="Cancelar"></button>
         </div>
         <div class="modal-body">
-          Se cerrará la sesión de administrador.
+          Se cerrará tu sesión actual.
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary"
@@ -169,23 +178,32 @@
     </div>
   </div>
 
+  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <script>
+    // ── Sidebar móvil ──────────────────────────────────────────────────────
+    // Abre el sidebar en móvil añadiendo la clase 'sidebar-open'
+    // y muestra el overlay oscuro de fondo.
     function openSidebar() {
       document.getElementById('sidebar').classList.add('sidebar-open');
       document.getElementById('sidebarOverlay').classList.add('active');
       document.querySelector('.topbar-menu-btn').setAttribute('aria-expanded', 'true');
     }
+
     function closeSidebar() {
       document.getElementById('sidebar').classList.remove('sidebar-open');
       document.getElementById('sidebarOverlay').classList.remove('active');
       document.querySelector('.topbar-menu-btn').setAttribute('aria-expanded', 'false');
     }
+
+    // Cerrar sidebar al pulsar Escape
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') closeSidebar();
     });
+
+    // ── Auto-hide toasts ───────────────────────────────────────────────────
+    // Los toasts desaparecen solos tras 4 segundos con una animación.
     document.querySelectorAll('.toast-app').forEach(function(toast) {
       setTimeout(function() {
         toast.style.opacity = '0';
@@ -194,6 +212,8 @@
         setTimeout(function() { toast.remove(); }, 300);
       }, 4000);
     });
+
+    // ── Tooltips Bootstrap ─────────────────────────────────────────────────
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
       new bootstrap.Tooltip(el);
     });
