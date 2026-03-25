@@ -92,7 +92,7 @@ class TestCascadeDelete:
         user = Usuario(
             username='usertodelete',
             email='delete@example.com',
-            password=generate_password_hash('pass12345'),
+            password=generate_password_hash('pass12345', method='pbkdf2:sha256'),
             nombre='Delete',
             apellidos='Me',
             rol='usuario',
@@ -157,7 +157,7 @@ class TestUsuarioModelo:
         user = Usuario(
             username='defaultrole',
             email='defaultrole@example.com',
-            password=generate_password_hash('pass12345'),
+            password=generate_password_hash('pass12345', method='pbkdf2:sha256'),
             nombre='Default',
             apellidos='Role',
         )
@@ -176,7 +176,7 @@ class TestUsuarioModelo:
         duplicado = Usuario(
             username='testuser',  # ya existe
             email='otro@example.com',
-            password=generate_password_hash('pass12345'),
+            password=generate_password_hash('pass12345', method='pbkdf2:sha256'),
             nombre='Otro',
             apellidos='User',
         )
@@ -190,7 +190,7 @@ class TestUsuarioModelo:
         duplicado = Usuario(
             username='otrousername',
             email='test@example.com',  # ya existe
-            password=generate_password_hash('pass12345'),
+            password=generate_password_hash('pass12345', method='pbkdf2:sha256'),
             nombre='Otro',
             apellidos='User',
         )

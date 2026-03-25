@@ -136,7 +136,7 @@ class TestRegistro:
         user = Usuario.query.filter_by(username='hashtest').first()
         assert user is not None
         assert user.password != 'mipassword123', "La contraseña no debe guardarse en texto plano"
-        assert user.password.startswith('scrypt:') or user.password.startswith('pbkdf2:'), (
+        assert user.password.startswith('pbkdf2:') or user.password.startswith('scrypt:'), (
             "La contraseña debe estar hasheada con werkzeug"
         )
 

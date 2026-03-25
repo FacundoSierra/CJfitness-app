@@ -25,6 +25,7 @@ def app():
     })
 
     with flask_app.app_context():
+        _db.drop_all()
         _db.create_all()
         yield flask_app
         _db.drop_all()
@@ -32,19 +33,12 @@ def app():
 
 @pytest.fixture(scope='function')
 def db(app):
-    """Transacción limpia por cada test — hace rollback al terminar."""
+    """BD limpia por cada test — recrea todas las tablas al empezar."""
     with app.app_context():
-        connection = _db.engine.connect()
-        transaction = connection.begin()
-
-        # Bind la sesión a la conexión con transacción abierta
-        _db.session.bind = connection
-
+        _db.drop_all()
+        _db.create_all()
         yield _db
-
         _db.session.remove()
-        transaction.rollback()
-        connection.close()
 
 
 @pytest.fixture(scope='function')
@@ -67,7 +61,7 @@ def usuario_normal(db):
     user = Usuario(
         username='testuser',
         email='test@example.com',
-        password=generate_password_hash('password123'),
+        password=generate_password_hash('password123', method='pbkdf2:sha256'),
         nombre='Test',
         apellidos='User',
         rol='usuario',
@@ -83,7 +77,7 @@ def usuario_admin(db):
     admin = Usuario(
         username='adminuser',
         email='admin@example.com',
-        password=generate_password_hash('adminpass123'),
+        password=generate_password_hash('adminpass123', method='pbkdf2:sha256'),
         nombre='Admin',
         apellidos='User',
         rol='admin',

@@ -63,7 +63,7 @@ def register():
             nuevo_usuario = Usuario(
                 username=form.username.data,
                 email=form.email.data,
-                password=generate_password_hash(form.password.data),
+                password=generate_password_hash(form.password.data, method='pbkdf2:sha256'),
                 nombre=form.nombre.data,
                 apellidos=form.apellidos.data,
                 telefono=form.telefono.data,

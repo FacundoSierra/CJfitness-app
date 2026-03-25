@@ -90,17 +90,7 @@
                         </div>
                     {% endif %}
                 </div>
-                <div class="form-group mb-4 text-start">
-                    <label for="role" class="form-label">Rol</label>
-                    {{ form.role(class="form-select") }}
-                    {% if form.role.errors %}
-                        <div class="text-danger small">
-                            {% for error in form.role.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
+
                 <button class="login-button" type="submit">{{ form.submit.label }}</button>
             </form>
             <p class="redirect mt-3">
