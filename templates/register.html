@@ -3,102 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro - Fitness App</title>
+    <title>Registrarse — Christian Jordy</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
 </head>
 <body>
-    <div class="login-container d-flex justify-content-center align-items-center">
-        <div class="login-box text-center">
-            <h2 class="mb-4 text-main">Registro</h2>
-            <form method="POST" action="{{ url_for('register') }}" autocomplete="on">
+
+<!-- Flash messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div style="position:fixed; top:16px; right:16px; z-index:1200; display:flex; flex-direction:column; gap:8px;">
+    {% for category, message in messages %}
+    <div class="flash-box flash-{{ category }}">
+        <i class="bi bi-{{ 'check-circle' if category=='success' else 'exclamation-circle' }}"></i>
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<div class="auth-page">
+
+    <!-- ── Left panel ── -->
+    <aside class="auth-panel">
+        <a class="panel-brand" href="{{ url_for('index') }}">
+            <div class="panel-brand-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+            Christian Jordy
+        </a>
+
+        <div class="panel-body">
+            <span class="panel-tagline">Empieza hoy</span>
+            <h2 class="panel-title">#SeLaMejor<br>VersiónDeTi</h2>
+            <p class="panel-subtitle">Crea tu cuenta gratuita y recibe acceso a tu plan de entrenamiento personalizado.</p>
+            <div class="panel-features">
+                <div class="panel-feature">
+                    <div class="panel-feature-icon"><i class="bi bi-person-plus"></i></div>
+                    Registro rápido y gratuito
+                </div>
+                <div class="panel-feature">
+                    <div class="panel-feature-icon"><i class="bi bi-lightning-charge"></i></div>
+                    Rutinas listas desde el primer día
+                </div>
+                <div class="panel-feature">
+                    <div class="panel-feature-icon"><i class="bi bi-heart-pulse"></i></div>
+                    Entrenamiento + Fisioterapia
+                </div>
+            </div>
+        </div>
+
+        <p class="panel-footer">&copy; 2025 Christian Jordy Medina Suárez</p>
+    </aside>
+
+    <!-- ── Form ── -->
+    <main class="auth-form-wrap">
+        <div class="auth-form-inner">
+            <a class="back-link" href="{{ url_for('index') }}">
+                <i class="bi bi-arrow-left"></i> Volver al inicio
+            </a>
+
+            <div class="form-header">
+                <h1>Crear cuenta</h1>
+                <p>Rellena los datos para empezar tu entrenamiento.</p>
+            </div>
+
+            <form method="POST" action="{{ url_for('register') }}" autocomplete="on" novalidate>
                 {{ form.hidden_tag() }}
-                <div class="form-group mb-3 text-start">
-                    <label for="username" class="form-label">Usuario</label>
-                    {{ form.username(class="form-control", placeholder="Tu usuario único") }}
-                    {% if form.username.errors %}
-                        <div class="text-danger small">
-                            {% for error in form.username.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
-                <div class="form-group mb-3 text-start">
-                    <label for="email" class="form-label">Correo electrónico</label>
-                    {{ form.email(class="form-control", placeholder="ejemplo@email.com") }}
-                    {% if form.email.errors %}
-                        <div class="text-danger small">
-                            {% for error in form.email.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
-                <div class="form-group mb-3 text-start">
-                    <label for="password" class="form-label">Contraseña</label>
-                    {{ form.password(class="form-control", placeholder="Mínimo 8 caracteres") }}
-                    {% if form.password.errors %}
-                        <div class="text-danger small">
-                            {% for error in form.password.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
-                <div class="form-group mb-3 text-start">
-                    <label for="confirm_password" class="form-label">Confirmar Contraseña</label>
-                    {{ form.confirm_password(class="form-control", placeholder="Repite tu contraseña") }}
-                    {% if form.confirm_password.errors %}
-                        <div class="text-danger small">
-                            {% for error in form.confirm_password.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
-                <div class="form-group mb-3 text-start">
-                    <label for="nombre" class="form-label">Nombre</label>
-                    {{ form.nombre(class="form-control") }}
-                    {% if form.nombre.errors %}
-                        <div class="text-danger small">
-                            {% for error in form.nombre.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
-                <div class="form-group mb-3 text-start">
-                    <label for="apellidos" class="form-label">Apellidos</label>
-                    {{ form.apellidos(class="form-control") }}
-                    {% if form.apellidos.errors %}
-                        <div class="text-danger small">
-                            {% for error in form.apellidos.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
-                <div class="form-group mb-3 text-start">
-                    <label for="telefono" class="form-label">Teléfono</label>
-                    {{ form.telefono(class="form-control", placeholder="Ej: 600123123") }}
-                    {% if form.telefono.errors %}
-                        <div class="text-danger small">
-                            {% for error in form.telefono.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+
+                <!-- Nombre + Apellidos -->
+                <div class="field-grid-2">
+                    <div class="field-group">
+                        <label for="nombre">Nombre</label>
+                        {{ form.nombre(class="form-control", placeholder="Tu nombre") }}
+                        {% for error in form.nombre.errors %}
+                        <div class="field-error"><i class="bi bi-exclamation-circle-fill"></i>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="field-group">
+                        <label for="apellidos">Apellidos</label>
+                        {{ form.apellidos(class="form-control", placeholder="Tus apellidos") }}
+                        {% for error in form.apellidos.errors %}
+                        <div class="field-error"><i class="bi bi-exclamation-circle-fill"></i>{{ error }}</div>
+                        {% endfor %}
+                    </div>
                 </div>
 
-                <button class="login-button" type="submit">{{ form.submit.label }}</button>
+                <!-- Usuario + Teléfono -->
+                <div class="field-grid-2">
+                    <div class="field-group">
+                        <label for="username">Usuario</label>
+                        {{ form.username(class="form-control", placeholder="Ej: christianj", autofocus=true) }}
+                        {% for error in form.username.errors %}
+                        <div class="field-error"><i class="bi bi-exclamation-circle-fill"></i>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="field-group">
+                        <label for="telefono">Teléfono</label>
+                        {{ form.telefono(class="form-control", placeholder="600 123 456") }}
+                        {% for error in form.telefono.errors %}
+                        <div class="field-error"><i class="bi bi-exclamation-circle-fill"></i>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div class="field-group">
+                    <label for="email">Correo electrónico</label>
+                    {{ form.email(class="form-control", placeholder="ejemplo@email.com") }}
+                    {% for error in form.email.errors %}
+                    <div class="field-error"><i class="bi bi-exclamation-circle-fill"></i>{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <!-- Contraseña + Confirmar -->
+                <div class="field-grid-2">
+                    <div class="field-group">
+                        <label for="password">Contraseña</label>
+                        {{ form.password(class="form-control", placeholder="Mínimo 8 caracteres") }}
+                        {% for error in form.password.errors %}
+                        <div class="field-error"><i class="bi bi-exclamation-circle-fill"></i>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="field-group">
+                        <label for="confirm_password">Confirmar contraseña</label>
+                        {{ form.confirm_password(class="form-control", placeholder="Repite tu contraseña") }}
+                        {% for error in form.confirm_password.errors %}
+                        <div class="field-error"><i class="bi bi-exclamation-circle-fill"></i>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-auth">
+                    <i class="bi bi-person-plus me-2"></i>{{ form.submit.label.text }}
+                </button>
             </form>
-            <p class="redirect mt-3">
-                ¿Ya tienes cuenta? 
+
+            <hr class="form-divider">
+
+            <p class="auth-redirect">
+                ¿Ya tienes cuenta?
                 <a href="{{ url_for('login') }}">Inicia sesión aquí</a>
             </p>
         </div>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    </main>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
