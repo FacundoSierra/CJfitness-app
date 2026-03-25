@@ -1,0 +1,431 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Configurar Pago Mensual - Admin{% endblock %}
+
+{% block head_extra %}
+<style>
+    /* Variables CSS */
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        --info-gradient: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
+        --shadow-soft: 0 8px 32px rgba(0,0,0,0.1);
+        --shadow-hover: 0 12px 40px rgba(0,0,0,0.15);
+        --border-radius: 20px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Contenedor principal - Sin margen derecho */
+    .container-fluid {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        padding: 2rem 1rem;
+        margin-right: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    /* Eliminar todos los márgenes y padding del body y html */
+    body, html {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        overflow-x: hidden;
+    }
+
+    /* Asegurar que el contenido principal ocupe todo el ancho */
+    .main-content {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Eliminar márgenes de las filas de Bootstrap */
+    .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .col-12, .col-md-3, .col-md-4, .col-md-6, .col-md-8 {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    .form-container {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 3rem;
+        box-shadow: var(--shadow-soft);
+        margin: 2rem 0;
+        border: 1px solid rgba(0,0,0,0.05);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .form-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--primary-gradient);
+    }
+    
+    .form-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding-bottom: 2rem;
+        border-bottom: 2px solid #e9ecef;
+        position: relative;
+    }
+
+    .form-header::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 2px;
+        background: var(--primary-gradient);
+    }
+    
+    .form-header h4 {
+        color: #2c3e50;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        font-size: 2rem;
+    }
+    
+    .form-header p {
+        color: #7f8c8d;
+        margin: 0;
+        font-size: 1.1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 2rem;
+    }
+    
+    .form-group label {
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.75rem;
+        display: block;
+        font-size: 1rem;
+    }
+    
+    .form-control {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        transition: var(--transition);
+        font-size: 1rem;
+        font-weight: 500;
+        background: #f8f9fa;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        outline: none;
+        background: white;
+    }
+
+    .form-control:hover {
+        border-color: #667eea;
+        background: white;
+    }
+    
+    .btn-submit {
+        background: var(--primary-gradient);
+        border: none;
+        color: white;
+        padding: 1.25rem 3rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        border-radius: 50px;
+        transition: var(--transition);
+        box-shadow: var(--shadow-soft);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-submit::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .btn-submit:hover::before {
+        left: 100%;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-hover);
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        border: none;
+        color: white;
+        padding: 1.25rem 3rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        border-radius: 50px;
+        transition: var(--transition);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .btn-secondary:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-hover);
+        color: white;
+    }
+    
+    .form-row {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .form-row .form-group {
+        flex: 1;
+        margin-bottom: 0;
+    }
+    
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    .help-text {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+        font-style: italic;
+    }
+    
+    .info-box {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border: 1px solid #2196f3;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .info-box::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--info-gradient);
+    }
+    
+    .info-box h6 {
+        color: #1976d2;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .info-box p {
+        color: #1976d2;
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    /* Animaciones */
+    .fade-in {
+        animation: fadeIn 0.6s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .slide-in {
+        animation: slideIn 0.8s ease-out;
+    }
+
+    @keyframes slideIn {
+        from { transform: translateX(-100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @media (max-width: 768px) {
+        .form-row {
+            flex-direction: column;
+            gap: 0;
+        }
+        
+        .form-container {
+            padding: 2rem 1.5rem;
+        }
+
+        .form-header h4 {
+            font-size: 1.5rem;
+        }
+
+        .btn-submit, .btn-secondary {
+            width: 100%;
+            margin: 0.5rem 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="form-container fade-in">
+                <div class="form-header">
+                    <h4><i class="fas fa-calendar-alt me-3"></i>Configurar Pago Mensual</h4>
+                    <p>Configura el pago mensual automático para un usuario</p>
+                </div>
+                
+                <!-- Información -->
+                <div class="info-box">
+                    <h6><i class="fas fa-info-circle me-2"></i>¿Cómo funciona?</h6>
+                    <p>Una vez configurado, el sistema generará automáticamente un pago pendiente cada mes para este usuario. El pago se creará el día especificado y quedará como "pendiente" hasta que se marque como "pagado".</p>
+                </div>
+                
+                <form method="POST" action="{{ url_for('admin_configurar_pago_mensual') }}">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="usuario_id" class="required-field">Usuario</label>
+                            <select class="form-control" id="usuario_id" name="usuario_id" required>
+                                <option value="">Seleccionar usuario...</option>
+                                {% for usuario in usuarios %}
+                                <option value="{{ usuario.id }}">{{ usuario.nombre }} {{ usuario.apellidos }} ({{ usuario.email }})</option>
+                                {% endfor %}
+                            </select>
+                            <div class="help-text">Selecciona el usuario para configurar su pago mensual</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="cantidad" class="required-field">Cantidad Mensual (€)</label>
+                            <input type="number" class="form-control" id="cantidad" name="cantidad" 
+                                   step="0.01" min="0" required>
+                            <div class="help-text">Importe que se cobrará cada mes</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="metodo_pago" class="required-field">Método de Pago</label>
+                            <select class="form-control" id="metodo_pago" name="metodo_pago" required>
+                                <option value="">Seleccionar método...</option>
+                                <option value="efectivo">Efectivo</option>
+                                <option value="transferencia">Transferencia</option>
+                                <option value="tarjeta">Tarjeta</option>
+                                <option value="paypal">PayPal</option>
+                                <option value="bizum">Bizum</option>
+                                <option value="manual">Manual</option>
+                            </select>
+                            <div class="help-text">Método de pago preferido del usuario</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="dia_vencimiento">Día de Vencimiento</label>
+                            <select class="form-control" id="dia_vencimiento" name="dia_vencimiento">
+                                {% for i in range(1, 32) %}
+                                <option value="{{ i }}" {% if i == 1 %}selected{% endif %}>{{ i }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="help-text">Día del mes en que vence el pago (1-31)</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="forma_pago">Forma de Pago (Opcional)</label>
+                        <input type="text" class="form-control" id="forma_pago" name="forma_pago" 
+                               placeholder="Ej: Transferencia a cuenta ES123456789, Pago en efectivo en gimnasio...">
+                        <div class="help-text">Descripción específica de cómo debe pagar el usuario</div>
+                    </div>
+
+                    <div class="form-group text-center">
+                        <button type="submit" class="btn btn-submit me-3">
+                            <i class="fas fa-save me-2"></i>Configurar Pago Mensual
+                        </button>
+                        <a href="{{ url_for('admin_pagos_mensuales') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Volver
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const usuarioSelect = document.getElementById('usuario_id');
+    const cantidadInput = document.getElementById('cantidad');
+    const metodoPagoSelect = document.getElementById('metodo_pago');
+    const formaPagoInput = document.getElementById('forma_pago');
+    
+    // Auto-completar forma de pago basada en el método seleccionado
+    metodoPagoSelect.addEventListener('change', function() {
+        const metodo = this.value;
+        let formaPago = '';
+        
+        switch(metodo) {
+            case 'efectivo':
+                formaPago = 'Pago en efectivo en gimnasio';
+                break;
+            case 'transferencia':
+                formaPago = 'Transferencia bancaria';
+                break;
+            case 'tarjeta':
+                formaPago = 'Pago con tarjeta';
+                break;
+            case 'paypal':
+                formaPago = 'Pago a través de PayPal';
+                break;
+            case 'bizum':
+                formaPago = 'Pago por Bizum';
+                break;
+            case 'manual':
+                formaPago = 'Pago manual';
+                break;
+        }
+        
+        if (formaPago && !formaPagoInput.value) {
+            formaPagoInput.value = formaPago;
+        }
+    });
+    
+    // Validar cantidad
+    cantidadInput.addEventListener('input', function() {
+        const valor = parseFloat(this.value);
+        if (valor < 0) {
+            this.value = 0;
+        }
+    });
+});
+</script>
+{% endblock %}

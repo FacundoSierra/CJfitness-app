@@ -1,0 +1,774 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Gestión de Pagos - Admin{% endblock %}
+
+{% block head_extra %}
+<style>
+    /* Variables CSS para consistencia */
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        --info-gradient: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
+        --danger-gradient: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+        --shadow-soft: 0 8px 32px rgba(0,0,0,0.1);
+        --shadow-hover: 0 12px 40px rgba(0,0,0,0.15);
+        --border-radius: 20px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Contenedor principal - Sin margen derecho */
+    .container-fluid {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        padding: 2rem 1rem;
+        margin-right: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    /* Eliminar todos los márgenes y padding del body y html */
+    body, html {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        overflow-x: hidden;
+    }
+
+    /* Asegurar que el contenido principal ocupe todo el ancho */
+    .main-content {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Eliminar márgenes de las filas de Bootstrap */
+    .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .col-12, .col-md-3, .col-md-4, .col-md-6, .col-md-8 {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    /* Título principal */
+    .main-title {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-soft);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .main-title::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: shimmer 3s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .main-title h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .main-title p {
+        font-size: 1.1rem;
+        margin: 0.5rem 0 0 0;
+        opacity: 0.9;
+    }
+
+    /* Tarjetas de estadísticas mejoradas */
+    .stats-card {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow-soft);
+        border: none;
+        position: relative;
+        overflow: hidden;
+        transition: var(--transition);
+    }
+
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--primary-gradient);
+    }
+
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    .stats-card.primary::before { background: var(--primary-gradient); }
+    .stats-card.success::before { background: var(--success-gradient); }
+    .stats-card.warning::before { background: var(--warning-gradient); }
+    .stats-card.info::before { background: var(--info-gradient); }
+
+    .stats-card h3 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin: 0;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .stats-card.success h3 {
+        background: var(--success-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .stats-card.warning h3 {
+        background: var(--warning-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .stats-card.info h3 {
+        background: var(--info-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .stats-card p {
+        margin: 0.5rem 0 0 0;
+        color: #6c757d;
+        font-weight: 500;
+        font-size: 1rem;
+    }
+
+    .stats-icon {
+        font-size: 3rem;
+        opacity: 0.1;
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+    }
+
+    /* Panel de acciones mejorado */
+    .action-buttons {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-soft);
+        border: 1px solid rgba(0,0,0,0.05);
+        text-align: center;
+    }
+
+    .btn-action {
+        border-radius: 50px;
+        padding: 1rem 2rem;
+        font-weight: 600;
+        margin: 0.5rem;
+        transition: var(--transition);
+        border: none;
+        position: relative;
+        overflow: hidden;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.9rem;
+    }
+
+    .btn-action::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .btn-action:hover::before {
+        left: 100%;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    .btn-primary {
+        background: var(--primary-gradient);
+        color: white;
+    }
+
+    .btn-success {
+        background: var(--success-gradient);
+        color: white;
+    }
+
+    /* Contenedor de búsqueda mejorado */
+    .search-container {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-soft);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .search-input {
+        border-radius: 25px;
+        border: 2px solid #e9ecef;
+        padding: 1rem 1.5rem;
+        font-size: 1rem;
+        transition: var(--transition);
+        background: #f8f9fa;
+        font-weight: 500;
+    }
+
+    .search-input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        background: white;
+        outline: none;
+    }
+
+    .search-input:hover {
+        border-color: #667eea;
+        background: white;
+    }
+
+    .search-icon {
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+
+    /* Tarjetas de usuario mejoradas */
+    .user-card {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 0;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-soft);
+        border: none;
+        position: relative;
+        overflow: hidden;
+        transition: var(--transition);
+    }
+
+    .user-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--primary-gradient);
+    }
+
+    .user-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    .user-card .card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: none;
+        padding: 1.5rem 2rem;
+        border-radius: var(--border-radius) var(--border-radius) 0 0;
+    }
+
+    .user-card .card-body {
+        padding: 2rem;
+    }
+
+    .user-info h5 {
+        color: #2c3e50;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        font-size: 1.3rem;
+    }
+
+    .badge-custom {
+        font-size: 0.85rem;
+        padding: 0.6rem 1.2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .badge-success {
+        background: var(--success-gradient);
+        color: white;
+    }
+
+    .badge-info {
+        background: var(--info-gradient);
+        color: white;
+    }
+
+    .badge-warning {
+        background: var(--warning-gradient);
+        color: white;
+    }
+
+    .badge-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+    }
+
+    /* Tabla mejorada */
+    .table {
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    .table thead th {
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.9rem;
+        padding: 1rem;
+    }
+
+    .table tbody td {
+        padding: 1rem;
+        border: none;
+        border-bottom: 1px solid #f8f9fa;
+        vertical-align: middle;
+    }
+
+    .table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    /* Botones de acción mejorados */
+    .btn-sm {
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        transition: var(--transition);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.8rem;
+    }
+
+    .btn-sm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    /* Estado vacío mejorado */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-soft);
+        margin: 2rem 0;
+    }
+
+    .empty-state i {
+        font-size: 5rem;
+        margin-bottom: 1.5rem;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .empty-state h5 {
+        color: #495057;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state p {
+        color: #6c757d;
+        margin-bottom: 2rem;
+    }
+
+    /* Animaciones */
+    .fade-in {
+        animation: fadeIn 0.6s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .slide-in {
+        animation: slideIn 0.8s ease-out;
+    }
+
+    @keyframes slideIn {
+        from { transform: translateX(-100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .main-title h2 {
+            font-size: 2rem;
+        }
+        
+        .stats-card h3 {
+            font-size: 2rem;
+        }
+        
+        .btn-action {
+            width: 100%;
+            margin: 0.25rem 0;
+        }
+        
+        .user-card .card-header,
+        .user-card .card-body {
+            padding: 1.5rem;
+        }
+    }
+</style>
+
+<script>
+// Función para cambiar estado
+function cambiarEstado(pagoId, estadoActual) {
+    const nuevoEstado = estadoActual === 'pendiente' ? 'pagado' : 'pendiente';
+    const texto = nuevoEstado === 'pagado' ? 'Completado' : 'Pendiente';
+    
+    if (confirm(`¿Quieres marcar este pago como ${texto}?`)) {
+        fetch(`/admin_pagos/${pagoId}/cambiar_estado`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                nuevo_estado: nuevoEstado
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('¡Estado cambiado correctamente!');
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error de conexión');
+        });
+    }
+}
+
+// Función para eliminar pago
+function eliminarPago(pagoId) {
+    if (confirm('¿Estás seguro de que quieres eliminar este pago? Esta acción no se puede deshacer.')) {
+        fetch(`/admin_pagos/${pagoId}/eliminar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('¡Pago eliminado correctamente!');
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error de conexión');
+        });
+    }
+}
+
+// Función para mostrar/ocultar pagos de usuario
+function togglePagosUsuario(usuarioId) {
+    const pagosContainer = document.getElementById(`pagos-usuario-${usuarioId}`);
+    const toggleBtn = document.getElementById(`toggle-btn-${usuarioId}`);
+    
+    if (pagosContainer.style.display === 'none' || pagosContainer.style.display === '') {
+        pagosContainer.style.display = 'block';
+        toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Ocultar Pagos';
+        toggleBtn.classList.remove('btn-outline-primary');
+        toggleBtn.classList.add('btn-outline-secondary');
+    } else {
+        pagosContainer.style.display = 'none';
+        toggleBtn.innerHTML = '<i class="fas fa-eye"></i> Ver Pagos';
+        toggleBtn.classList.remove('btn-outline-secondary');
+        toggleBtn.classList.add('btn-outline-primary');
+    }
+}
+
+// Función para filtrar usuarios por nombre
+function filterUsers() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const userItems = document.querySelectorAll('.user-item');
+    let visibleCount = 0;
+    
+    userItems.forEach(item => {
+        const username = item.getAttribute('data-username');
+        if (username.includes(searchTerm)) {
+            item.style.display = 'block';
+            visibleCount++;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    document.getElementById('userCount').textContent = visibleCount;
+}
+
+// Inicializar contador de usuarios
+document.addEventListener('DOMContentLoaded', function() {
+    const userItems = document.querySelectorAll('.user-item');
+    document.getElementById('userCount').textContent = userItems.length;
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Mensajes Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' }} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Título Principal -->
+    <div class="main-title fade-in">
+        <h2><i class="fas fa-credit-card me-3"></i>Dashboard de Pagos por Usuario</h2>
+        <p>Gestiona y supervisa todos los pagos de los usuarios de forma centralizada</p>
+    </div>
+
+    <!-- Estadísticas Generales -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card primary slide-in">
+                <i class="fas fa-credit-card stats-icon"></i>
+                <h3>{{ stats.total_pagos }}</h3>
+                <p>Total Pagos</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card success slide-in" style="animation-delay: 0.1s;">
+                <i class="fas fa-check-circle stats-icon"></i>
+                <h3>{{ stats.pagos_pagados }}</h3>
+                <p>Completados</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card warning slide-in" style="animation-delay: 0.2s;">
+                <i class="fas fa-clock stats-icon"></i>
+                <h3>{{ stats.pagos_pendientes }}</h3>
+                <p>Pendientes</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card info slide-in" style="animation-delay: 0.3s;">
+                <i class="fas fa-euro-sign stats-icon"></i>
+                <h3>€{{ "%.2f"|format(stats.ingresos_mes) }}</h3>
+                <p>Ingresos Mes</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel de Acciones -->
+    <div class="action-buttons fade-in">
+        <div class="d-flex flex-wrap justify-content-center">
+            <a href="{{ url_for('admin_registrar_pago') }}" class="btn btn-primary btn-action">
+                <i class="fas fa-plus me-2"></i>Registrar Nuevo Pago
+            </a>
+            <a href="{{ url_for('admin_pagos_mensuales') }}" class="btn btn-success btn-action">
+                <i class="fas fa-calendar-alt me-2"></i>Gestionar Pagos Mensuales
+            </a>
+        </div>
+    </div>
+
+    <!-- Búsqueda por Nombre -->
+    <div class="search-container fade-in">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="position-relative">
+                    <input type="text" 
+                           class="form-control search-input" 
+                           id="searchInput" 
+                           placeholder="Buscar usuario por nombre..."
+                           onkeyup="filterUsers()">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <span class="text-muted fw-bold">
+                    <i class="fas fa-users me-1"></i>
+                    <span id="userCount">0</span> usuarios encontrados
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Usuarios con Pagos -->
+    {% if pagos_recientes %}
+        {% set usuarios_agrupados = {} %}
+        {% for pago in pagos_recientes %}
+            {% if pago.usuario_id not in usuarios_agrupados %}
+                {% set _ = usuarios_agrupados.update({pago.usuario_id: {
+                    'nombre': pago.usuario_nombre,
+                    'pagos': [],
+                    'pendientes': 0,
+                    'completados': 0,
+                    'total': 0
+                }}) %}
+            {% endif %}
+            {% set _ = usuarios_agrupados[pago.usuario_id]['pagos'].append(pago) %}
+            {% set _ = usuarios_agrupados[pago.usuario_id].update({'total': usuarios_agrupados[pago.usuario_id]['total'] + 1}) %}
+            {% if pago.estado == 'pendiente' %}
+                {% set _ = usuarios_agrupados[pago.usuario_id].update({'pendientes': usuarios_agrupados[pago.usuario_id]['pendientes'] + 1}) %}
+            {% else %}
+                {% set _ = usuarios_agrupados[pago.usuario_id].update({'completados': usuarios_agrupados[pago.usuario_id]['completados'] + 1}) %}
+            {% endif %}
+        {% endfor %}
+
+        {% for usuario_id, usuario in usuarios_agrupados.items() %}
+        <div class="user-card user-item fade-in" data-username="{{ usuario.nombre.lower() }}" style="animation-delay: {{ loop.index0 * 0.1 }}s;">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="user-info">
+                            <i class="fas fa-user-circle me-2"></i>{{ usuario.nombre }}
+                        </h5>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="d-flex flex-wrap justify-content-end gap-2 mb-2">
+                            <span class="badge badge-warning badge-custom">
+                                <i class="fas fa-clock me-1"></i>{{ usuario.pendientes }} Pendientes
+                            </span>
+                            <span class="badge badge-success badge-custom">
+                                <i class="fas fa-check me-1"></i>{{ usuario.completados }} Completados
+                            </span>
+                            <span class="badge badge-info badge-custom">
+                                <i class="fas fa-list me-1"></i>{{ usuario.total }} Total
+                            </span>
+                        </div>
+                        <button class="btn btn-primary btn-sm" 
+                                id="toggle-btn-{{ usuario_id }}"
+                                onclick="togglePagosUsuario({{ usuario_id }})">
+                            <i class="fas fa-eye me-1"></i> Ver Pagos
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pagos del Usuario (ocultos por defecto) -->
+            <div class="card-body" id="pagos-usuario-{{ usuario_id }}" style="display: none;">
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Cantidad</th>
+                                <th>Método de Pago</th>
+                                <th>Forma de Pago</th>
+                                <th>Mes</th>
+                                <th>Estado</th>
+                                <th>Observaciones</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pago in usuario.pagos %}
+                            <tr>
+                                <td><i class="fas fa-calendar me-1"></i>{{ pago.fecha_pago }}</td>
+                                <td><span class="badge badge-success badge-custom">€{{ "%.2f"|format(pago.cantidad) }}</span></td>
+                                <td><span class="badge badge-info badge-custom">{{ pago.metodo_pago }}</span></td>
+                                <td><i class="fas fa-info-circle me-1"></i>{{ pago.forma_pago or 'No especificado' }}</td>
+                                <td><span class="badge badge-secondary badge-custom">{{ pago.mes_pago }}</span></td>
+                                <td>
+                                    {% if pago.estado == 'pagado' %}
+                                        <span class="badge badge-success badge-custom"><i class="fas fa-check me-1"></i>Completado</span>
+                                    {% else %}
+                                        <span class="badge badge-warning badge-custom"><i class="fas fa-clock me-1"></i>Pendiente</span>
+                                    {% endif %}
+                                </td>
+                                <td><i class="fas fa-comment me-1"></i>{{ pago.observaciones or 'Sin observaciones' }}</td>
+                                <td>
+                                    <div class="d-flex gap-1">
+                                        <!-- Botón para cambiar estado -->
+                                        <button class="btn btn-sm btn-primary" 
+                                                onclick="cambiarEstado({{ pago.id }}, '{{ pago.estado }}')">
+                                            {% if pago.estado == 'pendiente' %}
+                                                <i class="fas fa-check me-1"></i>Completar
+                                            {% else %}
+                                                <i class="fas fa-clock me-1"></i>Pendiente
+                                            {% endif %}
+                                        </button>
+                                        
+                                        <!-- Botón para eliminar -->
+                                        <button class="btn btn-sm btn-danger" 
+                                                onclick="eliminarPago({{ pago.id }})">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state fade-in">
+            <i class="fas fa-credit-card"></i>
+            <h5>No hay pagos registrados</h5>
+            <p>Comienza registrando el primer pago</p>
+            <a href="{{ url_for('admin_registrar_pago') }}" class="btn btn-primary btn-action">
+                <i class="fas fa-plus me-2"></i>Registrar Primer Pago
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soporte - Fitness App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --info-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            --light-gradient: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --shadow-hover: 0 15px 40px rgba(0, 0, 0, 0.15);
+            --border-radius: 15px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .support-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-soft);
+            margin: 2rem auto;
+            padding: 2rem;
+            max-width: 1200px;
+        }
+
+        .header-section {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+            background: var(--primary-gradient);
+            color: white;
+            border-radius: var(--border-radius);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .header-section h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-section p {
+            font-size: 1rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 50px;
+            padding: 0.5rem 1rem;
+            text-decoration: none;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            transform: translateX(-3px);
+        }
+
+        .support-card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-soft);
+            margin-bottom: 2rem;
+            overflow: hidden;
+            border: none;
+        }
+
+        .support-card-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 1.5rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .support-card-body {
+            padding: 2rem;
+        }
+
+        .contact-method {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.5rem;
+            border: 2px solid #e9ecef;
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .contact-method:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .contact-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .contact-text {
+            flex: 1;
+        }
+
+        .contact-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 0.25rem;
+        }
+
+        .contact-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .contact-details {
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .faq-item {
+            border: 1px solid #e9ecef;
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .faq-question {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: var(--transition);
+        }
+
+        .faq-question:hover {
+            background: #e9ecef;
+        }
+
+        .faq-answer {
+            padding: 1.5rem;
+            color: #6c757d;
+            line-height: 1.6;
+            display: none;
+        }
+
+        .faq-answer.show {
+            display: block;
+        }
+
+        .faq-icon {
+            transition: var(--transition);
+        }
+
+        .faq-icon.rotated {
+            transform: rotate(180deg);
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            transition: var(--transition);
+            font-size: 0.95rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+
+        .submit-btn {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: var(--transition);
+            font-size: 1rem;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .support-container {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+            
+            .header-section h1 {
+                font-size: 1.8rem;
+            }
+            
+            .contact-method {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div aria-live="polite" aria-atomic="true" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1200;">
+          {% for category, message in messages %}
+          <div class="toast show align-items-center text-bg-{{ 'success' if category=='success' else 'danger' }} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2500">
+            <div class="d-flex">
+              <div class="toast-body">
+                {{ message }}
+              </div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="support-container fade-in">
+        <!-- Header -->
+        <div class="header-section">
+            <a href="{{ url_for('dashboard') }}" class="back-btn">
+                <i class="bi bi-arrow-left me-1"></i>
+                <span class="d-none d-md-inline">Volver al Dashboard</span>
+                <span class="d-md-none">Volver</span>
+            </a>
+            <h1><i class="bi bi-headset me-3"></i>Soporte</h1>
+            <p>Estamos aquí para ayudarte en todo momento</p>
+        </div>
+
+        <!-- Métodos de Contacto -->
+        <div class="support-card">
+            <div class="support-card-header">
+                <i class="bi bi-telephone"></i>Contáctanos
+            </div>
+            <div class="support-card-body">
+                <div class="contact-method" onclick="window.open('mailto:soporte@fitnessapp.com')">
+                    <div class="contact-icon" style="background: var(--success-gradient);">
+                        <i class="bi bi-envelope"></i>
+                    </div>
+                    <div class="contact-text">
+                        <div class="contact-title">Email de Soporte</div>
+                        <div class="contact-description">Envía tu consulta por correo electrónico</div>
+                        <div class="contact-details">soporte@fitnessapp.com</div>
+                    </div>
+                </div>
+
+                <div class="contact-method" onclick="window.open('tel:+1234567890')">
+                    <div class="contact-icon" style="background: var(--warning-gradient);">
+                        <i class="bi bi-telephone"></i>
+                    </div>
+                    <div class="contact-text">
+                        <div class="contact-title">Teléfono de Soporte</div>
+                        <div class="contact-description">Llámanos para asistencia inmediata</div>
+                        <div class="contact-details">+1 (234) 567-890</div>
+                    </div>
+                </div>
+
+                <div class="contact-method" onclick="window.open('https://wa.me/1234567890')">
+                    <div class="contact-icon" style="background: var(--info-gradient);">
+                        <i class="bi bi-whatsapp"></i>
+                    </div>
+                    <div class="contact-text">
+                        <div class="contact-title">WhatsApp</div>
+                        <div class="contact-description">Chatea con nosotros en tiempo real</div>
+                        <div class="contact-details">+1 (234) 567-890</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preguntas Frecuentes -->
+        <div class="support-card">
+            <div class="support-card-header">
+                <i class="bi bi-question-circle"></i>Preguntas Frecuentes
+            </div>
+            <div class="support-card-body">
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>¿Cómo puedo cambiar mi rutina de entrenamiento?</span>
+                        <i class="bi bi-chevron-down faq-icon"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Para cambiar tu rutina, contacta con tu entrenador personal a través del panel de administración. Ellos podrán modificar tu rutina según tus necesidades y objetivos actuales.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>¿Cómo registro mi progreso en los ejercicios?</span>
+                        <i class="bi bi-chevron-down faq-icon"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>En la sección "Mis Entrenamientos", haz clic en "Registrar Progreso" en cualquier ejercicio. Podrás ingresar las series, repeticiones, RPE y carga que realizaste realmente.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>¿Puedo ver mi historial de entrenamientos?</span>
+                        <i class="bi bi-chevron-down faq-icon"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Sí, en la sección "Mis Entrenamientos" puedes cambiar entre vista diaria, semanal y mensual para ver tu historial completo de entrenamientos y progreso.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>¿Cómo actualizo mi información personal?</span>
+                        <i class="bi bi-chevron-down faq-icon"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Ve a "Mi Información" desde el dashboard principal. Allí podrás editar y actualizar tus datos personales, aunque algunos campos como nombre y email requieren contacto con soporte.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>¿Qué hago si tengo problemas técnicos?</span>
+                        <i class="bi bi-chevron-down faq-icon"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Si experimentas problemas técnicos, contacta inmediatamente a nuestro equipo de soporte por email o teléfono. Incluye detalles sobre el problema y capturas de pantalla si es posible.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario de Contacto -->
+        <div class="support-card">
+            <div class="support-card-header">
+                <i class="bi bi-chat-dots"></i>Envíanos un Mensaje
+            </div>
+            <div class="support-card-body">
+                <form>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nombre</label>
+                            <input type="text" class="form-control" value="{{ user.nombre }} {{ user.apellidos }}" readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" value="{{ user.email }}" readonly>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Asunto</label>
+                        <select class="form-select">
+                            <option>Consulta general</option>
+                            <option>Problema técnico</option>
+                            <option>Solicitud de cambio de rutina</option>
+                            <option>Pregunta sobre ejercicios</option>
+                            <option>Otro</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mensaje</label>
+                        <textarea class="form-control" rows="5" placeholder="Describe tu consulta o problema..."></textarea>
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" class="submit-btn">
+                            <i class="bi bi-send me-2"></i>Enviar Mensaje
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Horarios de Atención -->
+        <div class="support-card">
+            <div class="support-card-header">
+                <i class="bi bi-clock"></i>Horarios de Atención
+            </div>
+            <div class="support-card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Soporte por Email</h6>
+                        <p class="text-muted">24/7 - Respuesta en menos de 24 horas</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Soporte por Teléfono</h6>
+                        <p class="text-muted">Lunes a Viernes: 9:00 - 18:00<br>Sábados: 10:00 - 14:00</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-5 pt-4" style="border-top: 1px solid #e9ecef;">
+            <p class="text-muted mb-0">
+                <i class="bi bi-heart-fill text-danger me-1"></i>
+                Tu satisfacción es nuestra prioridad
+            </p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleFAQ(element) {
+            const answer = element.nextElementSibling;
+            const icon = element.querySelector('.faq-icon');
+            
+            if (answer.classList.contains('show')) {
+                answer.classList.remove('show');
+                icon.classList.remove('rotated');
+            } else {
+                // Cerrar todas las otras FAQs
+                document.querySelectorAll('.faq-answer.show').forEach(item => {
+                    item.classList.remove('show');
+                });
+                document.querySelectorAll('.faq-icon.rotated').forEach(item => {
+                    item.classList.remove('rotated');
+                });
+                
+                // Abrir la FAQ actual
+                answer.classList.add('show');
+                icon.classList.add('rotated');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Efecto de aparición escalonada para las tarjetas
+            const cards = document.querySelectorAll('.support-card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
+            });
+
+            // Efecto hover mejorado para los métodos de contacto
+            const contactMethods = document.querySelectorAll('.contact-method');
+            contactMethods.forEach(method => {
+                method.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px) scale(1.02)';
+                });
+                
+                method.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Planes de Suscripción - Fitness App{% endblock %}
+
+{% block content %}
+<div class="planes-container">
+    <div class="planes-header">
+        <h1>Planes de Suscripción</h1>
+        <p>Elige el plan que mejor se adapte a tus necesidades de fitness</p>
+    </div>
+
+    <div class="planes-grid">
+        {% for plan in planes %}
+        <div class="plan-card {% if plan.tipo == 'anual' %}plan-featured{% endif %}">
+            {% if plan.tipo == 'anual' %}
+            <div class="plan-badge">Más Popular</div>
+            {% endif %}
+            
+            <div class="plan-header">
+                <h3>{{ plan.nombre }}</h3>
+                <div class="plan-price">
+                    <span class="currency">€</span>
+                    <span class="amount">{{ "%.2f"|format(plan.precio) }}</span>
+                    <span class="period">/{{ plan.tipo }}</span>
+                </div>
+                <p class="plan-description">{{ plan.descripcion }}</p>
+            </div>
+
+            <div class="plan-features">
+                {% if plan.caracteristicas %}
+                    {% for caracteristica in plan.caracteristicas %}
+                    <div class="feature-item">
+                        <i class="fas fa-check"></i>
+                        <span>{{ caracteristica }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="feature-item">
+                        <i class="fas fa-check"></i>
+                        <span>Acceso completo a ejercicios</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-check"></i>
+                        <span>Rutinas personalizadas</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-check"></i>
+                        <span>Seguimiento de progreso</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-check"></i>
+                        <span>Soporte prioritario</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="plan-actions">
+                <button class="btn btn-primary btn-plan" 
+                        data-plan-id="{{ plan.id }}"
+                        data-plan-nombre="{{ plan.nombre }}"
+                        data-plan-precio="{{ plan.precio }}">
+                    Suscribirse Ahora
+                </button>
+            </div>
+
+            <div class="plan-footer">
+                <small>Duración: {{ plan.duracion_dias }} días</small>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="planes-info">
+        <div class="info-card">
+            <i class="fas fa-shield-alt"></i>
+            <h4>Pago Seguro</h4>
+            <p>Todos los pagos están protegidos con encriptación SSL de 256 bits</p>
+        </div>
+        <div class="info-card">
+            <i class="fas fa-undo"></i>
+            <h4>Cancelación Gratuita</h4>
+            <p>Puedes cancelar tu suscripción en cualquier momento sin penalización</p>
+        </div>
+        <div class="info-card">
+            <i class="fas fa-headset"></i>
+            <h4>Soporte 24/7</h4>
+            <p>Nuestro equipo está disponible para ayudarte en cualquier momento</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Pago -->
+<div id="paymentModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Completar Suscripción</h3>
+            <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="plan-summary">
+                <h4 id="modalPlanName"></h4>
+                <p class="plan-price-modal">
+                    <span class="currency">€</span>
+                    <span class="amount" id="modalPlanPrice"></span>
+                    <span class="period" id="modalPlanPeriod"></span>
+                </p>
+            </div>
+            
+            <form id="paymentForm">
+                <div class="form-group">
+                    <label for="cardNumber">Número de Tarjeta</label>
+                    <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="expiryDate">Fecha de Expiración</label>
+                        <input type="text" id="expiryDate" placeholder="MM/AA" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cvv">CVV</label>
+                        <input type="text" id="cvv" placeholder="123" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="cardName">Nombre en la Tarjeta</label>
+                    <input type="text" id="cardName" placeholder="Juan Pérez" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="autoRenewal" checked>
+                        Renovación automática
+                    </label>
+                    <small>Tu suscripción se renovará automáticamente al finalizar el período</small>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-full">
+                    <i class="fas fa-lock"></i>
+                    Pagar y Activar
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Éxito -->
+<div id="successModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header success">
+            <h3><i class="fas fa-check-circle"></i> ¡Suscripción Exitosa!</h3>
+        </div>
+        <div class="modal-body">
+            <p>Tu suscripción ha sido activada correctamente. Ya puedes disfrutar de todas las funcionalidades premium.</p>
+            <div class="success-actions">
+                <button class="btn btn-primary" onclick="window.location.href='/usuario_dashboard'">
+                    Ir al Dashboard
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar Stripe
+    const stripe = Stripe('{{ config.STRIPE_PUBLIC_KEY }}');
+    
+    // Botones de plan
+    const planButtons = document.querySelectorAll('.btn-plan');
+    planButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const planId = this.dataset.planId;
+            const planNombre = this.dataset.planNombre;
+            const planPrecio = this.dataset.planPrecio;
+            
+            // Actualizar modal
+            document.getElementById('modalPlanName').textContent = planNombre;
+            document.getElementById('modalPlanPrice').textContent = planPrecio;
+            
+            // Mostrar modal
+            document.getElementById('paymentModal').style.display = 'block';
+            
+            // Guardar plan seleccionado
+            window.selectedPlanId = planId;
+        });
+    });
+    
+    // Cerrar modal
+    const closeButtons = document.querySelectorAll('.close');
+    closeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            document.getElementById('paymentModal').style.display = 'none';
+        });
+    });
+    
+    // Cerrar modal al hacer clic fuera
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('paymentModal');
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+    
+    // Formulario de pago
+    document.getElementById('paymentForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const submitButton = this.querySelector('button[type="submit"]');
+        const originalText = submitButton.innerHTML;
+        
+        try {
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+            
+            // Crear suscripción
+            const response = await fetch('/api/suscripcion/crear', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    plan_id: window.selectedPlanId,
+                    metodo_pago_id: 'stripe_customer_id' // Esto se generaría con Stripe
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // Ocultar modal de pago
+                document.getElementById('paymentModal').style.display = 'none';
+                
+                // Mostrar modal de éxito
+                document.getElementById('successModal').style.display = 'block';
+                
+                // Actualizar estado premium en la sesión
+                sessionStorage.setItem('userPremium', 'true');
+                
+            } else {
+                alert('Error: ' + result.error);
+            }
+            
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error procesando el pago. Intenta de nuevo.');
+        } finally {
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalText;
+        }
+    });
+    
+    // Formatear campos de tarjeta
+    const cardNumber = document.getElementById('cardNumber');
+    const expiryDate = document.getElementById('expiryDate');
+    const cvv = document.getElementById('cvv');
+    
+    cardNumber.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+        let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+        e.target.value = formattedValue;
+    });
+    
+    expiryDate.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 2) {
+            value = value.slice(0, 2) + '/' + value.slice(2, 4);
+        }
+        e.target.value = value;
+    });
+    
+    cvv.addEventListener('input', function(e) {
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3);
+    });
+});
+</script>
+{% endblock %}

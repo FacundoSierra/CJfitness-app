@@ -1,0 +1,679 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Pagos Mensuales - Admin{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Mensajes Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' if category == 'danger' else 'warning' }} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' if category == 'danger' else 'info-circle' }} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Título Principal -->
+    <div class="main-title fade-in">
+        <h2><i class="fas fa-calendar-alt me-3"></i>Gestión de Pagos Mensuales</h2>
+        <p>Configura y gestiona los pagos mensuales de los usuarios de forma automática</p>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card primary slide-in">
+                <i class="fas fa-credit-card stats-icon"></i>
+                <h3>{{ stats.total_pagos }}</h3>
+                <p>Total Pagos</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card success slide-in" style="animation-delay: 0.1s;">
+                <i class="fas fa-check-circle stats-icon"></i>
+                <h3>{{ stats.pagos_pagados }}</h3>
+                <p>Pagados</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card warning slide-in" style="animation-delay: 0.2s;">
+                <i class="fas fa-clock stats-icon"></i>
+                <h3>{{ stats.pagos_pendientes }}</h3>
+                <p>Pendientes</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card info slide-in" style="animation-delay: 0.3s;">
+                <i class="fas fa-euro-sign stats-icon"></i>
+                <h3>€{{ "%.2f"|format(stats.ingresos_mes) }}</h3>
+                <p>Ingresos Mes</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel de Acciones -->
+    <div class="action-buttons fade-in">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h5><i class="fas fa-cogs me-2"></i>Acciones Rápidas</h5>
+                <div class="d-flex flex-wrap">
+                    <a href="{{ url_for('admin_configurar_pago_mensual') }}" class="btn btn-primary btn-action">
+                        <i class="fas fa-plus me-2"></i>Configurar Pago Mensual
+                    </a>
+                    <button class="btn btn-success btn-action" onclick="generarPagosMensuales()">
+                        <i class="fas fa-calendar-plus me-2"></i>Generar Pagos del Mes
+                    </button>
+                    <a href="{{ url_for('admin_pagos') }}" class="btn btn-secondary btn-action">
+                        <i class="fas fa-credit-card me-2"></i>Ver Todos los Pagos
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="form-generar">
+                    <label class="form-label fw-bold mb-2">Generar para mes específico:</label>
+                    <form method="POST" action="{{ url_for('admin_generar_pagos_mensuales') }}" id="generarForm">
+                        <div class="input-group">
+                            <input type="month" class="form-control" name="mes" value="{{ moment_actual }}">
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="fas fa-play me-1"></i>Generar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Usuarios con Configuración -->
+    {% if usuarios_config %}
+        <div class="row">
+            <div class="col-12">
+                <h5 class="mb-4 fade-in"><i class="fas fa-users me-2"></i>Usuarios con Pago Mensual Configurado</h5>
+                
+                {% for usuario in usuarios_config %}
+                <div class="user-card fade-in" style="animation-delay: {{ loop.index0 * 0.1 }}s;">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="user-info">
+                                <h5><i class="fas fa-user-circle me-2"></i>{{ usuario.usuario_nombre }}</h5>
+                                <div class="user-details">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    Configurado desde: {{ usuario.fecha_creacion }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="payment-info">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <strong><i class="fas fa-euro-sign me-1"></i>Cantidad:</strong><br>
+                                        <span class="badge badge-success badge-custom">€{{ "%.2f"|format(usuario.cantidad_mensual) }}</span>
+                                    </div>
+                                    <div class="col-6">
+                                        <strong><i class="fas fa-credit-card me-1"></i>Método:</strong><br>
+                                        <span class="badge badge-info badge-custom">{{ usuario.metodo_pago }}</span>
+                                    </div>
+                                </div>
+                                {% if usuario.forma_pago %}
+                                <div class="mt-3">
+                                    <strong><i class="fas fa-info-circle me-1"></i>Forma:</strong> {{ usuario.forma_pago }}
+                                </div>
+                                {% endif %}
+                                <div class="mt-3">
+                                    <strong><i class="fas fa-calendar-day me-1"></i>Vencimiento:</strong> Día {{ usuario.dia_vencimiento }} de cada mes
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12 text-end">
+                            <button class="btn btn-cancelar" onclick="cancelarPagoMensual({{ usuario.usuario_id }})">
+                                <i class="fas fa-times me-1"></i>Cancelar Configuración
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state fade-in">
+            <i class="fas fa-calendar-times"></i>
+            <h5>No hay configuraciones de pago mensual</h5>
+            <p>Comienza configurando el pago mensual para un usuario</p>
+            <a href="{{ url_for('admin_configurar_pago_mensual') }}" class="btn btn-primary btn-action">
+                <i class="fas fa-plus me-2"></i>Configurar Primer Pago Mensual
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal de Confirmación -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Acción</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmButton">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block head_extra %}
+<style>
+    /* Variables CSS para consistencia */
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        --info-gradient: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
+        --danger-gradient: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+        --shadow-soft: 0 8px 32px rgba(0,0,0,0.1);
+        --shadow-hover: 0 12px 40px rgba(0,0,0,0.15);
+        --border-radius: 20px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Contenedor principal - Sin margen derecho */
+    .container-fluid {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        padding: 2rem 1rem;
+        margin-right: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    /* Eliminar todos los márgenes y padding del body y html */
+    body, html {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        overflow-x: hidden;
+    }
+
+    /* Asegurar que el contenido principal ocupe todo el ancho */
+    .main-content {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Eliminar márgenes de las filas de Bootstrap */
+    .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .col-12, .col-md-3, .col-md-4, .col-md-6, .col-md-8 {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    /* Título principal */
+    .main-title {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-soft);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .main-title::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: shimmer 3s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .main-title h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .main-title p {
+        font-size: 1.1rem;
+        margin: 0.5rem 0 0 0;
+        opacity: 0.9;
+    }
+
+    /* Tarjetas de estadísticas mejoradas */
+    .stats-card {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow-soft);
+        border: none;
+        position: relative;
+        overflow: hidden;
+        transition: var(--transition);
+    }
+
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--primary-gradient);
+    }
+
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    .stats-card.primary::before { background: var(--primary-gradient); }
+    .stats-card.success::before { background: var(--success-gradient); }
+    .stats-card.warning::before { background: var(--warning-gradient); }
+    .stats-card.info::before { background: var(--info-gradient); }
+
+    .stats-card h3 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin: 0;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .stats-card.success h3 {
+        background: var(--success-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .stats-card.warning h3 {
+        background: var(--warning-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .stats-card.info h3 {
+        background: var(--info-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .stats-card p {
+        margin: 0.5rem 0 0 0;
+        color: #6c757d;
+        font-weight: 500;
+        font-size: 1rem;
+    }
+
+    .stats-icon {
+        font-size: 3rem;
+        opacity: 0.1;
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+    }
+
+    /* Panel de acciones mejorado */
+    .action-buttons {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-soft);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .action-buttons h5 {
+        color: #495057;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-action {
+        border-radius: 50px;
+        padding: 1rem 2rem;
+        font-weight: 600;
+        margin: 0.5rem;
+        transition: var(--transition);
+        border: none;
+        position: relative;
+        overflow: hidden;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.9rem;
+    }
+
+    .btn-action::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .btn-action:hover::before {
+        left: 100%;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    .btn-primary {
+        background: var(--primary-gradient);
+        color: white;
+    }
+
+    .btn-success {
+        background: var(--success-gradient);
+        color: white;
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+    }
+
+    /* Tarjetas de usuario mejoradas */
+    .user-card {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow-soft);
+        border: none;
+        position: relative;
+        overflow: hidden;
+        transition: var(--transition);
+    }
+
+    .user-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--primary-gradient);
+    }
+
+    .user-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    .user-info h5 {
+        color: #2c3e50;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        font-size: 1.3rem;
+    }
+
+    .user-details {
+        color: #7f8c8d;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .payment-info {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .badge-custom {
+        font-size: 0.85rem;
+        padding: 0.6rem 1.2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .badge-success {
+        background: var(--success-gradient);
+        color: white;
+    }
+
+    .badge-info {
+        background: var(--info-gradient);
+        color: white;
+    }
+
+    .badge-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+    }
+
+    /* Estado vacío mejorado */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-soft);
+        margin: 2rem 0;
+    }
+
+    .empty-state i {
+        font-size: 5rem;
+        margin-bottom: 1.5rem;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .empty-state h5 {
+        color: #495057;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state p {
+        color: #6c757d;
+        margin-bottom: 2rem;
+    }
+
+    /* Formulario de generación mejorado */
+    .form-generar {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 15px;
+        padding: 1rem;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .form-control {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        transition: var(--transition);
+        font-weight: 500;
+    }
+
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        outline: none;
+    }
+
+    /* Botón de cancelar mejorado */
+    .btn-cancelar {
+        background: var(--danger-gradient);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 600;
+        transition: var(--transition);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.85rem;
+    }
+
+    .btn-cancelar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
+        color: white;
+    }
+
+    /* Modal mejorado */
+    .modal-content {
+        border-radius: var(--border-radius);
+        border: none;
+        box-shadow: var(--shadow-hover);
+    }
+
+    .modal-header {
+        background: var(--primary-gradient);
+        color: white;
+        border-radius: var(--border-radius) var(--border-radius) 0 0;
+        border: none;
+    }
+
+    .modal-title {
+        font-weight: 700;
+    }
+
+    .btn-close {
+        filter: invert(1);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .main-title h2 {
+            font-size: 2rem;
+        }
+        
+        .stats-card h3 {
+            font-size: 2rem;
+        }
+        
+        .btn-action {
+            width: 100%;
+            margin: 0.25rem 0;
+        }
+        
+        .user-card {
+            padding: 1.5rem;
+        }
+    }
+
+    /* Animaciones suaves */
+    .fade-in {
+        animation: fadeIn 0.6s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .slide-in {
+        animation: slideIn 0.8s ease-out;
+    }
+
+    @keyframes slideIn {
+        from { transform: translateX(-100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+</style>
+
+<script>
+function generarPagosMensuales() {
+    if (confirm('¿Estás seguro de que quieres generar los pagos mensuales para este mes?')) {
+        document.getElementById('generarForm').submit();
+    }
+}
+
+function cancelarPagoMensual(usuarioId) {
+    const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+    document.getElementById('confirmMessage').textContent = '¿Estás seguro de que quieres cancelar la configuración de pago mensual para este usuario?';
+    
+    document.getElementById('confirmButton').onclick = function() {
+        // Mostrar indicador de carga
+        const button = document.getElementById('confirmButton');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Cancelando...';
+        button.disabled = true;
+        
+        fetch(`/admin_pagos_mensuales/cancelar/${usuarioId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                alert('Configuración cancelada correctamente');
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Error desconocido'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error de conexión: ' + error.message);
+        })
+        .finally(() => {
+            // Restaurar botón
+            button.innerHTML = originalText;
+            button.disabled = false;
+            modal.hide();
+        });
+    };
+    
+    modal.show();
+}
+</script>
+{% endblock %}

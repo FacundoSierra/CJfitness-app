@@ -1,0 +1,122 @@
+body {
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    background: radial-gradient(ellipse at bottom right, #e6f0fa 0%, #dde6ee 80%, #ccd6df 100%);
+    font-family: 'Segoe UI', 'Inter', Arial, sans-serif;
+    color: #2e3b4e;
+}
+
+.login-container,
+.register-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-box,
+.register-card {
+    background: rgba(255, 255, 255, 0.83);
+    box-shadow: 0 6px 32px 0 rgba(23, 44, 71, 0.12), 0 1.5px 6px 0 rgba(33, 75, 130, 0.07);
+    border-radius: 20px;
+    padding: 40px 38px;
+    max-width: 400px;
+    width: 100%;
+    margin: 0 20px;
+    border: 1.5px solid #d2e1f7;
+    backdrop-filter: blur(4px);
+}
+
+h2 {
+    font-weight: bold;
+    color: #2266aa;
+    letter-spacing: 1px;
+    margin-bottom: 26px;
+}
+
+.form-control,
+.form-select {
+    background: rgba(245, 247, 252, 0.93);
+    border: 1.4px solid #b6c9e3;
+    border-radius: 14px;
+    padding: 11px 14px;
+    margin-bottom: 18px;
+    font-size: 1rem;
+    color: #345285;
+    box-shadow: none;
+    outline: none;
+    transition: border 0.18s;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border: 1.4px solid #6da9ed;
+    background: #f5faff;
+    color: #2266aa;
+}
+
+label {
+    font-weight: 500;
+    color: #607091;
+    margin-bottom: 7px;
+}
+
+.login-button,
+.register-button {
+    width: 100%;
+    background: linear-gradient(90deg, #ffe890 0%, #6da9ed 100%);
+    color: #23487b;
+    font-weight: bold;
+    border: none;
+    padding: 13px 0;
+    border-radius: 14px;
+    margin-top: 5px;
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px #e9ecf4;
+    transition: background 0.2s, color 0.2s;
+}
+
+.login-button:hover,
+.register-button:hover {
+    background: linear-gradient(90deg, #f9e5a5 0%, #6db8ea 100%);
+    color: #0b3468;
+}
+
+.text-danger {
+    color: #d1342f !important;
+    margin-bottom: 12px;
+}
+
+a {
+    color: #2266aa;
+    font-weight: bold;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+a:hover {
+    color: #f6be3b;
+    text-decoration: underline;
+}
+
+.redirect,
+p.text-center {
+    margin-top: 17px;
+    color: #7c8fa7;
+    font-size: 1rem;
+}
+
+/* Responsive para móvil */
+@media (max-width: 540px) {
+    .login-box,
+    .register-card {
+        padding: 24px 8px;
+        border-radius: 13px;
+    }
+    h2 {
+        font-size: 1.5rem;
+    }
+}
+

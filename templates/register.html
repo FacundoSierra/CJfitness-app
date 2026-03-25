@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - Fitness App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+</head>
+<body>
+    <div class="login-container d-flex justify-content-center align-items-center">
+        <div class="login-box text-center">
+            <h2 class="mb-4 text-main">Registro</h2>
+            <form method="POST" action="{{ url_for('register') }}" autocomplete="on">
+                {{ form.hidden_tag() }}
+                <div class="form-group mb-3 text-start">
+                    <label for="username" class="form-label">Usuario</label>
+                    {{ form.username(class="form-control", placeholder="Tu usuario único") }}
+                    {% if form.username.errors %}
+                        <div class="text-danger small">
+                            {% for error in form.username.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="form-group mb-3 text-start">
+                    <label for="email" class="form-label">Correo electrónico</label>
+                    {{ form.email(class="form-control", placeholder="ejemplo@email.com") }}
+                    {% if form.email.errors %}
+                        <div class="text-danger small">
+                            {% for error in form.email.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="form-group mb-3 text-start">
+                    <label for="password" class="form-label">Contraseña</label>
+                    {{ form.password(class="form-control", placeholder="Mínimo 8 caracteres") }}
+                    {% if form.password.errors %}
+                        <div class="text-danger small">
+                            {% for error in form.password.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="form-group mb-3 text-start">
+                    <label for="confirm_password" class="form-label">Confirmar Contraseña</label>
+                    {{ form.confirm_password(class="form-control", placeholder="Repite tu contraseña") }}
+                    {% if form.confirm_password.errors %}
+                        <div class="text-danger small">
+                            {% for error in form.confirm_password.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="form-group mb-3 text-start">
+                    <label for="nombre" class="form-label">Nombre</label>
+                    {{ form.nombre(class="form-control") }}
+                    {% if form.nombre.errors %}
+                        <div class="text-danger small">
+                            {% for error in form.nombre.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="form-group mb-3 text-start">
+                    <label for="apellidos" class="form-label">Apellidos</label>
+                    {{ form.apellidos(class="form-control") }}
+                    {% if form.apellidos.errors %}
+                        <div class="text-danger small">
+                            {% for error in form.apellidos.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="form-group mb-3 text-start">
+                    <label for="telefono" class="form-label">Teléfono</label>
+                    {{ form.telefono(class="form-control", placeholder="Ej: 600123123") }}
+                    {% if form.telefono.errors %}
+                        <div class="text-danger small">
+                            {% for error in form.telefono.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="form-group mb-4 text-start">
+                    <label for="role" class="form-label">Rol</label>
+                    {{ form.role(class="form-select") }}
+                    {% if form.role.errors %}
+                        <div class="text-danger small">
+                            {% for error in form.role.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <button class="login-button" type="submit">{{ form.submit.label }}</button>
+            </form>
+            <p class="redirect mt-3">
+                ¿Ya tienes cuenta? 
+                <a href="{{ url_for('login') }}">Inicia sesión aquí</a>
+            </p>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

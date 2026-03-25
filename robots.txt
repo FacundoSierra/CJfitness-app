@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://fitness-app-hxmg.onrender.com/sitemap.xml

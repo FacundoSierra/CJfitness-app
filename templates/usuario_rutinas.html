@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Rutinas - Fitness App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --info-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --warning-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --danger-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            --border-radius: 15px;
+            --shadow-soft: 0 10px 30px rgba(0,0,0,0.1);
+            --shadow-hover: 0 20px 60px rgba(0,0,0,0.15);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .main-title {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-soft);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .main-title::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: shimmer 3s infinite;
+        }
+
+        .main-title h1 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 2.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .main-title p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Panel de controles */
+        .controls-panel {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-soft);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-select, .form-control {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 0.75rem 1rem;
+            transition: var(--transition);
+        }
+
+        .form-select:focus, .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+
+        .btn-action {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+            color: white;
+        }
+        
+        /* Headers de vista */
+        .date-header, .week-header, .month-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-soft);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .week-header {
+            background: var(--info-gradient);
+        }
+
+        .month-header {
+            background: var(--success-gradient);
+        }
+
+        .date-header::before, .week-header::before, .month-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: shimmer 3s infinite;
+        }
+
+        .date-header h5, .week-header h5, .month-header h5 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 1.8rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Tarjetas de rutina */
+        .routine-card {
+            background: white;
+            border-radius: var(--border-radius);
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-soft);
+            border: none;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .routine-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .routine-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: var(--warning-gradient);
+        }
+
+        .routine-card .card-header {
+            background: linear-gradient(135deg, #ffe48b 0%, #ffd700 100%);
+            color: #2e68a8;
+            border: none;
+            font-weight: 700;
+            padding: 2rem;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .routine-card .card-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: shimmer 4s infinite;
+        }
+
+        .routine-card .card-header h6 {
+            margin: 0;
+            font-size: 1.3rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .routine-card .card-body {
+            padding: 2.5rem;
+        }
+
+        /* Ejercicios */
+        .exercise-item {
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            border-left: 6px solid var(--primary-gradient);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .exercise-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(30px, -30px);
+        }
+        
+        .exercise-item:hover {
+            background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
+            transform: translateX(8px) translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .exercise-name {
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .exercise-details {
+            color: #6c757d;
+            font-size: 1rem;
+            margin: 0;
+            position: relative;
+            z-index: 1;
+            line-height: 1.6;
+        }
+
+        .exercise-details i {
+            color: var(--primary-gradient);
+            margin-right: 0.5rem;
+            width: 16px;
+            text-align: center;
+        }
+
+        /* Badges */
+        .badge {
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge.bg-secondary {
+            background: var(--info-gradient) !important;
+            color: white;
+        }
+
+        .badge.bg-info {
+            background: var(--success-gradient) !important;
+            color: white;
+        }
+
+        /* Estado vacío */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        .empty-state h5 {
+            color: #6c757d;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            color: #6c757d;
+            margin: 0;
+        }
+
+        /* Botones de acción */
+        .btn-start {
+            background: var(--success-gradient);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        
+        .btn-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.3);
+            color: white;
+        }
+        
+        .btn-complete {
+            background: var(--info-gradient);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        
+        .btn-complete:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(67, 233, 123, 0.3);
+            color: white;
+        }
+        
+        .btn-notes {
+            background: var(--warning-gradient);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        
+        .btn-notes:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(250, 112, 154, 0.3);
+            color: white;
+        }
+        
+        /* Animaciones */
+        @keyframes shimmer {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 1rem;
+            }
+            
+            .controls-panel {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .main-title h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Toast Bootstrap para feedback -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div aria-live="polite" aria-atomic="true" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1200;">
+          {% for category, message in messages %}
+          <div class="toast show align-items-center text-bg-{{ 'success' if category=='success' else 'danger' }} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2500">
+            <div class="d-flex">
+              <div class="toast-body">
+                {{ message }}
+              </div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="main-container">
+        <!-- Header con botón de volver -->
+        <div class="d-flex align-items-center mb-4 position-relative" style="min-height:58px;">
+            <a href="{{ url_for('dashboard') }}"
+               class="btn btn-outline-light me-2 d-flex align-items-center gap-2"
+               style="position: absolute; left: 0; z-index:10;">
+                <span class="d-inline d-md-none"><i class="bi bi-arrow-left"></i></span>
+                <span class="d-none d-md-inline">← Volver al Panel Principal</span>
+            </a>
+            <h2 class="dashboard-title fw-bold mb-0 w-100 text-center">
+                <i class="bi bi-calendar-check me-2"></i> Mi Plan de Entrenamiento
+            </h2>
+        </div>
+
+        <hr class="header-divider mb-4" style="height:2px; background:rgba(66, 106, 218, 0.733); border:none;">
+
+        <!-- Título principal -->
+        <div class="main-title fade-in">
+            <h1><i class="bi bi-dumbbell me-3"></i>Mis Rutinas de Entrenamiento</h1>
+            <p>Organiza tu entrenamiento y sigue tu progreso</p>
+        </div>
+
+        <!-- Panel de controles -->
+        <div class="controls-panel fade-in">
+            <div class="d-flex gap-3 align-items-center flex-wrap">
+                <div>
+                    <label class="form-label">Vista:</label>
+                    <select class="form-select" id="vistaSelect" onchange="cambiarVista()" style="min-width: 120px;">
+                        <option value="diaria" {{ 'selected' if vista_actual == 'diaria' else '' }}>Diaria</option>
+                        <option value="semanal" {{ 'selected' if vista_actual == 'semanal' else '' }}>Semanal</option>
+                        <option value="mensual" {{ 'selected' if vista_actual == 'mensual' else '' }}>Mensual</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Fecha:</label>
+                    <input type="date" class="form-control" id="fechaSelect" value="{{ fecha_actual.strftime('%Y-%m-%d') }}" onchange="cambiarFecha()">
+                </div>
+                <div class="d-flex gap-2 align-items-end">
+                    {% if vista_actual == 'diaria' %}
+                        <button class="btn btn-outline-primary" onclick="navegarPeriodo(-1)">Día anterior</button>
+                        <button class="btn btn-outline-secondary" onclick="irAHoy()">Hoy</button>
+                        <button class="btn btn-outline-primary" onclick="navegarPeriodo(1)">Día posterior</button>
+                    {% elif vista_actual == 'semanal' %}
+                        <button class="btn btn-outline-primary" onclick="navegarPeriodo(-1)">Semana anterior</button>
+                        <button class="btn btn-outline-secondary" onclick="irAHoy()">Semana actual</button>
+                        <button class="btn btn-outline-primary" onclick="navegarPeriodo(1)">Semana posterior</button>
+                    {% else %}
+                        <button class="btn btn-outline-primary" onclick="navegarPeriodo(-1)">Mes anterior</button>
+                        <button class="btn btn-outline-secondary" onclick="irAHoy()">Mes actual</button>
+                        <button class="btn btn-outline-primary" onclick="navegarPeriodo(1)">Mes posterior</button>
+                    {% endif %}
+            </div>
+            </div>
+        </div>
+
+        <!-- Contenido de rutinas -->
+        {% if datos_vista.tipo == 'diaria' %}
+            <!-- Vista Diaria -->
+            <div class="date-header fade-in">
+                <h5><i class="bi bi-calendar-event me-2"></i>{{ datos_vista.fecha.strftime('%A %d de %B, %Y') | capitalize }}</h5>
+            </div>
+            
+            {% if datos_vista.rutina and datos_vista.rutina.bloques %}
+                {% for bloque in datos_vista.rutina.bloques %}
+                    <div class="routine-card fade-in">
+                        <div class="card-header">
+                            <h6><i class="bi bi-collection me-2"></i>{{ bloque.nombre_bloque }}</h6>
+                        </div>
+                        <div class="card-body">
+                            {% if bloque.categoria %}
+                                <div class="mb-3">
+                                    <span class="badge bg-secondary">{{ bloque.categoria }}</span>
+                                </div>
+                            {% endif %}
+                            {% if bloque.ejercicios %}
+                                <div class="row">
+                                    {% for ejercicio in bloque.ejercicios %}
+                                        <div class="col-12 mb-3">
+                                            <div class="exercise-item" data-plan-series="{{ ejercicio.series_reps or '' }}" data-plan-rpe="{{ ejercicio.rpe or '' }}" data-plan-carga="{{ ejercicio.carga or '' }}">
+                                                <div class="exercise-name">
+                                                    {{ ejercicio.ejercicio.nombre if ejercicio.ejercicio else ejercicio.nombre_manual }}
+                                                </div>
+                                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                                    {% if ejercicio.categoria %}
+                                                        <span class="badge bg-secondary">{{ ejercicio.categoria }}</span>
+                                                    {% endif %}
+                                                    {% if ejercicio.subcategoria %}
+                                                        <span class="badge bg-info">{{ ejercicio.subcategoria }}</span>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="exercise-details">
+                                                    <i class="bi bi-arrow-repeat"></i>
+                                                    <strong>Series/Reps:</strong> {{ ejercicio.series_reps }}<br>
+                                                    <i class="bi bi-speedometer2"></i>
+                                                    <strong>RPE:</strong> {{ ejercicio.rpe }}<br>
+                                                    <i class="bi bi-weight"></i>
+                                                    <strong>Carga:</strong> {{ ejercicio.carga }}
+                                                </div>
+                                                <div class="mt-3">
+                                                    <!-- Formulario de seguimiento -->
+                                                    <div class="seguimiento-form mb-3" id="form-{{ ejercicio.id }}" style="display: none;">
+                                                        <div class="row g-3">
+                                                            <div class="col-md-4">
+                                                                <label class="form-label fw-bold">Series/Reps Realizadas:</label>
+                                                                <input type="text" class="form-control" id="series_reales_{{ ejercicio.id }}" 
+                                                                       placeholder="{{ ejercicio.series_reps }}" value="">
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label class="form-label fw-bold">RPE Real:</label>
+                                                                <input type="text" class="form-control" id="rpe_real_{{ ejercicio.id }}" 
+                                                                       placeholder="{{ ejercicio.rpe }}" value="">
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label class="form-label fw-bold">Carga Real:</label>
+                                                                <input type="text" class="form-control" id="carga_real_{{ ejercicio.id }}" 
+                                                                       placeholder="{{ ejercicio.carga }}" value="">
+                                                            </div>
+                                                            <div class="col-12">
+                                                                <label class="form-label fw-bold">Notas:</label>
+                                                                <textarea class="form-control" id="notas_{{ ejercicio.id }}" 
+                                                                          rows="2" placeholder="Añadir notas sobre el ejercicio..."></textarea>
+                                                            </div>
+                                                            <div class="col-12">
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input" type="checkbox" id="completado_{{ ejercicio.id }}">
+                                                                    <label class="form-check-label fw-bold" for="completado_{{ ejercicio.id }}">
+                                                                        Marcar como completado
+                                                                    </label>
+                    </div>
+                    </div>
+                    </div>
+                                                        <div class="mt-3 d-flex gap-2">
+                                                            <button class="btn btn-outline-primary" onclick="copiarDelPlan(this, {{ ejercicio.id }})">
+                                                                <i class="bi bi-clipboard-check me-1"></i>Copiar del plan
+                                                            </button>
+                                                            <button class="btn btn-success" onclick="guardarSeguimiento(this, {{ ejercicio.id }}, '{{ datos_vista.fecha.strftime('%Y-%m-%d') }}')">
+                                                                <i class="bi bi-save me-1"></i>Guardar Progreso
+                                                            </button>
+                                                            <button class="btn btn-secondary" onclick="cancelarSeguimiento(this, {{ ejercicio.id }})">
+                                                                <i class="bi bi-x me-1"></i>Cancelar
+                                                            </button>
+                    </div>
+                </div>
+                
+                                                    <!-- Botones de acción -->
+                                                    <div class="d-flex gap-2" id="botones-{{ ejercicio.id }}">
+                                                        <button class="btn btn-start btn-registrar-progreso" data-ejercicio-id="{{ ejercicio.id }}" data-fecha="{{ datos_vista.fecha.strftime('%Y-%m-%d') if datos_vista.tipo=='diaria' else '' }}" onclick="mostrarFormularioSeguimiento(event, {{ ejercicio.id }}, '{{ datos_vista.fecha.strftime('%Y-%m-%d') if datos_vista.tipo=='diaria' else '' }}')">
+                                                            <i class="bi bi-pencil-square me-1"></i>Registrar Progreso
+                                                        </button>
+                                                        <span class="ms-2 small text-success d-none" id="status-{{ ejercicio.id }}-{{ datos_vista.fecha.strftime('%Y-%m-%d') }}">
+                                                            <i class="bi bi-check2-circle"></i> Progreso añadido
+                                                        </span>
+                                                        <button class="btn btn-outline-primary btn-sm ms-auto d-none" id="btn-actualizar-{{ ejercicio.id }}-{{ datos_vista.fecha.strftime('%Y-%m-%d') }}" onclick="abrirModalActualizar({{ ejercicio.id }}, '{{ datos_vista.fecha.strftime('%Y-%m-%d') }}')">
+                                                            Actualizar Progreso
+                                                        </button>
+                                                        <button class="btn btn-notes" onclick="verHistorialEjercicio({{ ejercicio.id }})">
+                                                            <i class="bi bi-clock-history me-1"></i>Ver Progreso
+                                                        </button>
+                                                    </div>
+                </div>
+            </div>
+        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="empty-state">
+                                    <i class="bi bi-exclamation-circle text-muted" style="font-size: 2rem;"></i>
+                                    <p class="text-muted mb-0">No hay ejercicios asignados a este bloque.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state fade-in">
+                    <i class="bi bi-calendar-x text-muted" style="font-size: 4rem;"></i>
+                    <h5 class="text-muted">Sin rutina asignada</h5>
+                    <p class="text-muted">No tienes rutina asignada para este día. ¡Disfruta del descanso!</p>
+                </div>
+            {% endif %}
+
+        {% elif datos_vista.tipo == 'semanal' %}
+            <!-- Vista Semanal -->
+            <div class="week-header fade-in">
+                <h5><i class="bi bi-calendar-week me-2"></i>Semana del {{ datos_vista.inicio.strftime('%d/%m') }} al {{ datos_vista.fin.strftime('%d/%m') }}</h5>
+            </div>
+            
+            {% for fecha, bloques in datos_vista.dias.items() %}
+                <div class="routine-card fade-in">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6><i class="bi bi-calendar-event me-2"></i>{{ fecha.strftime('%A %d/%m') | capitalize }}</h6>
+                        <button class="btn btn-success btn-sm" onclick="marcarDiaCompletado('{{ fecha.strftime('%Y-%m-%d') }}')">
+                            <i class="bi bi-check-circle"></i> Marcar Completado
+                        </button>
+                    </div>
+            <div class="card-body">
+                        {% for bloque in bloques %}
+                            <div class="mb-4">
+                                <h6 class="mb-3 d-flex align-items-center">
+                                    <i class="bi bi-collection me-2"></i>
+                                    <strong>{{ bloque.nombre_bloque }}</strong>
+                                    {% if bloque.categoria %}
+                                        <span class="badge bg-secondary ms-2">{{ bloque.categoria }}</span>
+                                    {% endif %}
+                                </h6>
+                        {% if bloque.ejercicios %}
+                                    <div class="row">
+                                        {% for ejercicio in bloque.ejercicios %}
+                                            <div class="col-12 mb-3">
+                            <div class="exercise-item">
+                                <div class="exercise-name">
+                                                        {{ ejercicio.ejercicio.nombre if ejercicio.ejercicio else ejercicio.nombre_manual }}
+                                                    </div>
+                                                    <div class="d-flex flex-wrap gap-2 mb-2">
+                                                        {% if ejercicio.categoria %}
+                                                            <span class="badge bg-secondary">{{ ejercicio.categoria }}</span>
+                                                        {% endif %}
+                                                        {% if ejercicio.subcategoria %}
+                                                            <span class="badge bg-info">{{ ejercicio.subcategoria }}</span>
+                                                        {% endif %}
+                                </div>
+                                <div class="exercise-details">
+                                        <i class="bi bi-arrow-repeat"></i>
+                                                        <strong>Series/Reps:</strong> {{ ejercicio.series_reps }}<br>
+                                                        <i class="bi bi-speedometer2"></i>
+                                                        <strong>RPE:</strong> {{ ejercicio.rpe }}<br>
+                                                        <i class="bi bi-weight"></i>
+                                                        <strong>Carga:</strong> {{ ejercicio.carga }}
+                                                    </div>
+                                                    
+                                                    <!-- Formulario de seguimiento (igual que vista diaria) -->
+                                                    <div class="seguimiento-form mb-3" id="form-{{ ejercicio.id }}" style="display: none;">
+                                                        <div class="row g-3">
+                                                            <div class="col-md-4">
+                                                                <label class="form-label fw-bold">Series/Reps Realizadas:</label>
+                                                                <input type="text" class="form-control" id="series_reales_{{ ejercicio.id }}" 
+                                                                       placeholder="{{ ejercicio.series_reps }}" value="">
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label class="form-label fw-bold">RPE Real:</label>
+                                                                <input type="text" class="form-control" id="rpe_real_{{ ejercicio.id }}" 
+                                                                       placeholder="{{ ejercicio.rpe }}" value="">
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label class="form-label fw-bold">Carga Real:</label>
+                                                                <input type="text" class="form-control" id="carga_real_{{ ejercicio.id }}" 
+                                                                       placeholder="{{ ejercicio.carga }}" value="">
+                                                            </div>
+                                                            <div class="col-12">
+                                                                <label class="form-label fw-bold">Notas:</label>
+                                                                <textarea class="form-control" id="notas_{{ ejercicio.id }}" 
+                                                                          rows="2" placeholder="Añadir notas sobre el ejercicio..."></textarea>
+                                                            </div>
+                                                            <div class="col-12">
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input" type="checkbox" id="completado_{{ ejercicio.id }}">
+                                                                    <label class="form-check-label fw-bold" for="completado_{{ ejercicio.id }}">
+                                                                        Marcar como completado
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="mt-3 d-flex gap-2">
+                                                            <button class="btn btn-outline-primary" onclick="copiarDelPlan(this, {{ ejercicio.id }})">
+                                                                <i class="bi bi-clipboard-check me-1"></i>Copiar del plan
+                                                            </button>
+                                                            <button class="btn btn-success" onclick="guardarSeguimiento(this, {{ ejercicio.id }}, '{{ fecha.strftime('%Y-%m-%d') }}')">
+                                                                <i class="bi bi-save me-1"></i>Guardar Progreso
+                                                            </button>
+                                                            <button class="btn btn-secondary" onclick="cancelarSeguimiento(this, {{ ejercicio.id }})">
+                                                                <i class="bi bi-x me-1"></i>Cancelar
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <!-- Botones de seguimiento -->
+                                                    <div class="exercise-actions mt-3 d-flex align-items-center">
+                                                        <button class="btn btn-start btn-sm me-2 btn-registrar-progreso" data-ejercicio-id="{{ ejercicio.id }}" data-fecha="{{ fecha }}" 
+                                                                onclick="mostrarFormularioSeguimiento(event, {{ ejercicio.id }}, '{{ fecha.strftime('%Y-%m-%d') }}')">
+                                                            <i class="bi bi-plus-circle"></i> Registrar Progreso
+                                                        </button>
+                                                        <span class="ms-2 small text-success d-none" id="status-{{ ejercicio.id }}-{{ fecha }}">
+                                                            <i class="bi bi-check2-circle"></i> Progreso añadido
+                                                        </span>
+                                                        <div class="ms-auto d-flex gap-2">
+                                                            <button class="btn btn-outline-primary btn-sm d-none" id="btn-actualizar-{{ ejercicio.id }}-{{ fecha }}" onclick="abrirModalActualizar({{ ejercicio.id }}, '{{ fecha }}')">
+                                                                Actualizar Progreso
+                                                            </button>
+                                                            <button class="btn btn-notes btn-sm" 
+                                                                    onclick="verHistorialEjercicio({{ ejercicio.id }})">
+                                                                <i class="bi bi-clock-history"></i> Ver Progreso
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                    </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <div class="empty-state">
+                                        <i class="bi bi-exclamation-circle text-muted" style="font-size: 2rem;"></i>
+                                        <p class="text-muted mb-0">No hay ejercicios asignados a este bloque.</p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                        {% endfor %}
+                                </div>
+                            </div>
+                            {% endfor %}
+
+                        {% else %}
+            <!-- Vista Mensual -->
+            {% if datos_vista.semanas %}
+                <div class="month-header fade-in">
+                    <h5><i class="bi bi-calendar3 me-2"></i>{{ fecha_actual.strftime('%B %Y') | capitalize }}</h5>
+                </div>
+                {% for semana in datos_vista.semanas %}
+                    <div class="week-header fade-in">
+                        <h5><i class="bi bi-calendar-week me-2"></i>Semana del {{ semana.inicio.strftime('%d/%m') }} al {{ semana.fin.strftime('%d/%m') }}</h5>
+                    </div>
+                    {% for rutina in semana.rutinas %}
+                        <div class="routine-card fade-in">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6><i class="bi bi-calendar-event me-2"></i>Fecha: {{ rutina.fecha.strftime('%d/%m/%Y') }}</h6>
+                                <button class="btn btn-success btn-sm" onclick="marcarDiaCompletado('{{ rutina.fecha.strftime('%Y-%m-%d') }}')">
+                                    <i class="bi bi-check-circle"></i> Marcar Completado
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                {% for bloque in rutina.bloques %}
+                                    <div class="mb-4">
+                                        <h6 class="mb-3 d-flex align-items-center">
+                                            <i class="bi bi-collection me-2"></i>
+                                            <strong>{{ bloque.nombre_bloque }}</strong>
+                                            {% if bloque.categoria %}
+                                                <span class="badge bg-secondary ms-2">{{ bloque.categoria }}</span>
+                                            {% endif %}
+                                        </h6>
+                                        {% if bloque.ejercicios %}
+                                            <div class="row">
+                                                {% for ejercicio in bloque.ejercicios %}
+                                                    <div class="col-12 mb-3">
+                                                        <div class="exercise-item" data-plan-series="{{ ejercicio.series_reps or '' }}" data-plan-rpe="{{ ejercicio.rpe or '' }}" data-plan-carga="{{ ejercicio.carga or '' }}">
+                                                            <div class="exercise-name">
+                                                                {{ ejercicio.ejercicio.nombre if ejercicio.ejercicio else ejercicio.nombre_manual }}
+                                                            </div>
+                                                            <div class="d-flex flex-wrap gap-2 mb-2">
+                                                                {% if ejercicio.categoria %}
+                                                                    <span class="badge bg-secondary">{{ ejercicio.categoria }}</span>
+                                                                {% endif %}
+                                                                {% if ejercicio.subcategoria %}
+                                                                    <span class="badge bg-info">{{ ejercicio.subcategoria }}</span>
+                                                                {% endif %}
+                                                            </div>
+                                                            <div class="exercise-details">
+                                                                <i class="bi bi-arrow-repeat"></i>
+                                                                <strong>Series/Reps:</strong> {{ ejercicio.series_reps }}<br>
+                                                                <i class="bi bi-speedometer2"></i>
+                                                                <strong>RPE:</strong> {{ ejercicio.rpe }}<br>
+                                                                <i class="bi bi-weight"></i>
+                                                                <strong>Carga:</strong> {{ ejercicio.carga }}
+                                                            </div>
+                                                            
+                                                            <!-- Formulario de seguimiento mensual (igual que diaria) -->
+                                                            <div class="seguimiento-form mb-3" id="form-{{ ejercicio.id }}" style="display: none;">
+                                                                <div class="row g-3">
+                                                                    <div class="col-md-4">
+                                                                        <label class="form-label fw-bold">Series/Reps Realizadas:</label>
+                                                                        <input type="text" class="form-control" id="series_reales_{{ ejercicio.id }}" 
+                                                                               placeholder="{{ ejercicio.series_reps }}" value="">
+                                                                    </div>
+                                                                    <div class="col-md-4">
+                                                                        <label class="form-label fw-bold">RPE Real:</label>
+                                                                        <input type="text" class="form-control" id="rpe_real_{{ ejercicio.id }}" 
+                                                                               placeholder="{{ ejercicio.rpe }}" value="">
+                                                                    </div>
+                                                                    <div class="col-md-4">
+                                                                        <label class="form-label fw-bold">Carga Real:</label>
+                                                                        <input type="text" class="form-control" id="carga_real_{{ ejercicio.id }}" 
+                                                                               placeholder="{{ ejercicio.carga }}" value="">
+                                                                    </div>
+                                                                    <div class="col-12">
+                                                                        <label class="form-label fw-bold">Notas:</label>
+                                                                        <textarea class="form-control" id="notas_{{ ejercicio.id }}" 
+                                                                                  rows="2" placeholder="Añadir notas sobre el ejercicio..."></textarea>
+                                                                    </div>
+                                                                    <div class="col-12">
+                                                                        <div class="form-check">
+                                                                            <input class="form-check-input" type="checkbox" id="completado_{{ ejercicio.id }}">
+                                                                            <label class="form-check-label fw-bold" for="completado_{{ ejercicio.id }}">
+                                                                                Marcar como completado
+                                                                            </label>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="mt-3 d-flex gap-2">
+                                                                    <button class="btn btn-outline-primary" onclick="copiarDelPlan(this, {{ ejercicio.id }})">
+                                                                        <i class="bi bi-clipboard-check me-1"></i>Copiar del plan
+                                                                    </button>
+                                                                    <button class="btn btn-success" onclick="guardarSeguimiento(this, {{ ejercicio.id }}, '{{ rutina.fecha.strftime('%Y-%m-%d') }}')">
+                                                                        <i class="bi bi-save me-1"></i>Guardar Progreso
+                                                                    </button>
+                                                                    <button class="btn btn-secondary" onclick="cancelarSeguimiento(this, {{ ejercicio.id }})">
+                                                                        <i class="bi bi-x me-1"></i>Cancelar
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Formulario de seguimiento mensual (igual que diaria) -->
+                                                            <div class="seguimiento-form mb-3" id="form-{{ ejercicio.id }}" style="display: none;">
+                                                                <div class="row g-3">
+                                                                    <div class="col-md-4">
+                                                                        <label class="form-label fw-bold">Series/Reps Realizadas:</label>
+                                                                        <input type="text" class="form-control" id="series_reales_{{ ejercicio.id }}" 
+                                                                               placeholder="{{ ejercicio.series_reps }}" value="">
+                                                                    </div>
+                                                                    <div class="col-md-4">
+                                                                        <label class="form-label fw-bold">RPE Real:</label>
+                                                                        <input type="text" class="form-control" id="rpe_real_{{ ejercicio.id }}" 
+                                                                               placeholder="{{ ejercicio.rpe }}" value="">
+                                                                    </div>
+                                                                    <div class="col-md-4">
+                                                                        <label class="form-label fw-bold">Carga Real:</label>
+                                                                        <input type="text" class="form-control" id="carga_real_{{ ejercicio.id }}" 
+                                                                               placeholder="{{ ejercicio.carga }}" value="">
+                                                                    </div>
+                                                                    <div class="col-12">
+                                                                        <label class="form-label fw-bold">Notas:</label>
+                                                                        <textarea class="form-control" id="notas_{{ ejercicio.id }}" 
+                                                                                  rows="2" placeholder="Añadir notas sobre el ejercicio..."></textarea>
+                                                                    </div>
+                                                                    <div class="col-12">
+                                                                        <div class="form-check">
+                                                                            <input class="form-check-input" type="checkbox" id="completado_{{ ejercicio.id }}">
+                                                                            <label class="form-check-label fw-bold" for="completado_{{ ejercicio.id }}">
+                                                                                Marcar como completado
+                                                                            </label>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="mt-3 d-flex gap-2">
+                                                                    <button class="btn btn-outline-primary" onclick="copiarDelPlan(this, {{ ejercicio.id }})">
+                                                                        <i class="bi bi-clipboard-check me-1"></i>Copiar del plan
+                                                                    </button>
+                                                                    <button class="btn btn-success" onclick="guardarSeguimiento(this, {{ ejercicio.id }}, '{{ rutina.fecha.strftime('%Y-%m-%d') }}')">
+                                                                        <i class="bi bi-save me-1"></i>Guardar Progreso
+                                                                    </button>
+                                                                    <button class="btn btn-secondary" onclick="cancelarSeguimiento(this, {{ ejercicio.id }})">
+                                                                        <i class="bi bi-x me-1"></i>Cancelar
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <!-- Botones de seguimiento -->
+                                                            <div class="exercise-actions mt-3 d-flex align-items-center">
+                                                                <button class="btn btn-start btn-sm me-2 btn-registrar-progreso" data-ejercicio-id="{{ ejercicio.id }}" data-fecha="{{ rutina.fecha.strftime('%Y-%m-%d') }}" 
+                                                                        onclick="mostrarFormularioSeguimiento(event, {{ ejercicio.id }}, '{{ rutina.fecha.strftime('%Y-%m-%d') }}')">
+                                                                    <i class="bi bi-plus-circle"></i> Registrar Progreso
+                                                                </button>
+                                                                <span class="ms-2 small text-success d-none" id="status-{{ ejercicio.id }}-{{ rutina.fecha.strftime('%Y-%m-%d') }}">
+                                                                    <i class="bi bi-check2-circle"></i> Progreso añadido
+                                                                </span>
+                                                                <div class="ms-auto d-flex gap-2">
+                                                                    <button class="btn btn-outline-primary btn-sm d-none" id="btn-actualizar-{{ ejercicio.id }}-{{ rutina.fecha.strftime('%Y-%m-%d') }}" onclick="abrirModalActualizar({{ ejercicio.id }}, '{{ rutina.fecha.strftime('%Y-%m-%d') }}')">
+                                                                        Actualizar Progreso
+                                                                    </button>
+                                                                    <button class="btn btn-notes btn-sm" 
+                                                                            onclick="verHistorialEjercicio({{ ejercicio.id }})">
+                                                                        <i class="bi bi-clock-history"></i> Ver Progreso
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                    </div>
+                    {% endfor %}
+                                            </div>
+                {% else %}
+                                            <div class="empty-state">
+                                                <i class="bi bi-exclamation-circle text-muted" style="font-size: 2rem;"></i>
+                                                <p class="text-muted mb-0">No hay ejercicios asignados a este bloque.</p>
+                    </div>
+                {% endif %}
+                                    </div>
+                                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+                {% endfor %}
+            {% else %}
+                <div class="empty-state fade-in">
+                    <i class="bi bi-calendar-x text-muted" style="font-size: 4rem;"></i>
+                    <h5 class="text-muted">Sin rutinas asignadas</h5>
+                    <p class="text-muted">No hay rutinas asignadas aún para este mes.</p>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    <!-- Modal Seguimiento (reutilizable en semanal/mensual) -->
+    <div class="modal fade" id="seguimientoModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Registrar/Actualizar Progreso</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Fecha</label>
+              <input type="text" class="form-control" id="modal_fecha" readonly>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Series/Reps Realizadas</label>
+              <input type="text" class="form-control" id="modal_series" placeholder="Ej: 3x12">
+            </div>
+            <div class="row g-2">
+              <div class="col">
+                <label class="form-label">RPE (0-10)</label>
+                <input type="number" class="form-control" id="modal_rpe" min="0" max="10">
+              </div>
+              <div class="col">
+                <label class="form-label">Carga (kg)</label>
+                <input type="number" class="form-control" id="modal_carga" min="0" step="0.5">
+              </div>
+            </div>
+            <div class="mt-3">
+              <label class="form-label">Notas</label>
+              <textarea class="form-control" id="modal_notas" rows="2"></textarea>
+            </div>
+            <div class="form-check mt-2">
+              <input class="form-check-input" type="checkbox" id="modal_completado">
+              <label class="form-check-label" for="modal_completado">Marcar como completado</label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-primary" id="modal_copiar_plan">Copiar del plan</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-success" id="modal_guardar">Guardar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let seguimientoModal = null;
+        let modalCtx = { ejercicioId: null, fecha: null, exerciseItem: null };
+        document.addEventListener('DOMContentLoaded', function() {
+            const modalEl = document.getElementById('seguimientoModal');
+            if (modalEl) {
+                seguimientoModal = new bootstrap.Modal(modalEl);
+            }
+        });
+        // Cambiar vista
+        function cambiarVista() {
+            const vista = document.getElementById('vistaSelect').value;
+            const fecha = document.getElementById('fechaSelect').value;
+            const url = new URL(window.location);
+            url.searchParams.set('vista', vista);
+            url.searchParams.set('fecha', fecha);
+            window.location.href = url.toString();
+        }
+
+        // Cambiar fecha
+        function cambiarFecha() {
+            const vista = document.getElementById('vistaSelect').value;
+            const fecha = document.getElementById('fechaSelect').value;
+            const url = new URL(window.location);
+            url.searchParams.set('vista', vista);
+            url.searchParams.set('fecha', fecha);
+            window.location.href = url.toString();
+        }
+
+        function irAHoy() {
+            const hoy = new Date();
+            const yyyy = hoy.getFullYear();
+            const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+            const dd = String(hoy.getDate()).padStart(2, '0');
+            document.getElementById('fechaSelect').value = `${yyyy}-${mm}-${dd}`;
+            cambiarFecha();
+        }
+
+        function navegarPeriodo(delta) {
+            const vista = document.getElementById('vistaSelect').value;
+            const fecha = new Date(document.getElementById('fechaSelect').value || new Date());
+            if (vista === 'diaria') {
+                fecha.setDate(fecha.getDate() + delta);
+            } else if (vista === 'semanal') {
+                fecha.setDate(fecha.getDate() + delta * 7);
+            } else {
+                fecha.setMonth(fecha.getMonth() + delta);
+            }
+            const yyyy = fecha.getFullYear();
+            const mm = String(fecha.getMonth() + 1).padStart(2, '0');
+            const dd = String(fecha.getDate()).padStart(2, '0');
+            document.getElementById('fechaSelect').value = `${yyyy}-${mm}-${dd}`;
+            cambiarFecha();
+        }
+
+        // Funciones de seguimiento de ejercicios
+        function mostrarFormularioSeguimiento(btnOrEvent, ejercicioId, fecha) {
+            const boton = (btnOrEvent && btnOrEvent.currentTarget) ? btnOrEvent.currentTarget : btnOrEvent;
+            const exerciseItem = boton.closest('.exercise-item');
+            const fechaVal = fecha || document.getElementById('fechaSelect')?.value;
+            if (!exerciseItem) return;
+
+            // Si existe formulario embebido (vista diaria), mostrarlo
+            const embebido = exerciseItem.querySelector(`#form-${ejercicioId}`);
+            if (embebido) {
+                embebido.style.display = 'block';
+                const acciones = exerciseItem.querySelector('.exercise-actions');
+                if (acciones) acciones.style.display = 'none';
+                embebido.dataset.fecha = fechaVal;
+                return;
+            }
+            
+            // Fallback: abrir modal (semanal/mensual)
+            modalCtx = { ejercicioId, fecha: fechaVal, exerciseItem };
+            const planSeries = exerciseItem?.dataset?.planSeries || '';
+            const planRpe = exerciseItem?.dataset?.planRpe || '';
+            const planCarga = exerciseItem?.dataset?.planCarga || '';
+            document.getElementById('modal_fecha').value = fechaVal || '';
+            document.getElementById('modal_series').value = '';
+            document.getElementById('modal_rpe').value = '';
+            document.getElementById('modal_carga').value = '';
+            document.getElementById('modal_notas').value = '';
+            document.getElementById('modal_completado').checked = false;
+            document.getElementById('modal_copiar_plan').onclick = () => {
+                document.getElementById('modal_series').value = planSeries;
+                document.getElementById('modal_rpe').value = planRpe;
+                document.getElementById('modal_carga').value = planCarga;
+            };
+            document.getElementById('modal_guardar').onclick = guardarSeguimientoDesdeModal;
+            if (seguimientoModal) seguimientoModal.show();
+        }
+
+        function cancelarSeguimiento(btn, ejercicioId) {
+            const exerciseItem = btn.closest('.exercise-item');
+            const form = exerciseItem?.querySelector(`#form-${ejercicioId}`);
+            if (form) form.style.display = 'none';
+            const acciones = exerciseItem?.querySelector('.exercise-actions');
+            if (acciones) acciones.style.display = '';
+        }
+
+        function copiarDelPlan(btn, ejercicioId) {
+            const exerciseItem = btn.closest('.exercise-item');
+            if (!exerciseItem) return;
+            const series = exerciseItem.dataset.planSeries || '';
+            const rpe = exerciseItem.dataset.planRpe || '';
+            const carga = exerciseItem.dataset.planCarga || '';
+            const s = document.getElementById(`series_reales_${ejercicioId}`);
+            const r = document.getElementById(`rpe_real_${ejercicioId}`);
+            const c = document.getElementById(`carga_real_${ejercicioId}`);
+            if (s) s.value = series || '';
+            if (r) r.value = rpe || '';
+            if (c) c.value = carga || '';
+        }
+
+        async function guardarSeguimiento(btn, ejercicioId, fecha) {
+            try {
+                const seriesEl = document.getElementById(`series_reales_${ejercicioId}`);
+                const rpeEl = document.getElementById(`rpe_real_${ejercicioId}`);
+                const cargaEl = document.getElementById(`carga_real_${ejercicioId}`);
+                const notasEl = document.getElementById(`notas_${ejercicioId}`);
+                const compEl = document.getElementById(`completado_${ejercicioId}`);
+                const form = btn.closest('.seguimiento-form');
+                const fechaEjec = (form?.dataset?.fecha) || fecha || document.getElementById('fechaSelect')?.value;
+
+                // Validaciones rápidas
+                const rpeVal = rpeEl?.value ? Number(rpeEl.value) : null;
+                if (rpeVal != null && (rpeVal < 0 || rpeVal > 10)) {
+                    alert('RPE debe estar entre 0 y 10');
+                    return;
+                }
+                const cargaVal = cargaEl?.value ? Number(cargaEl.value) : null;
+                if (cargaVal != null && cargaVal < 0) {
+                    alert('La carga no puede ser negativa');
+                    return;
+                }
+
+                const data = {
+                    fecha_ejecucion: fechaEjec,
+                    series_reps_reales: seriesEl?.value || '',
+                    rpe_real: rpeEl?.value || '',
+                    carga_real: cargaEl?.value || '',
+                    notas: notasEl?.value || '',
+                    completado: compEl?.checked || false
+                };
+
+                const response = await fetch(`/api/ejercicio/${ejercicioId}/registrar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('¡Progreso guardado correctamente!');
+                    cancelarSeguimiento(btn, ejercicioId);
+                    // Mostrar estado de "Progreso añadido" y botón actualizar
+                    const fechaKey = fechaEjec || '';
+                    const statusEl = document.getElementById(`status-${ejercicioId}${fechaKey ? '-' + fechaKey : ''}`);
+                    const actualizarEl = document.getElementById(`btn-actualizar-${ejercicioId}${fechaKey ? '-' + fechaKey : ''}`);
+                    const registrarBtn = document.querySelector(`.btn-registrar-progreso[data-ejercicio-id='${ejercicioId}'][data-fecha='${fechaKey}']`);
+                    if (statusEl) statusEl.classList.remove('d-none');
+                    if (actualizarEl) actualizarEl.classList.remove('d-none');
+                    if (registrarBtn) registrarBtn.classList.add('d-none');
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al guardar el progreso');
+            }
+        }
+
+        // Al cargar, consultar si ya hay progreso en la fecha para mostrar estado/botón actualizar
+        document.addEventListener('DOMContentLoaded', async function() {
+            const fechaVista = document.getElementById('fechaSelect')?.value;
+            // Buscar botones en todas las vistas (diaria/semanal/mensual)
+            const botones = document.querySelectorAll('.btn-registrar-progreso');
+            for (const btn of botones) {
+                const exerciseItem = btn.closest('.exercise-item');
+                if (!exerciseItem) continue;
+                // Preferir data-atributos; si faltan, parsear del onclick
+                let ejercicioId = btn.dataset.ejercicioId;
+                let fecha = btn.dataset.fecha || fechaVista;
+                if (!ejercicioId || !fecha) {
+                    const onclickAttr = btn.getAttribute('onclick') || '';
+                    const match = onclickAttr.match(/mostrarFormularioSeguimiento\(event,\s*(\d+),\s*'(.*?)'\)/);
+                    if (match) {
+                        ejercicioId = ejercicioId || match[1];
+                        fecha = fecha || match[2];
+                    }
+                }
+                if (!ejercicioId || !fecha) continue;
+                try {
+                    const resp = await fetch(`/api/ejercicio/${ejercicioId}/seguimiento?fecha=${fecha}`);
+                    const data = await resp.json();
+                    if (data.existe_en_fecha) {
+                        const statusEl = document.getElementById(`status-${ejercicioId}${fecha ? '-' + fecha : ''}`);
+                        const actualizarEl = document.getElementById(`btn-actualizar-${ejercicioId}${fecha ? '-' + fecha : ''}`);
+                        if (statusEl) statusEl.classList.remove('d-none');
+                        if (actualizarEl) actualizarEl.classList.remove('d-none');
+                        // Ocultar botón Registrar si ya hay progreso
+                        btn.classList.add('d-none');
+                    }
+                } catch (e) {
+                    console.warn('No se pudo verificar progreso existente', e);
+                }
+            }
+        });
+
+        async function verHistorialEjercicio(ejercicioId) {
+            try {
+                const response = await fetch(`/api/ejercicio/${ejercicioId}/seguimiento`);
+                const data = await response.json();
+
+                if (data.seguimientos && data.seguimientos.length > 0) {
+                    let historialHTML = `
+                        <div class="modal fade" id="historialModal" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Historial de ${data.ejercicio.nombre}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Fecha</th>
+                                                        <th>Series/Reps</th>
+                                                        <th>RPE</th>
+                                                        <th>Carga</th>
+                                                        <th>Completado</th>
+                                                        <th>Notas</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                    `;
+
+                    data.seguimientos.forEach(seg => {
+                        historialHTML += `
+                            <tr>
+                                <td>${seg.fecha_ejecucion}</td>
+                                <td>
+                                    <small class="text-muted">Planificado: ${seg.series_reps_planificadas || 'N/A'}</small><br>
+                                    <strong>Realizado: ${seg.series_reps_reales || 'N/A'}</strong>
+                                </td>
+                                <td>
+                                    <small class="text-muted">Planificado: ${seg.rpe_planificado || 'N/A'}</small><br>
+                                    <strong>Realizado: ${seg.rpe_real || 'N/A'}</strong>
+                                </td>
+                                <td>
+                                    <small class="text-muted">Planificado: ${seg.carga_planificada || 'N/A'}</small><br>
+                                    <strong>Realizado: ${seg.carga_real || 'N/A'}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge ${seg.completado ? 'bg-success' : 'bg-warning'}">
+                                        ${seg.completado ? 'Sí' : 'No'}
+                                    </span>
+                                </td>
+                                <td>${seg.notas || 'Sin notas'}</td>
+                            </tr>
+                        `;
+                    });
+
+                    historialHTML += `
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    // Remover modal anterior si existe
+                    const existingModal = document.getElementById('historialModal');
+                    if (existingModal) {
+                        existingModal.remove();
+                    }
+
+                    // Agregar el nuevo modal
+                    document.body.insertAdjacentHTML('beforeend', historialHTML);
+
+                    // Mostrar el modal
+                    const modal = new bootstrap.Modal(document.getElementById('historialModal'));
+                    modal.show();
+                } else {
+                    alert('No hay historial de seguimiento para este ejercicio');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al cargar el historial');
+            }
+        }
+
+        async function abrirModalActualizar(ejercicioId, fecha) {
+            try {
+                const resp = await fetch(`/api/ejercicio/${ejercicioId}/seguimiento?fecha=${fecha}`);
+                const data = await resp.json();
+                if (!data.existe_en_fecha) {
+                    // Si no hay registro en esa fecha, abrimos el modal vacío con copiar del plan
+                    document.getElementById('modal_fecha').value = fecha;
+                    document.getElementById('modal_series').value = '';
+                    document.getElementById('modal_rpe').value = '';
+                    document.getElementById('modal_carga').value = '';
+                    document.getElementById('modal_notas').value = '';
+                    document.getElementById('modal_completado').checked = false;
+                    if (seguimientoModal) seguimientoModal.show();
+                    return;
+                }
+
+                const seg = data.seguimiento_en_fecha;
+                document.getElementById('modal_fecha').value = seg.fecha_ejecucion;
+                document.getElementById('modal_series').value = seg.series_reps_reales || '';
+                document.getElementById('modal_rpe').value = seg.rpe_real || '';
+                document.getElementById('modal_carga').value = seg.carga_real || '';
+                document.getElementById('modal_notas').value = seg.notas || '';
+                document.getElementById('modal_completado').checked = !!seg.completado;
+                // Guardar contexto para actualizar el ejercicioId/fecha correctos
+                modalCtx = { ejercicioId, fecha, exerciseItem: null };
+                if (seguimientoModal) seguimientoModal.show();
+            } catch (e) {
+                console.error('Error abriendo actualización:', e);
+            }
+        }
+
+        async function guardarSeguimientoDesdeModal() {
+            const ejercicioId = modalCtx.ejercicioId;
+            const fecha = modalCtx.fecha;
+            const series = document.getElementById('modal_series').value;
+            const rpe = document.getElementById('modal_rpe').value;
+            const carga = document.getElementById('modal_carga').value;
+            const notas = document.getElementById('modal_notas').value;
+            const completado = document.getElementById('modal_completado').checked;
+
+            if (rpe && (Number(rpe) < 0 || Number(rpe) > 10)) {
+                alert('RPE debe estar entre 0 y 10');
+                return;
+            }
+            if (carga && Number(carga) < 0) {
+                alert('La carga no puede ser negativa');
+                return;
+            }
+            try {
+                const resp = await fetch(`/api/ejercicio/${ejercicioId}/registrar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fecha_ejecucion: fecha,
+                        series_reps_reales: series,
+                        rpe_real: rpe,
+                        carga_real: carga,
+                        notas,
+                        completado
+                    })
+                });
+                const result = await resp.json();
+                if (!resp.ok || !result.success) {
+                    alert(`Error: ${result.error || 'No se pudo guardar'}`);
+                    return;
+                }
+                if (seguimientoModal) seguimientoModal.hide();
+                alert('¡Progreso guardado correctamente!');
+                const statusEl = document.getElementById(`status-${ejercicioId}${fecha ? '-' + fecha : ''}`);
+                const actualizarEl = document.getElementById(`btn-actualizar-${ejercicioId}${fecha ? '-' + fecha : ''}`);
+                if (statusEl) statusEl.classList.remove('d-none');
+                if (actualizarEl) actualizarEl.classList.remove('d-none');
+            } catch (e) {
+                console.error(e);
+                alert('Error al guardar el progreso');
+            }
+        }
+
+        // Funciones generales
+        function marcarTodosCompletados() {
+            if (confirm('¿Quieres marcar todos los ejercicios como completados?')) {
+                alert('¡Todos los ejercicios marcados como completados!');
+            }
+        }
+
+        function marcarDiaCompletado(fecha) {
+            if (confirm(`¿Quieres marcar el día ${fecha} como completado?`)) {
+                // Aquí se enviaría la petición al servidor
+                fetch('/api/marcar-dia-completado', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        fecha: fecha
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('¡Día marcado como completado!');
+                        // Actualizar la interfaz para mostrar que el día está completado
+                        const boton = event.target;
+                        boton.innerHTML = '<i class="bi bi-check-circle-fill"></i> Completado';
+                        boton.classList.remove('btn-success');
+                        boton.classList.add('btn-outline-success');
+                        boton.disabled = true;
+                    } else {
+                        alert('Error al marcar el día como completado: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al marcar el día como completado');
+                });
+            }
+        }
+
+        // Debug: Verificar que los botones se cargan correctamente
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Página cargada, verificando botones de seguimiento...');
+            const botones = document.querySelectorAll('[id^="botones-"]');
+            console.log('Botones encontrados:', botones.length);
+            botones.forEach(btn => {
+                console.log('Botón ID:', btn.id);
+            });
+        });
+
+        function agregarNotas() {
+            const notas = prompt('Añadir notas generales:');
+            if (notas !== null) {
+                console.log('Notas generales:', notas);
+                alert('Notas guardadas correctamente');
+            }
+        }
+        
+        // Inicializar cuando se carga la página
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mostrar toasts si existen
+            document.querySelectorAll('.toast').forEach(function(toastEl) {
+                var toast = new bootstrap.Toast(toastEl);
+                toast.show();
+            });
+        });
+    </script>
+</body>
+</html>

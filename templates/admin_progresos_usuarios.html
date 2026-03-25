@@ -1,0 +1,25 @@
+{% extends 'base_admin.html' %}
+{% block content %}
+<div class="container py-4">
+  <div class="card" style="border:none; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border-radius:16px; overflow:hidden;">
+    <div class="d-flex text-white" style="background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);">
+      <div class="p-3 flex-fill fw-bold">🧑‍💻 USUARIO</div>
+      <div class="p-3 flex-fill fw-bold">🪪 NOMBRE</div>
+      <div class="p-3 flex-fill fw-bold">📊 ACCIONES</div>
+    </div>
+    {% for u in usuarios %}
+    <div class="d-flex align-items-center" style="background:white; border-bottom:1px solid #f2f2f2;">
+      <div class="p-3 flex-fill">{{ u.username }}</div>
+      <div class="p-3 flex-fill">{{ u.nombre }} {{ u.apellidos }}</div>
+      <div class="p-3 flex-fill d-flex align-items-center gap-2">
+        <a href="{{ url_for('admin_progresos_usuario', user_id=u.id, vista='diaria', fecha=request.args.get('fecha') or '') }}" class="btn btn-info btn-sm" style="border-radius:999px; padding:.5rem 1rem;">
+          <i class="bi bi-eye"></i> Ver Progresos
+        </a>
+        <span class="badge" style="background:#eef2f7; color:#444;">{{ conteos.get(u.id, 0) }} registros</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+

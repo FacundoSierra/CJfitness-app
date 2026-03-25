@@ -1,0 +1,29 @@
+# Configuración de Cron para generar pagos mensuales automáticamente
+# 
+# Para configurar este cron job:
+# 1. Abre el crontab: crontab -e
+# 2. Añade una de las siguientes líneas según tu preferencia:
+#
+# Opción 1: Ejecutar el primer día de cada mes a las 9:00 AM
+# 0 9 1 * * cd /ruta/a/tu/proyecto && python3 generar_pagos_mensuales.py generar
+#
+# Opción 2: Ejecutar el último día de cada mes a las 11:59 PM (para el mes siguiente)
+# 59 23 28-31 * * [ $(date -d tomorrow +\%d) -eq 1 ] && cd /ruta/a/tu/proyecto && python3 generar_pagos_mensuales.py generar
+#
+# Opción 3: Ejecutar el día 25 de cada mes a las 10:00 AM (para el mes siguiente)
+# 0 10 25 * * cd /ruta/a/tu/proyecto && python3 generar_pagos_mensuales.py generar
+#
+# IMPORTANTE: 
+# - Reemplaza "/ruta/a/tu/proyecto" con la ruta real donde está tu proyecto
+# - Asegúrate de que el usuario que ejecuta el cron tenga permisos para acceder a la base de datos
+# - Considera configurar variables de entorno para la base de datos si es necesario
+#
+# Para verificar que el cron está funcionando, puedes revisar los logs:
+# tail -f /var/log/cron
+# o
+# journalctl -u cron
+#
+# Para probar manualmente:
+# cd /ruta/a/tu/proyecto
+# python3 generar_pagos_mensuales.py generar
+# python3 generar_pagos_mensuales.py estadisticas
