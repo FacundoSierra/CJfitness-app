@@ -1,0 +1,204 @@
+/*
+ * variables.css
+ * ─────────────────────────────────────────────────────────────────────────────
+ * SISTEMA DE TOKENS DE DISEÑO
+ *
+ * ¿Qué es esto?
+ * Un "token" es una variable con nombre que guarda un valor de diseño.
+ * En lugar de escribir "#3b82f6" en 50 sitios distintos, escribimos
+ * "var(--color-primary)" y solo tenemos que cambiar el valor aquí.
+ *
+ * ¿Por qué en :root?
+ * :root es el elemento raíz del documento (equivale a <html>).
+ * Las variables declaradas aquí son accesibles desde cualquier selector
+ * de toda la aplicación — son globales.
+ *
+ * Convención de nombres: --categoria-variante
+ * Ejemplos: --color-primary, --space-4, --shadow-md
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+:root {
+
+  /* ── COLORES BASE ──────────────────────────────────────────────────────────
+   *
+   * Paleta principal de la aplicación CJFitness.
+   * Se organiza en capas: fondos → superficies → texto → acción → estado.
+   *
+   * Filosofía: oscuro para estructura (sidebar, header), claro para contenido,
+   * azul como color de acción, ámbar como color de energía/fitness.
+   * ─────────────────────────────────────────────────────────────────────────*/
+
+  /* Fondos — lo que el usuario ve detrás del contenido */
+  --color-bg:           #f8fafc;   /* fondo general de página (gris muy suave) */
+  --color-bg-alt:       #f1f5f9;   /* fondo alternativo para secciones */
+  --color-surface:      #ffffff;   /* fondo de cards, modales, formularios */
+  --color-surface-alt:  #f8fafc;   /* fondo de filas alternas en tablas */
+
+  /* Estructura — sidebar, topbar, elementos de navegación */
+  --color-sidebar:      #0f172a;   /* azul marino profundo */
+  --color-sidebar-alt:  #1e293b;   /* versión ligeramente más clara del sidebar */
+  --color-sidebar-text: #94a3b8;   /* texto en el sidebar (gris azulado) */
+  --color-sidebar-hover:#1e293b;   /* fondo del item de nav al hacer hover */
+  --color-sidebar-active: #3b82f6; /* color del item de nav activo */
+
+  /* Acento principal — acciones, links, elementos interactivos */
+  --color-primary:      #3b82f6;   /* azul brillante */
+  --color-primary-dark: #2563eb;   /* azul más oscuro (hover de botones) */
+  --color-primary-light:#eff6ff;   /* azul muy claro (fondos de badges, alerts) */
+
+  /* Acento secundario — energía, destacados, fitness */
+  --color-accent:       #f59e0b;   /* ámbar/dorado */
+  --color-accent-dark:  #d97706;   /* ámbar oscuro (hover) */
+  --color-accent-light: #fffbeb;   /* ámbar muy claro (fondos) */
+
+  /* Estados — feedback visual al usuario */
+  --color-success:      #10b981;   /* verde esmeralda */
+  --color-success-light:#d1fae5;   /* verde claro (fondos) */
+  --color-danger:       #ef4444;   /* rojo */
+  --color-danger-light: #fee2e2;   /* rojo claro (fondos) */
+  --color-warning:      #f59e0b;   /* mismo que accent (coherencia) */
+  --color-warning-light:#fffbeb;
+  --color-info:         #3b82f6;   /* mismo que primary */
+  --color-info-light:   #eff6ff;
+
+  /* Texto — jerarquía tipográfica */
+  --color-text:         #0f172a;   /* texto principal (casi negro) */
+  --color-text-secondary: #64748b; /* texto secundario (gris azulado) */
+  --color-text-muted:   #94a3b8;   /* texto desactivado, placeholders */
+  --color-text-inverse: #ffffff;   /* texto sobre fondos oscuros */
+
+  /* Bordes */
+  --color-border:       #e2e8f0;   /* borde estándar (gris suave) */
+  --color-border-dark:  #cbd5e1;   /* borde más visible */
+
+
+  /* ── TIPOGRAFÍA ───────────────────────────────────────────────────────────
+   *
+   * Usamos una font-stack sin serifa moderna.
+   * "Inter" es la tipografía estándar en apps SaaS modernas (Vercel, Linear,
+   * Notion). Si no está instalada en el sistema, el navegador cae a Segoe UI
+   * (Windows) o San Francisco (Mac), que son igualmente buenas.
+   *
+   * Escala de tamaños: basada en una progresión de 1.25 (Major Third).
+   * Esto significa que cada nivel es 1.25x el anterior, lo que da una
+   * jerarquía visual clara y armoniosa.
+   * ─────────────────────────────────────────────────────────────────────────*/
+
+  --font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+  /* Tamaños */
+  --text-xs:    0.75rem;    /* 12px — etiquetas, badges pequeños */
+  --text-sm:    0.875rem;   /* 14px — texto secundario, tabla */
+  --text-base:  1rem;       /* 16px — texto normal */
+  --text-lg:    1.125rem;   /* 18px — texto importante */
+  --text-xl:    1.25rem;    /* 20px — subtítulos pequeños */
+  --text-2xl:   1.5rem;     /* 24px — títulos de sección */
+  --text-3xl:   1.875rem;   /* 30px — títulos de página */
+  --text-4xl:   2.25rem;    /* 36px — hero/landing */
+
+  /* Pesos */
+  --font-normal:    400;
+  --font-medium:    500;
+  --font-semibold:  600;
+  --font-bold:      700;
+
+  /* Altura de línea */
+  --leading-tight:  1.25;   /* títulos */
+  --leading-normal: 1.5;    /* texto normal */
+  --leading-relaxed:1.75;   /* texto largo, párrafos */
+
+
+  /* ── ESPACIADOS ───────────────────────────────────────────────────────────
+   *
+   * Sistema basado en múltiplos de 4px (0.25rem).
+   * Usar siempre estos valores y no valores arbitrarios como "13px" o "22px".
+   * Esto da consistencia visual y hace que los layouts se vean ordenados.
+   *
+   * --space-1  = 4px   (separación mínima, iconos)
+   * --space-2  = 8px   (padding interno pequeño)
+   * --space-3  = 12px  (gap entre elementos relacionados)
+   * --space-4  = 16px  (padding estándar)
+   * --space-6  = 24px  (separación entre secciones pequeñas)
+   * --space-8  = 32px  (separación entre secciones)
+   * --space-12 = 48px  (separación grande)
+   * --space-16 = 64px  (secciones de página)
+   * ─────────────────────────────────────────────────────────────────────────*/
+
+  --space-1:  0.25rem;   /* 4px */
+  --space-2:  0.5rem;    /* 8px */
+  --space-3:  0.75rem;   /* 12px */
+  --space-4:  1rem;      /* 16px */
+  --space-5:  1.25rem;   /* 20px */
+  --space-6:  1.5rem;    /* 24px */
+  --space-8:  2rem;      /* 32px */
+  --space-10: 2.5rem;    /* 40px */
+  --space-12: 3rem;      /* 48px */
+  --space-16: 4rem;      /* 64px */
+
+
+  /* ── BORDES Y RADIO ───────────────────────────────────────────────────────
+   *
+   * Los bordes redondeados dan modernidad y suavidad.
+   * Usamos un sistema progresivo:
+   * - sm para elementos pequeños (badges, inputs)
+   * - md para cards y botones estándar
+   * - lg para cards grandes o paneles
+   * - xl para modales o elementos prominentes
+   * - full para círculos (avatares, botones circulares)
+   * ─────────────────────────────────────────────────────────────────────────*/
+
+  --radius-sm:   0.375rem;  /* 6px */
+  --radius-md:   0.5rem;    /* 8px */
+  --radius-lg:   0.75rem;   /* 12px */
+  --radius-xl:   1rem;      /* 16px */
+  --radius-2xl:  1.5rem;    /* 24px */
+  --radius-full: 9999px;    /* círculo completo */
+
+
+  /* ── SOMBRAS ──────────────────────────────────────────────────────────────
+   *
+   * Las sombras crean profundidad y jerarquía visual.
+   * Una sombra más grande/difusa = elemento más "elevado" visualmente.
+   *
+   * Usamos sombras de color azul-gris (no negro puro) porque quedan
+   * más naturales y modernas sobre fondos claros.
+   * ─────────────────────────────────────────────────────────────────────────*/
+
+  --shadow-sm:  0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-md:  0 4px 6px -1px rgba(15, 23, 42, 0.08),
+                0 2px 4px -1px rgba(15, 23, 42, 0.04);
+  --shadow-lg:  0 10px 15px -3px rgba(15, 23, 42, 0.08),
+                0 4px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-xl:  0 20px 25px -5px rgba(15, 23, 42, 0.10),
+                0 10px 10px -5px rgba(15, 23, 42, 0.04);
+
+  /* Sombra de card al hacer hover (azul sutil) */
+  --shadow-hover: 0 8px 25px -5px rgba(59, 130, 246, 0.15),
+                  0 4px 10px -5px rgba(59, 130, 246, 0.08);
+
+
+  /* ── TRANSICIONES ─────────────────────────────────────────────────────────
+   *
+   * Valores estándar para animaciones CSS.
+   * "fast" para feedback inmediato (hover de botones).
+   * "normal" para transiciones de elementos (cards, modales).
+   * "slow" para animaciones de entrada de página.
+   * ─────────────────────────────────────────────────────────────────────────*/
+
+  --transition-fast:   150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow:   400ms ease;
+
+
+  /* ── LAYOUT ───────────────────────────────────────────────────────────────
+   * Dimensiones fijas del layout principal.
+   * Cambiar aquí afecta toda la estructura de la app.
+   * ─────────────────────────────────────────────────────────────────────────*/
+
+  --sidebar-width:         240px;   /* ancho del sidebar en escritorio */
+  --sidebar-width-collapsed: 64px;  /* ancho del sidebar colapsado */
+  --topbar-height:         64px;    /* altura de la barra superior */
+  --content-max-width:     1200px;  /* ancho máximo del contenido */
+
+}
