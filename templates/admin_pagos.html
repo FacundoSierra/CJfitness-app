@@ -39,13 +39,14 @@
 
 <!-- Búsqueda -->
 <div class="card" style="margin-bottom: var(--space-6);">
-    <div style="display:flex; align-items:center; gap: var(--space-4);">
+    <div class="card-body" style="display:flex; align-items:center; gap: var(--space-4);">
         <div class="search-wrapper" style="flex:1;">
             <i class="bi bi-search search-icon"></i>
             <input type="text"
-                   class="form-control search-input"
+                   class="search-input"
                    id="searchInput"
                    placeholder="Buscar usuario..."
+                   aria-label="Buscar pago"
                    onkeyup="filterUsers()">
         </div>
         <span style="color: var(--color-text-secondary); font-size: var(--text-sm); white-space:nowrap;">

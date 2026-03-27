@@ -45,6 +45,8 @@
 
 .btn:hover   { transform: translateY(-1px); }
 .btn:active  { transform: translateY(0); }
+/* En tablas el lift effect es molesto — desactivar */
+.table .btn:hover { transform: none; }
 
 /* Botón primario — acción principal de la página */
 .btn-primary {
@@ -363,6 +365,16 @@ textarea.form-control {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
 }
 
+/* Inputs desactivados o de solo lectura */
+.form-control:disabled,
+.form-control[readonly],
+.form-select:disabled {
+  background-color: var(--color-bg-alt);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+  opacity: 1; /* evitar que Bootstrap los haga demasiado opacos */
+}
+
 /* Estado de error en un input */
 .form-control.is-invalid,
 .form-select.is-invalid {
@@ -537,9 +549,13 @@ textarea.form-control {
 }
 
 .modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-3);
   padding: var(--space-4) var(--space-6);
   border-top: 1px solid var(--color-border);
-  gap: var(--space-3);
 }
 
 
@@ -561,9 +577,9 @@ textarea.form-control {
 .alert i { flex-shrink: 0; margin-top: 2px; font-size: var(--text-base); }
 
 .alert-info    { background: var(--color-info-light);    color: var(--color-primary-dark); border-color: #bfdbfe; }
-.alert-success { background: var(--color-success-light); color: #065f46; border-color: #a7f3d0; }
-.alert-warning { background: var(--color-warning-light); color: #92400e; border-color: #fde68a; }
-.alert-danger  { background: var(--color-danger-light);  color: #991b1b; border-color: #fecaca; }
+.alert-success { background: var(--color-success-light); color: var(--color-success-dark); border-color: #a7f3d0; }
+.alert-warning { background: var(--color-warning-light); color: var(--color-warning-dark); border-color: #fde68a; }
+.alert-danger  { background: var(--color-danger-light);  color: var(--color-danger-dark);  border-color: #fecaca; }
 
 
 /* ── AVATAR ───────────────────────────────────────────────────────────────────
@@ -620,6 +636,11 @@ textarea.form-control {
   transition: border-color var(--transition-fast),
               box-shadow var(--transition-fast),
               background-color var(--transition-fast);
+}
+
+.search-input:hover:not(:focus) {
+  border-color: var(--color-border-dark);
+  background-color: var(--color-surface);
 }
 
 .search-input:focus {

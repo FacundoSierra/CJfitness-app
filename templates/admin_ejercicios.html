@@ -12,17 +12,20 @@
 
 <!-- Búsqueda -->
 <div class="card" style="margin-bottom: var(--space-6);">
-    <div class="search-wrapper">
-        <i class="bi bi-search search-icon"></i>
-        <input type="text"
-               class="form-control search-input"
-               id="searchInput"
-               placeholder="Buscar por nombre, categoría o subcategoría..."
-               onkeyup="filterExercises()">
+    <div class="card-body">
+        <div class="search-wrapper">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text"
+                   class="search-input"
+                   id="searchInput"
+                   placeholder="Buscar por nombre, categoría o subcategoría..."
+                   aria-label="Buscar ejercicio"
+                   onkeyup="filterExercises()">
+        </div>
+        <p style="margin-top: var(--space-2); font-size: var(--text-sm); color: var(--color-text-secondary);">
+            La búsqueda recorre todos los ejercicios de la base de datos
+        </p>
     </div>
-    <p style="margin-top: var(--space-2); font-size: var(--text-sm); color: var(--color-text-secondary);">
-        La búsqueda recorre todos los ejercicios de la base de datos
-    </p>
 </div>
 
 <!-- Formulario añadir -->
@@ -84,6 +87,15 @@
                         </div>
                     </td>
                 </form>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4">
+                    <div class="table-empty">
+                        <i class="bi bi-dumbbell"></i>
+                        No hay ejercicios en la base de datos.
+                    </div>
+                </td>
             </tr>
             {% endfor %}
         </tbody>

@@ -249,6 +249,13 @@
   color: var(--color-text-secondary);
 }
 
+.topbar-user span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 120px;
+}
+
 .topbar-avatar {
   width: 34px;
   height: 34px;

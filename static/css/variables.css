@@ -55,10 +55,13 @@
   /* Estados — feedback visual al usuario */
   --color-success:      #10b981;   /* verde esmeralda */
   --color-success-light:#d1fae5;   /* verde claro (fondos) */
+  --color-success-dark: #065f46;   /* verde oscuro (texto sobre fondo claro) */
   --color-danger:       #ef4444;   /* rojo */
   --color-danger-light: #fee2e2;   /* rojo claro (fondos) */
+  --color-danger-dark:  #991b1b;   /* rojo oscuro (texto sobre fondo claro) */
   --color-warning:      #f59e0b;   /* mismo que accent (coherencia) */
   --color-warning-light:#fffbeb;
+  --color-warning-dark: #92400e;   /* ámbar oscuro (texto sobre fondo claro) */
   --color-info:         #3b82f6;   /* mismo que primary */
   --color-info-light:   #eff6ff;
 

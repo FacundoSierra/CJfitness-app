@@ -261,6 +261,11 @@ ul, ol {
   color: var(--color-text-secondary);
 }
 
+.badge-info {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
 
 /* ── SEPARADORES ──────────────────────────────────────────────────────────────*/
 hr {
