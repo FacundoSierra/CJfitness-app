@@ -218,5 +218,31 @@ class PasswordResetToken(db.Model):
     def __repr__(self):
         return f'<PasswordResetToken {self.id} - Usuario {self.user_id}>'
 
+class FeedbackSesion(db.Model):
+    """Feedback bidireccional entre usuario y entrenador por sesión/día."""
+    __tablename__ = 'feedback_sesiones'
+
+    id          = db.Column(db.Integer, primary_key=True)
+    usuario_id  = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
+    fecha       = db.Column(db.Date, nullable=False)
+
+    # Usuario → Entrenador
+    valoracion      = db.Column(db.Integer, nullable=True)   # 1-5
+    sensacion       = db.Column(db.String(20), nullable=True) # muy bien|bien|normal|mal|muy mal
+    notas_usuario   = db.Column(db.Text, nullable=True)
+    fecha_usuario   = db.Column(db.DateTime, nullable=True)
+
+    # Entrenador → Usuario
+    respuesta_entrenador = db.Column(db.Text, nullable=True)
+    fecha_entrenador     = db.Column(db.DateTime, nullable=True)
+
+    creado = db.Column(db.DateTime, default=datetime.utcnow)
+
+    usuario = db.relationship("Usuario")
+
+    def __repr__(self):
+        return f'<FeedbackSesion {self.usuario_id} {self.fecha}>'
+
+
 # Tablas simplificadas para el sistema de pagos básico
 # Estas se pueden agregar más adelante si se necesitan

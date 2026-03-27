@@ -240,6 +240,64 @@
                 {% endfor %}
             </div>
         </div>
+
+        <!-- Sección de Feedback de Sesión -->
+        <div class="card" id="feedback-card" style="margin-top:var(--space-4);">
+            <div style="display:flex; align-items:center; gap:var(--space-2); margin-bottom:var(--space-4);">
+                <i class="bi bi-chat-heart" style="color:var(--color-primary); font-size:var(--text-lg);"></i>
+                <h3 style="font-size:var(--text-base); font-weight:700; margin:0;">¿Cómo fue el entreno?</h3>
+            </div>
+
+            <div id="feedback-form-container">
+                <!-- Valoración con estrellas -->
+                <div class="form-group">
+                    <label class="form-label">Valoración</label>
+                    <div id="star-rating" style="display:flex; gap:var(--space-2); font-size:1.6rem; cursor:pointer;">
+                        {% for i in range(1, 6) %}
+                        <span class="star" data-val="{{ i }}" style="color:var(--color-border); transition:color 0.1s;" onclick="setRating({{ i }})" onmouseover="hoverRating({{ i }})" onmouseout="resetHover()">★</span>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" id="fb-valoracion" value="">
+                </div>
+
+                <!-- Sensación -->
+                <div class="form-group">
+                    <label class="form-label">Sensación general</label>
+                    <select class="form-control" id="fb-sensacion" style="max-width:220px;">
+                        <option value="">Seleccionar...</option>
+                        <option value="muy bien">😄 Muy bien</option>
+                        <option value="bien">🙂 Bien</option>
+                        <option value="normal">😐 Normal</option>
+                        <option value="mal">😕 Mal</option>
+                        <option value="muy mal">😞 Muy mal</option>
+                    </select>
+                </div>
+
+                <!-- Notas -->
+                <div class="form-group" style="margin-bottom:var(--space-4);">
+                    <label class="form-label">Notas al entrenador</label>
+                    <textarea class="form-control" id="fb-notas" rows="3" placeholder="Cómo te has sentido, qué ha costado más, lesiones..."></textarea>
+                </div>
+
+                <button class="btn btn-primary" onclick="enviarFeedback('{{ datos_vista.fecha.strftime('%Y-%m-%d') }}')">
+                    <i class="bi bi-send me-1"></i>Enviar Feedback
+                </button>
+                <span id="fb-status" style="margin-left:var(--space-3); font-size:var(--text-sm); color:var(--color-success); display:none;">
+                    <i class="bi bi-check2-circle me-1"></i>Guardado
+                </span>
+            </div>
+
+            <!-- Respuesta del entrenador -->
+            <div id="respuesta-entrenador" style="display:none; margin-top:var(--space-4); padding-top:var(--space-4); border-top:1px solid var(--color-border);">
+                <div style="display:flex; align-items:center; gap:var(--space-2); margin-bottom:var(--space-2);">
+                    <i class="bi bi-person-circle" style="color:var(--color-accent);"></i>
+                    <span style="font-weight:600; font-size:var(--text-sm);">Respuesta de tu entrenador</span>
+                    <span id="respuesta-fecha" style="font-size:var(--text-xs); color:var(--color-text-muted); margin-left:auto;"></span>
+                </div>
+                <p id="respuesta-texto" style="color:var(--color-text-secondary); font-size:var(--text-sm); background:var(--color-bg-alt); padding:var(--space-3); border-radius:var(--radius-md); margin:0;"></p>
+            </div>
+        </div>
+
     {% else %}
         <div class="card" style="text-align:center; padding:var(--space-8);">
             <i class="bi bi-calendar-x" style="font-size:3rem; color:var(--color-border); display:block; margin-bottom:var(--space-3);"></i>
@@ -680,5 +738,72 @@ function marcarDiaCompletado(fecha) {
         .catch(() => alert('Error al marcar el día como completado'));
     }
 }
+
+// ── FEEDBACK DE SESIÓN ────────────────────────────────────────────────────────
+
+let _fbRating = 0;
+
+function setRating(val) {
+    _fbRating = val;
+    document.getElementById('fb-valoracion').value = val;
+    document.querySelectorAll('#star-rating .star').forEach((s, i) => {
+        s.style.color = i < val ? 'var(--color-accent)' : 'var(--color-border)';
+    });
+}
+
+function hoverRating(val) {
+    document.querySelectorAll('#star-rating .star').forEach((s, i) => {
+        s.style.color = i < val ? 'var(--color-accent)' : 'var(--color-border)';
+    });
+}
+
+function resetHover() {
+    setRating(_fbRating);
+}
+
+async function enviarFeedback(fecha) {
+    const valoracion = parseInt(document.getElementById('fb-valoracion').value) || null;
+    const sensacion  = document.getElementById('fb-sensacion').value || null;
+    const notas      = document.getElementById('fb-notas').value.trim() || null;
+
+    const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ fecha, valoracion, sensacion, notas_usuario: notas })
+    });
+    const data = await res.json();
+    if (data.success) {
+        const st = document.getElementById('fb-status');
+        st.style.display = 'inline';
+        setTimeout(() => st.style.display = 'none', 2500);
+    } else {
+        alert('Error al guardar el feedback');
+    }
+}
+
+async function cargarFeedbackDia(fecha) {
+    if (!fecha || !document.getElementById('feedback-card')) return;
+    try {
+        const res  = await fetch(`/api/feedback/${fecha}`);
+        const data = await res.json();
+        if (!data.success || !data.feedback) return;
+        const fb = data.feedback;
+        if (fb.valoracion) setRating(fb.valoracion);
+        if (fb.sensacion)  document.getElementById('fb-sensacion').value = fb.sensacion;
+        if (fb.notas_usuario) document.getElementById('fb-notas').value = fb.notas_usuario;
+        if (fb.respuesta_entrenador) {
+            document.getElementById('respuesta-texto').textContent = fb.respuesta_entrenador;
+            document.getElementById('respuesta-fecha').textContent = fb.fecha_entrenador || '';
+            document.getElementById('respuesta-entrenador').style.display = 'block';
+        }
+    } catch(e) { /* silencioso */ }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const fechaInput = document.getElementById('fechaSelect');
+    if (fechaInput && document.getElementById('feedback-card')) {
+        cargarFeedbackDia(fechaInput.value);
+    }
+});
 </script>
 {% endblock %}

@@ -7,7 +7,7 @@ from sqlalchemy import func
 
 
 def init_app(app):
-    from models import db, Usuario, Ejercicio, Rutina, Bloque, EjercicioAsignado, Plan, Pago, ConfiguracionPagoMensual, SeguimientoEjercicio
+    from models import db, Usuario, Ejercicio, Rutina, Bloque, EjercicioAsignado, Plan, Pago, ConfiguracionPagoMensual, SeguimientoEjercicio, FeedbackSesion
     from utils import log_activity, log_error, handle_db_error, admin_required
     from payment_service import payment_service
 
@@ -1253,3 +1253,127 @@ def init_app(app):
         response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
         log_activity(f"PDF de progreso exportado para usuario {user_id}", session.get('user_id'))
         return response
+
+    # ── FEEDBACK DE SESIÓN (ADMIN) ────────────────────────────────────────────
+
+    @app.route('/admin/feedback/<int:feedback_id>/responder', methods=['POST'])
+    @admin_required
+    def admin_responder_feedback(feedback_id):
+        """El entrenador responde al feedback de un usuario."""
+        fb = FeedbackSesion.query.get_or_404(feedback_id)
+        data = request.get_json() or {}
+        respuesta = (data.get('respuesta') or '').strip()
+        if not respuesta:
+            return jsonify({'success': False, 'message': 'La respuesta no puede estar vacía'}), 400
+        fb.respuesta_entrenador = respuesta
+        fb.fecha_entrenador = datetime.utcnow()
+        db.session.commit()
+        return jsonify({'success': True})
+
+    @app.route('/admin/usuarios/<int:user_id>/feedbacks')
+    @admin_required
+    def admin_feedbacks_usuario(user_id):
+        """Lista de feedbacks de un usuario para el panel admin."""
+        usuario = Usuario.query.get_or_404(user_id)
+        feedbacks = (
+            FeedbackSesion.query
+            .filter_by(usuario_id=user_id)
+            .order_by(FeedbackSesion.fecha.desc())
+            .limit(60)
+            .all()
+        )
+        return render_template(
+            'admin_feedbacks_usuario.html',
+            usuario=usuario,
+            feedbacks=feedbacks
+        )
+
+    # ── COPIAR SEMANA ─────────────────────────────────────────────────────────
+
+    @app.route('/admin_entrenamientos/<int:user_id>/copiar_semana', methods=['POST'])
+    @admin_required
+    def copiar_semana_usuario(user_id):
+        """Copia todas las rutinas de una semana a otra (deep copy)."""
+        try:
+            source_str = request.form.get('source_week')
+            target_str = request.form.get('target_week')
+            if not source_str or not target_str:
+                flash('Debes seleccionar semana origen y destino', 'danger')
+                return redirect(url_for('calendario_entrenamientos_usuario', user_id=user_id))
+
+            # Normalizar a lunes de cada semana
+            source_day = datetime.strptime(source_str, '%Y-%m-%d').date()
+            target_day = datetime.strptime(target_str, '%Y-%m-%d').date()
+            source_lunes = source_day - timedelta(days=source_day.weekday())
+            target_lunes = target_day - timedelta(days=target_day.weekday())
+
+            if source_lunes == target_lunes:
+                flash('La semana origen y destino son la misma', 'warning')
+                return redirect(url_for('calendario_entrenamientos_usuario', user_id=user_id,
+                                        mes=source_lunes.strftime('%Y-%m')))
+
+            # Buscar rutinas en la semana origen
+            rutinas_origen = (
+                Rutina.query
+                .filter_by(usuario_id=user_id)
+                .filter(Rutina.fecha >= source_lunes)
+                .filter(Rutina.fecha <= source_lunes + timedelta(days=6))
+                .all()
+            )
+
+            if not rutinas_origen:
+                flash('La semana origen no tiene rutinas asignadas', 'warning')
+                return redirect(url_for('calendario_entrenamientos_usuario', user_id=user_id,
+                                        mes=source_lunes.strftime('%Y-%m')))
+
+            copiados = 0
+            for rutina_src in rutinas_origen:
+                offset = rutina_src.fecha.weekday()
+                fecha_dest = target_lunes + timedelta(days=offset)
+
+                # Borrar rutina existente en destino (cascade)
+                rutina_dest = Rutina.query.filter_by(usuario_id=user_id, fecha=fecha_dest).first()
+                if rutina_dest:
+                    db.session.delete(rutina_dest)
+                    db.session.flush()
+
+                # Crear nueva rutina
+                nueva_rutina = Rutina(usuario_id=user_id, fecha=fecha_dest)
+                db.session.add(nueva_rutina)
+                db.session.flush()
+
+                for bloque_src in rutina_src.bloques:
+                    nuevo_bloque = Bloque(
+                        rutina_id=nueva_rutina.id,
+                        nombre_bloque=bloque_src.nombre_bloque,
+                        categoria=bloque_src.categoria
+                    )
+                    db.session.add(nuevo_bloque)
+                    db.session.flush()
+
+                    for ej_src in bloque_src.ejercicios:
+                        nuevo_ej = EjercicioAsignado(
+                            bloque_id=nuevo_bloque.id,
+                            ejercicio_id=ej_src.ejercicio_id,
+                            nombre_manual=ej_src.nombre_manual,
+                            series_reps=ej_src.series_reps,
+                            rpe=ej_src.rpe,
+                            carga=ej_src.carga,
+                            series_json=ej_src.series_json,
+                            categoria=ej_src.categoria,
+                            subcategoria=ej_src.subcategoria
+                        )
+                        db.session.add(nuevo_ej)
+
+                copiados += 1
+
+            db.session.commit()
+            flash(f'{copiados} día{"s" if copiados != 1 else ""} copiado{"s" if copiados != 1 else ""} correctamente', 'success')
+            return redirect(url_for('calendario_entrenamientos_usuario', user_id=user_id,
+                                    mes=target_lunes.strftime('%Y-%m')))
+
+        except Exception as e:
+            db.session.rollback()
+            log_error(e, session.get('user_id'))
+            flash(f'Error al copiar la semana: {str(e)}', 'danger')
+            return redirect(url_for('calendario_entrenamientos_usuario', user_id=user_id))

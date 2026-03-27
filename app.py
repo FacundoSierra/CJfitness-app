@@ -21,7 +21,7 @@ from models import db
 db.init_app(app)
 
 # Importar modelos después de inicializar db
-from models import Usuario, Ejercicio, Rutina, Bloque, EjercicioAsignado, Plan, Pago, ConfiguracionPagoMensual, SeguimientoEjercicio, PasswordResetToken
+from models import Usuario, Ejercicio, Rutina, Bloque, EjercicioAsignado, Plan, Pago, ConfiguracionPagoMensual, SeguimientoEjercicio, PasswordResetToken, FeedbackSesion
 
 # Importar payment service
 from payment_service import payment_service
@@ -45,8 +45,9 @@ def index():
     return render_template('index.html')
 
 # ------------------ AUTO-MIGRACIÓN DE BD ------------------
-# Añade columnas nuevas si no existen (seguro: no borra datos)
+# Crea tablas nuevas y añade columnas si no existen (nunca borra datos)
 with app.app_context():
+    db.create_all()  # crea tablas nuevas (feedback_sesiones, etc.) sin tocar las existentes
     try:
         from sqlalchemy import text
         with db.engine.connect() as _conn:

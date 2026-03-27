@@ -67,9 +67,14 @@
         <h1 class="page-title">Asignar Rutinas</h1>
         <p class="page-subtitle">{{ usuario.nombre }} {{ usuario.apellidos }}</p>
     </div>
-    <a href="{{ url_for('ver_rutinas_usuario', user_id=usuario.id) }}" class="btn btn-secondary">
-        <i class="bi bi-eye me-1"></i>Ver Rutinas
-    </a>
+    <div style="display:flex; gap:var(--space-2);">
+        <button type="button" class="btn btn-secondary" onclick="abrirModalCopiarSemana()">
+            <i class="bi bi-calendar-plus me-1"></i>Copiar Semana
+        </button>
+        <a href="{{ url_for('ver_rutinas_usuario', user_id=usuario.id) }}" class="btn btn-secondary">
+            <i class="bi bi-eye me-1"></i>Ver Rutinas
+        </a>
+    </div>
 </div>
 
 <div class="card" style="margin-bottom: var(--space-6);">
@@ -141,8 +146,50 @@
         </form>
     </div>
 </div>
+<!-- Modal Copiar Semana -->
+<div class="modal fade" id="modalCopiarSemana" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-calendar-plus me-2"></i>Copiar Semana</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('copiar_semana_usuario', user_id=usuario.id) }}">
+                <div class="modal-body" style="display:flex; flex-direction:column; gap:var(--space-4);">
+                    <div class="form-group" style="margin:0;">
+                        <label class="form-label">Semana origen (cualquier día)</label>
+                        <input type="date" class="form-control" name="source_week" id="sourceWeekInput"
+                               value="{{ mes_actual }}-01" required>
+                        <p style="font-size:var(--text-xs); color:var(--color-text-muted); margin-top:4px;">
+                            Se copiará toda la semana que contenga esta fecha
+                        </p>
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label class="form-label">Semana destino (cualquier día)</label>
+                        <input type="date" class="form-control" name="target_week" required>
+                        <p style="font-size:var(--text-xs); color:var(--color-text-muted); margin-top:4px;">
+                            Si ya hay rutinas en el destino, serán reemplazadas
+                        </p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-calendar-plus me-1"></i>Copiar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts_extra %}
 <script src="{{ url_for('static', filename='js/calendario_rutinas.js') }}"></script>
+<script>
+function abrirModalCopiarSemana() {
+    const modal = new bootstrap.Modal(document.getElementById('modalCopiarSemana'));
+    modal.show();
+}
+</script>
 {% endblock %}

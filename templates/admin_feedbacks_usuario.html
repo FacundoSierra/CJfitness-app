@@ -1,0 +1,107 @@
+{% extends "base_admin.html" %}
+{% block title %}Feedbacks — {{ usuario.nombre }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Feedbacks de {{ usuario.nombre }}</h1>
+        <p class="page-subtitle">Valoraciones y notas del usuario tras cada sesión</p>
+    </div>
+    <a href="{{ url_for('admin_progresos_usuario', user_id=usuario.id) }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Volver a Progresos
+    </a>
+</div>
+
+{% if feedbacks %}
+<div style="display:flex; flex-direction:column; gap:var(--space-4);">
+{% for fb in feedbacks %}
+<div class="card" id="fb-{{ fb.id }}">
+    <!-- Cabecera: fecha + valoración -->
+    <div style="display:flex; align-items:center; gap:var(--space-3); flex-wrap:wrap; margin-bottom:var(--space-3);">
+        <span style="font-weight:700; font-size:var(--text-base);">
+            <i class="bi bi-calendar-event me-1" style="color:var(--color-primary);"></i>
+            {{ fb.fecha.strftime('%d/%m/%Y') }}
+        </span>
+        {% if fb.valoracion %}
+        <span style="font-size:1.2rem; letter-spacing:2px;">
+            {% for i in range(fb.valoracion) %}⭐{% endfor %}
+            <span style="font-size:var(--text-xs); color:var(--color-text-muted);">{{ fb.valoracion }}/5</span>
+        </span>
+        {% endif %}
+        {% if fb.sensacion %}
+        <span class="badge badge-info">{{ fb.sensacion | capitalize }}</span>
+        {% endif %}
+        {% if not fb.respuesta_entrenador %}
+        <span class="badge badge-warning" style="margin-left:auto;">Sin respuesta</span>
+        {% else %}
+        <span class="badge badge-success" style="margin-left:auto;">Respondido</span>
+        {% endif %}
+    </div>
+
+    <!-- Notas del usuario -->
+    {% if fb.notas_usuario %}
+    <div style="background:var(--color-bg-alt); border-radius:var(--radius-md); padding:var(--space-3); margin-bottom:var(--space-3);">
+        <p style="font-size:var(--text-xs); font-weight:600; color:var(--color-text-muted); margin-bottom:var(--space-1);">NOTAS DEL USUARIO</p>
+        <p style="margin:0; font-size:var(--text-sm); color:var(--color-text);">{{ fb.notas_usuario }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Respuesta del entrenador -->
+    {% if fb.respuesta_entrenador %}
+    <div style="background:var(--color-primary-light); border-radius:var(--radius-md); padding:var(--space-3); margin-bottom:var(--space-3);">
+        <p style="font-size:var(--text-xs); font-weight:600; color:var(--color-primary); margin-bottom:var(--space-1);">TU RESPUESTA</p>
+        <p style="margin:0; font-size:var(--text-sm); color:var(--color-text);" id="resp-text-{{ fb.id }}">{{ fb.respuesta_entrenador }}</p>
+        <p style="margin-top:var(--space-1); font-size:var(--text-xs); color:var(--color-text-muted);">
+            {{ fb.fecha_entrenador.strftime('%d/%m/%Y %H:%M') if fb.fecha_entrenador }}
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Formulario para responder/editar -->
+    <div>
+        <label class="form-label">{{ 'Editar respuesta' if fb.respuesta_entrenador else 'Responder al usuario' }}</label>
+        <textarea class="form-control" id="respuesta-{{ fb.id }}" rows="2"
+                  placeholder="Escribe tu feedback para el usuario..."
+                  style="margin-bottom:var(--space-2);">{{ fb.respuesta_entrenador or '' }}</textarea>
+        <button class="btn btn-primary btn-sm" onclick="responderFeedback({{ fb.id }})">
+            <i class="bi bi-send me-1"></i>{{ 'Actualizar respuesta' if fb.respuesta_entrenador else 'Enviar respuesta' }}
+        </button>
+        <span id="ok-{{ fb.id }}" style="display:none; margin-left:var(--space-2); color:var(--color-success); font-size:var(--text-sm);">
+            <i class="bi bi-check2-circle me-1"></i>Guardado
+        </span>
+    </div>
+</div>
+{% endfor %}
+</div>
+
+{% else %}
+<div class="card" style="text-align:center; padding:var(--space-8);">
+    <i class="bi bi-chat-heart" style="font-size:3rem; color:var(--color-border); display:block; margin-bottom:var(--space-3);"></i>
+    <h3 style="font-size:var(--text-lg);">Sin feedbacks todavía</h3>
+    <p style="color:var(--color-text-secondary);">{{ usuario.nombre }} aún no ha enviado valoraciones de sus sesiones.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+async function responderFeedback(feedbackId) {
+    const respuesta = document.getElementById(`respuesta-${feedbackId}`).value.trim();
+    if (!respuesta) { alert('Escribe una respuesta antes de enviar'); return; }
+
+    const res = await fetch(`/admin/feedback/${feedbackId}/responder`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ respuesta })
+    });
+    const data = await res.json();
+    if (data.success) {
+        const ok = document.getElementById(`ok-${feedbackId}`);
+        ok.style.display = 'inline';
+        setTimeout(() => ok.style.display = 'none', 2500);
+    } else {
+        alert('Error al guardar la respuesta');
+    }
+}
+</script>
+{% endblock %}

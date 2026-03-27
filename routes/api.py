@@ -5,7 +5,7 @@ from collections import defaultdict
 
 
 def init_app(app):
-    from models import db, Usuario, Ejercicio, Rutina, Bloque, EjercicioAsignado, Pago, SeguimientoEjercicio
+    from models import db, Usuario, Ejercicio, Rutina, Bloque, EjercicioAsignado, Pago, SeguimientoEjercicio, FeedbackSesion
     from utils import log_activity, log_error, handle_db_error, admin_required, login_required
     from payment_service import payment_service
 
@@ -967,3 +967,60 @@ def init_app(app):
             db.session.rollback()
             logger.error(f"Error marcando día como completado: {str(e)}")
             return jsonify({'success': False, 'message': 'Error interno del servidor'}), 500
+
+    # ── FEEDBACK DE SESIÓN ────────────────────────────────────────────────────
+
+    @app.route('/api/feedback', methods=['POST'])
+    @login_required
+    def api_enviar_feedback():
+        """Usuario envía feedback de su sesión del día."""
+        try:
+            usuario_id = session['user_id']
+            data = request.get_json() or {}
+            fecha_str = data.get('fecha')
+            if not fecha_str:
+                return jsonify({'success': False, 'message': 'Fecha requerida'}), 400
+
+            fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+
+            fb = FeedbackSesion.query.filter_by(usuario_id=usuario_id, fecha=fecha).first()
+            if not fb:
+                fb = FeedbackSesion(usuario_id=usuario_id, fecha=fecha)
+                db.session.add(fb)
+
+            fb.valoracion    = data.get('valoracion')
+            fb.sensacion     = data.get('sensacion')
+            fb.notas_usuario = data.get('notas_usuario', '').strip() or None
+            fb.fecha_usuario = datetime.utcnow()
+            db.session.commit()
+
+            return jsonify({'success': True, 'feedback_id': fb.id})
+
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error guardando feedback: {str(e)}")
+            return jsonify({'success': False, 'message': 'Error interno'}), 500
+
+    @app.route('/api/feedback/<fecha_str>', methods=['GET'])
+    @login_required
+    def api_get_feedback(fecha_str):
+        """Usuario consulta el feedback de un día (incluyendo respuesta del trainer)."""
+        try:
+            usuario_id = session['user_id']
+            fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            fb = FeedbackSesion.query.filter_by(usuario_id=usuario_id, fecha=fecha).first()
+            if not fb:
+                return jsonify({'success': True, 'feedback': None})
+
+            return jsonify({'success': True, 'feedback': {
+                'id': fb.id,
+                'valoracion': fb.valoracion,
+                'sensacion': fb.sensacion,
+                'notas_usuario': fb.notas_usuario,
+                'respuesta_entrenador': fb.respuesta_entrenador,
+                'fecha_entrenador': fb.fecha_entrenador.strftime('%d/%m/%Y') if fb.fecha_entrenador else None,
+            }})
+
+        except Exception as e:
+            logger.error(f"Error obteniendo feedback: {str(e)}")
+            return jsonify({'success': False, 'message': 'Error interno'}), 500
