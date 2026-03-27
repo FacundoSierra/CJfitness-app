@@ -44,6 +44,19 @@ def robots():
 def index():
     return render_template('index.html')
 
+# ------------------ AUTO-MIGRACIÓN DE BD ------------------
+# Añade columnas nuevas si no existen (seguro: no borra datos)
+with app.app_context():
+    try:
+        from sqlalchemy import text
+        with db.engine.connect() as _conn:
+            _conn.execute(text(
+                "ALTER TABLE ejercicios_asignados ADD COLUMN series_json TEXT"
+            ))
+            _conn.commit()
+    except Exception:
+        pass  # La columna ya existe
+
 # ------------------ REGISTRAR MÓDULOS DE RUTAS ------------------
 
 from routes import auth, admin, usuario, api

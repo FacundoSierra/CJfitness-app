@@ -58,7 +58,7 @@ def init_app(app):
                     for e in b.ejercicios:
                         ejercicios.append({
                             "nombre_manual": e.nombre_manual,
-                            "series_reps": e.series_reps,
+                            "series_reps": e.series_display,
                             "rpe": e.rpe,
                             "carga": e.carga,
                             "ejercicio": {"nombre": e.ejercicio.nombre} if e.ejercicio else None,
@@ -101,7 +101,7 @@ def init_app(app):
                     for e in b.ejercicios:
                         ejercicios.append({
                             "nombre_manual": e.nombre_manual,
-                            "series_reps": e.series_reps,
+                            "series_reps": e.series_display,
                             "rpe": e.rpe,
                             "carga": e.carga,
                             "ejercicio": {"nombre": e.ejercicio.nombre} if e.ejercicio else None,
@@ -150,7 +150,7 @@ def init_app(app):
                         for e in b.ejercicios:
                             ejercicios.append({
                                 "nombre_manual": e.nombre_manual,
-                                "series_reps": e.series_reps,
+                                "series_reps": e.series_display,
                                 "rpe": e.rpe,
                                 "carga": e.carga,
                                 "ejercicio": {"nombre": e.ejercicio.nombre} if e.ejercicio else None,
@@ -672,7 +672,7 @@ def init_app(app):
                     usuario_id=usuario_id,
                     ejercicio_asignado_id=ejercicio_asignado_id,
                     fecha_ejecucion=fecha_ejecucion,
-                    series_reps_planificadas=ejercicio_asignado.series_reps,
+                    series_reps_planificadas=ejercicio_asignado.series_display,
                     rpe_planificado=ejercicio_asignado.rpe,
                     carga_planificada=ejercicio_asignado.carga,
                     series_reps_reales=data.get('series_reps_reales', ''),
@@ -945,7 +945,7 @@ def init_app(app):
                                 usuario_id=usuario_id,
                                 ejercicio_asignado_id=ejercicio_asignado.id,
                                 fecha_ejecucion=fecha,
-                                series_reps_planificadas=ejercicio_asignado.series_reps,
+                                series_reps_planificadas=ejercicio_asignado.series_display,
                                 rpe_planificado=ejercicio_asignado.rpe,
                                 carga_planificada=ejercicio_asignado.carga,
                                 completado=True,

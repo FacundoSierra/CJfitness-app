@@ -80,7 +80,7 @@
         <div class="form-group">
             <label class="form-label">Series/Reps Realizadas</label>
             <input type="text" class="form-control" id="series_reales_{{ ejercicio.id }}"
-                   placeholder="{{ ejercicio.series_reps }}" value="">
+                   placeholder="{{ ejercicio.series_display }}" value="">
         </div>
         <div class="form-group">
             <label class="form-label">RPE Real</label>
@@ -117,10 +117,11 @@
 {% endmacro %}
 
 {% macro ejercicio_item(ejercicio, fecha_str) %}
+{% set sdata = ejercicio.series_data_parsed %}
 <div class="exercise-item"
-     data-plan-series="{{ ejercicio.series_reps or '' }}"
-     data-plan-rpe="{{ ejercicio.rpe or '' }}"
-     data-plan-carga="{{ ejercicio.carga or '' }}">
+     data-plan-series="{{ ejercicio.series_display }}"
+     data-plan-rpe="{{ (sdata.rpe if sdata and not sdata.variar else ejercicio.rpe) or '' }}"
+     data-plan-carga="{{ (sdata.carga if sdata and not sdata.variar else ejercicio.carga) or '' }}">
     <div class="exercise-name">
         {{ ejercicio.ejercicio.nombre if ejercicio.ejercicio else ejercicio.nombre_manual }}
     </div>
@@ -129,9 +130,26 @@
         {% if ejercicio.subcategoria %}<span class="badge badge-success">{{ ejercicio.subcategoria }}</span>{% endif %}
     </div>
     <div class="exercise-details">
-        <i class="bi bi-arrow-repeat"></i><strong>Series/Reps:</strong> {{ ejercicio.series_reps }}<br>
-        <i class="bi bi-speedometer2"></i><strong>RPE:</strong> {{ ejercicio.rpe }}<br>
-        <i class="bi bi-weight"></i><strong>Carga:</strong> {{ ejercicio.carga }}
+        {% if sdata %}
+            {% if sdata.variar %}
+                <i class="bi bi-list-ol"></i><strong>Series:</strong><br>
+                {% for s in sdata.series_data %}
+                    <span style="margin-left:var(--space-4);">
+                        S{{ loop.index }}: {{ s.reps or '?' }} reps
+                        {% if s.carga %} @ {{ s.carga }}{% endif %}
+                        {% if s.rpe %} (RPE {{ s.rpe }}){% endif %}
+                    </span><br>
+                {% endfor %}
+            {% else %}
+                <i class="bi bi-arrow-repeat"></i><strong>Series:</strong> {{ sdata.series }}×{{ sdata.reps }}
+                {% if sdata.carga %} @ {{ sdata.carga }}{% endif %}
+                {% if sdata.rpe %} &nbsp;<i class="bi bi-speedometer2"></i><strong>RPE:</strong> {{ sdata.rpe }}{% endif %}
+            {% endif %}
+        {% else %}
+            <i class="bi bi-arrow-repeat"></i><strong>Series/Reps:</strong> {{ ejercicio.series_reps or '—' }}<br>
+            <i class="bi bi-speedometer2"></i><strong>RPE:</strong> {{ ejercicio.rpe or '—' }}<br>
+            <i class="bi bi-weight"></i><strong>Carga:</strong> {{ ejercicio.carga or '—' }}
+        {% endif %}
     </div>
     {{ seguimiento_form(ejercicio, fecha_str) }}
     <div class="exercise-actions" style="display:flex; align-items:center; gap:var(--space-2); margin-top:var(--space-3);">

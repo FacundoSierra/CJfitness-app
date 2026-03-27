@@ -285,13 +285,11 @@ def init_app(app):
                 logger.debug(f"Bloque {bloque_id} creado con ID: {bloque.id}, categoría: {categoria_bloque}")
 
                 ejercicios = request.form.getlist(f"ejercicio_{bloque_id}[]")
-                series = request.form.getlist(f"series_{bloque_id}[]")
-                rpes = request.form.getlist(f"rpe_{bloque_id}[]")
-                cargas = request.form.getlist(f"carga_{bloque_id}[]")
+                series_jsons = request.form.getlist(f"series_json_{bloque_id}[]")
                 categorias_ej = request.form.getlist(f"categoria_ej_{bloque_id}[]")
                 subcategorias_ej = request.form.getlist(f"subcategoria_ej_{bloque_id}[]")
 
-                logger.debug(f"Bloque {bloque_id}: {len(ejercicios)} ejercicios, {len(series)} series, {len(rpes)} RPEs, {len(cargas)} cargas")
+                logger.debug(f"Bloque {bloque_id}: {len(ejercicios)} ejercicios, {len(series_jsons)} series_json")
 
                 for i in range(len(ejercicios)):
                     ejercicio = ejercicios[i]
@@ -299,14 +297,13 @@ def init_app(app):
                     ejercicio_id = ejercicio_obj.id if ejercicio_obj else None
                     categoria_ej = categorias_ej[i] if i < len(categorias_ej) else None
                     subcategoria_ej = subcategorias_ej[i] if i < len(subcategorias_ej) else None
+                    sj = series_jsons[i] if i < len(series_jsons) else None
 
                     asignado = EjercicioAsignado(
                         bloque_id=bloque.id,
                         ejercicio_id=ejercicio_id,
                         nombre_manual=ejercicio if not ejercicio_id else None,
-                        series_reps=series[i] if i < len(series) else None,
-                        rpe=rpes[i] if i < len(rpes) else None,
-                        carga=cargas[i] if i < len(cargas) else None,
+                        series_json=sj,
                         categoria=categoria_ej,
                         subcategoria=subcategoria_ej
                     )

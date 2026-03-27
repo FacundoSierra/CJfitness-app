@@ -72,15 +72,45 @@ class EjercicioAsignado(db.Model):
     bloque_id = db.Column(db.Integer, db.ForeignKey('bloques.id'), nullable=False)
     ejercicio_id = db.Column(db.Integer, db.ForeignKey('ejercicios.id'), nullable=True)
     nombre_manual = db.Column(db.String(128), nullable=True)
-    series_reps = db.Column(db.String(32), nullable=True)
-    rpe = db.Column(db.String(12), nullable=True)
-    carga = db.Column(db.String(32), nullable=True)
+    series_reps = db.Column(db.String(32), nullable=True)   # legacy
+    rpe = db.Column(db.String(12), nullable=True)           # legacy
+    carga = db.Column(db.String(32), nullable=True)         # legacy
+    series_json = db.Column(db.Text, nullable=True)         # nuevo: JSON con series variables
     categoria = db.Column(db.String(64), nullable=True)
     subcategoria = db.Column(db.String(64), nullable=True)
     # Columnas removidas: orden, descanso, tiempo (no existen en Render DB)
-    
+
     ejercicio = relationship("Ejercicio")
     bloque = relationship("Bloque")
+
+    @property
+    def series_data_parsed(self):
+        """Devuelve el dict parseado de series_json, o None si no hay."""
+        import json
+        if self.series_json:
+            try:
+                return json.loads(self.series_json)
+            except Exception:
+                pass
+        return None
+
+    @property
+    def series_display(self):
+        """Cadena legible para mostrar el volumen del ejercicio."""
+        d = self.series_data_parsed
+        if d:
+            if d.get('variar'):
+                parts = [
+                    f"S{i+1}: {s.get('reps','?')}r @ {s.get('carga','?')} RPE{s.get('rpe','?')}"
+                    for i, s in enumerate(d.get('series_data', []))
+                ]
+                return ' / '.join(parts)
+            carga = d.get('carga', '')
+            carga_str = f" @ {carga}" if carga else ''
+            rpe = d.get('rpe', '')
+            rpe_str = f" (RPE {rpe})" if rpe else ''
+            return f"{d.get('series','?')}×{d.get('reps','?')}{carga_str}{rpe_str}"
+        return self.series_reps or ''
 
 class Plan(db.Model):
     __tablename__ = 'planes'
