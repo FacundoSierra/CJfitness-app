@@ -149,7 +149,7 @@ function agregarEjercicio(btn, bloqueIndex) {
           <button type="button" class="btn btn-sm btn-outline-primary variar-btn"
                   onclick="toggleVariarSeries(this)"
                   title="Activar variaciones por serie">
-            ⚡ Variar Series
+             Variar Series
           </button>
         </div>
       </div>
