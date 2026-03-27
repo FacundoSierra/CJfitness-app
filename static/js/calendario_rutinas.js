@@ -87,81 +87,83 @@ function agregarEjercicio(btn, bloqueIndex) {
     .map(cat => `<option value="${cat}">${cat}</option>`).join('');
 
   const html = `
-    <div class="ejercicio-entry" style="border:1px solid var(--color-border-dark); border-radius:var(--radius-md); padding:var(--space-3); margin-bottom:var(--space-2); background:var(--color-bg-alt);">
+    <div class="ejercicio-entry" style="border:1px solid var(--color-border-dark); border-radius:var(--radius-md); padding:var(--space-4); margin-bottom:var(--space-3); background:var(--color-bg-alt);">
 
-      <!-- Fila principal -->
-      <div style="display:flex; flex-wrap:wrap; gap:var(--space-2); align-items:center;">
+      <!-- Fila 1: Ejercicio -->
+      <div style="display:grid; grid-template-columns:1fr 1fr 2fr auto; gap:var(--space-3); margin-bottom:var(--space-3); align-items:end;">
+        <div>
+          <label style="font-size:var(--text-xs); font-weight:600; color:var(--color-text-secondary); margin-bottom:4px; display:block;">Categoría</label>
+          <select class="form-select categoria-select-ej" name="categoria_ej_${bloqueIndex}[]"
+                  onchange="actualizarSubcategoriasEjercicio(this)">
+            <option value="">Seleccionar...</option>
+            ${catOpts}
+          </select>
+        </div>
+        <div>
+          <label style="font-size:var(--text-xs); font-weight:600; color:var(--color-text-secondary); margin-bottom:4px; display:block;">Subcategoría</label>
+          <select class="form-select subcategoria-select-ej" name="subcategoria_ej_${bloqueIndex}[]"
+                  onchange="actualizarEjerciciosEjercicio(this)">
+            <option value="">Seleccionar...</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:var(--text-xs); font-weight:600; color:var(--color-text-secondary); margin-bottom:4px; display:block;">Ejercicio</label>
+          <select class="form-select ejercicio-select" name="ejercicio_${bloqueIndex}[]">
+            <option value="">Seleccionar...</option>
+          </select>
+        </div>
+        <div style="padding-bottom:2px;">
+          <button type="button" class="btn btn-sm btn-danger"
+                  onclick="this.closest('.ejercicio-entry').remove()"
+                  title="Eliminar ejercicio">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </div>
 
-        <!-- Categoría → Subcategoría → Ejercicio -->
-        <select class="form-select categoria-select-ej" name="categoria_ej_${bloqueIndex}[]"
-                style="width:110px; font-size:var(--text-sm);"
-                onchange="actualizarSubcategoriasEjercicio(this)">
-          <option value="">Categoría</option>
-          ${catOpts}
-        </select>
-
-        <select class="form-select subcategoria-select-ej" name="subcategoria_ej_${bloqueIndex}[]"
-                style="width:120px; font-size:var(--text-sm);"
-                onchange="actualizarEjerciciosEjercicio(this)">
-          <option value="">Subcategoría</option>
-        </select>
-
-        <select class="form-select ejercicio-select" name="ejercicio_${bloqueIndex}[]"
-                style="width:150px; font-size:var(--text-sm);">
-          <option value="">Ejercicio</option>
-        </select>
-
-        <span style="border-left:1px solid var(--color-border); height:28px; margin:0 var(--space-1);"></span>
-
-        <!-- Series (1-10) -->
-        <select class="form-select series-select"
-                style="width:80px; font-size:var(--text-sm);"
-                onchange="actualizarFilasSeries(this)">
-          ${buildSeriesOptions('')}
-        </select>
-
-        <!-- Reps (1-25) -->
-        <select class="form-select reps-select"
-                style="width:72px; font-size:var(--text-sm);">
-          ${buildRepsOptions('')}
-        </select>
-
-        <!-- RPE (1-10) -->
-        <select class="form-select rpe-select"
-                style="width:72px; font-size:var(--text-sm);">
-          ${buildRpeOptions('')}
-        </select>
-
-        <!-- Carga (texto libre) -->
-        <input type="text" class="form-control carga-input"
-               placeholder="Carga (ej: 80kg)"
-               style="width:100px; font-size:var(--text-sm);">
-
-        <!-- Botón variar -->
-        <button type="button" class="btn btn-sm btn-outline-primary variar-btn"
-                onclick="toggleVariarSeries(this)"
-                title="Activar variaciones por serie"
-                style="font-size:var(--text-xs);">
-          ⚡ Variar
-        </button>
-
-        <!-- Eliminar -->
-        <button type="button" class="btn btn-sm btn-danger"
-                onclick="this.closest('.ejercicio-entry').remove()"
-                style="margin-left:auto;">
-          <i class="bi bi-x-lg"></i>
-        </button>
+      <!-- Fila 2: Volumen -->
+      <div style="display:grid; grid-template-columns:90px 90px 90px 1fr auto; gap:var(--space-3); align-items:end;">
+        <div>
+          <label style="font-size:var(--text-xs); font-weight:600; color:var(--color-text-secondary); margin-bottom:4px; display:block;">Series</label>
+          <select class="form-select series-select" onchange="actualizarFilasSeries(this)">
+            ${buildSeriesOptions('')}
+          </select>
+        </div>
+        <div>
+          <label style="font-size:var(--text-xs); font-weight:600; color:var(--color-text-secondary); margin-bottom:4px; display:block;">Reps</label>
+          <select class="form-select reps-select">
+            ${buildRepsOptions('')}
+          </select>
+        </div>
+        <div>
+          <label style="font-size:var(--text-xs); font-weight:600; color:var(--color-text-secondary); margin-bottom:4px; display:block;">RPE</label>
+          <select class="form-select rpe-select">
+            ${buildRpeOptions('')}
+          </select>
+        </div>
+        <div>
+          <label style="font-size:var(--text-xs); font-weight:600; color:var(--color-text-secondary); margin-bottom:4px; display:block;">Carga</label>
+          <input type="text" class="form-control carga-input" placeholder="Ej: 80kg, BW+20">
+        </div>
+        <div style="padding-bottom:2px;">
+          <button type="button" class="btn btn-sm btn-outline-primary variar-btn"
+                  onclick="toggleVariarSeries(this)"
+                  title="Activar variaciones por serie">
+            ⚡ Variar Series
+          </button>
+        </div>
       </div>
 
       <!-- Tabla de series variables (oculta por defecto) -->
-      <div class="series-tabla" style="display:none; margin-top:var(--space-3);">
-        <table style="width:auto; font-size:var(--text-sm); border-collapse:separate; border-spacing:0 4px;">
+      <div class="series-tabla" style="display:none; margin-top:var(--space-4); padding-top:var(--space-3); border-top:1px solid var(--color-border);">
+        <p style="font-size:var(--text-xs); font-weight:600; color:var(--color-text-secondary); margin-bottom:var(--space-2);">Valores por serie:</p>
+        <table style="width:auto; font-size:var(--text-sm); border-collapse:separate; border-spacing:0 6px;">
           <thead>
-            <tr style="color:var(--color-text-secondary);">
-              <th style="padding:0 var(--space-2); width:50px;">Serie</th>
-              <th style="padding:0 var(--space-2); width:72px;">Reps</th>
-              <th style="padding:0 var(--space-2); width:72px;">RPE</th>
-              <th style="padding:0 var(--space-2); width:110px;">Carga</th>
+            <tr style="color:var(--color-text-secondary); font-size:var(--text-xs); font-weight:600;">
+              <th style="padding:0 var(--space-3); width:60px;">Serie</th>
+              <th style="padding:0 var(--space-3); width:90px;">Reps</th>
+              <th style="padding:0 var(--space-3); width:90px;">RPE</th>
+              <th style="padding:0 var(--space-3); width:130px;">Carga</th>
             </tr>
           </thead>
           <tbody class="series-tbody"></tbody>
@@ -257,20 +259,20 @@ function actualizarFilasSeries(seriesSelect) {
 
     tbody.insertAdjacentHTML('beforeend', `
       <tr>
-        <td style="padding:2px var(--space-2); color:var(--color-text-secondary); font-weight:600;">S${i + 1}</td>
-        <td style="padding:2px var(--space-2);">
-          <select class="form-select form-select-sm reps-serie" style="width:68px;">
+        <td style="padding:3px var(--space-3); color:var(--color-primary); font-weight:700; font-size:var(--text-sm);">S${i + 1}</td>
+        <td style="padding:3px var(--space-3);">
+          <select class="form-select form-select-sm reps-serie" style="width:86px;">
             ${buildRepsOptions(reps, '-')}
           </select>
         </td>
-        <td style="padding:2px var(--space-2);">
-          <select class="form-select form-select-sm rpe-serie" style="width:68px;">
+        <td style="padding:3px var(--space-3);">
+          <select class="form-select form-select-sm rpe-serie" style="width:86px;">
             ${buildRpeOptions(rpe, '-')}
           </select>
         </td>
-        <td style="padding:2px var(--space-2);">
+        <td style="padding:3px var(--space-3);">
           <input type="text" class="form-control form-control-sm carga-serie"
-                 style="width:90px;" value="${carga}" placeholder="Carga">
+                 style="width:120px;" value="${carga}" placeholder="Ej: 80kg">
         </td>
       </tr>
     `);
