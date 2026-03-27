@@ -23,13 +23,48 @@
 <!-- Contenedor de estadísticas dinámicas (cargado por dashboard-stats.js) -->
 <div id="dashboard-stats-container"></div>
 
-<!-- Grid de 2 columnas: últimos usuarios + actividad reciente -->
+<!-- Alertas rápidas -->
+{% if pagos_pendientes > 0 or usuarios_sin_rutina > 0 %}
+<div style="display:flex; gap:var(--space-3); flex-wrap:wrap; margin-bottom:var(--space-5);">
+  {% if pagos_pendientes > 0 %}
+  <a href="{{ url_for('admin_pagos') }}" style="
+      display:flex; align-items:center; gap:10px;
+      background:#fff8ed; border:1px solid #f5c842; border-radius:10px;
+      padding:10px 16px; text-decoration:none; color:inherit; flex:1; min-width:220px;
+  ">
+    <i class="bi bi-exclamation-triangle-fill" style="color:#d4900a; font-size:1.1rem;"></i>
+    <div>
+      <div style="font-weight:700; font-size:0.88rem;">{{ pagos_pendientes }} pagos pendientes</div>
+      <div style="font-size:0.75rem; color:var(--color-text-muted);">Revisar en la sección de pagos</div>
+    </div>
+    <i class="bi bi-arrow-right ms-auto" style="color:var(--color-text-muted);"></i>
+  </a>
+  {% endif %}
+  {% if usuarios_sin_rutina > 0 %}
+  <a href="{{ url_for('admin_usuarios') }}" style="
+      display:flex; align-items:center; gap:10px;
+      background:#f0f4ff; border:1px solid #b0c4f5; border-radius:10px;
+      padding:10px 16px; text-decoration:none; color:inherit; flex:1; min-width:220px;
+  ">
+    <i class="bi bi-person-dash-fill" style="color:#2d72c8; font-size:1.1rem;"></i>
+    <div>
+      <div style="font-weight:700; font-size:0.88rem;">{{ usuarios_sin_rutina }} sin rutina esta semana</div>
+      <div style="font-size:0.75rem; color:var(--color-text-muted);">Usuarios sin actividad en 7 días</div>
+    </div>
+    <i class="bi bi-arrow-right ms-auto" style="color:var(--color-text-muted);"></i>
+  </a>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- Grid de 2 columnas: últimos usuarios + pagos próximos -->
 <div class="grid-2" style="margin-bottom: var(--space-6);">
 
   <!-- Últimos usuarios registrados -->
   <div class="card">
     <div class="card-header">
       <h3 class="card-title"><i class="bi bi-person-plus me-2 text-primary"></i>Últimos usuarios registrados</h3>
+      <a href="{{ url_for('admin_usuarios') }}" class="btn btn-secondary btn-sm">Ver todos</a>
     </div>
     <div class="card-body" style="padding: 0;">
       {% for user in ultimos_usuarios %}
@@ -37,7 +72,7 @@
           <div class="avatar avatar-sm" style="background: var(--color-primary-light); color: var(--color-primary); font-size: var(--text-xs);">
             {{ user.nombre[0]|upper }}
           </div>
-          <div style="min-width:0;">
+          <div style="min-width:0; flex:1;">
             <div style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--color-text);">
               {{ user.nombre }} {{ user.apellidos }}
             </div>
@@ -45,6 +80,9 @@
               {{ user.email }}
             </div>
           </div>
+          <a href="{{ url_for('admin_entrenamientos') }}?usuario={{ user.id }}" class="btn btn-secondary btn-sm" style="flex-shrink:0;">
+            <i class="bi bi-calendar-plus"></i>
+          </a>
         </div>
       {% else %}
         <div class="table-empty">
@@ -55,24 +93,36 @@
     </div>
   </div>
 
-  <!-- Actividad reciente -->
+  <!-- Próximos pagos vencidos -->
   <div class="card">
     <div class="card-header">
-      <h3 class="card-title"><i class="bi bi-activity me-2 text-success"></i>Actividad reciente</h3>
+      <h3 class="card-title"><i class="bi bi-calendar-x me-2" style="color:var(--color-accent);"></i>Próximos vencimientos</h3>
+      <a href="{{ url_for('admin_pagos') }}" class="btn btn-secondary btn-sm">Ver pagos</a>
     </div>
     <div class="card-body" style="padding: 0;">
+      {% for pago in pagos_proximos %}
       <div style="display:flex; align-items:center; gap: var(--space-3); padding: var(--space-4) var(--space-6); border-bottom: 1px solid var(--color-border);">
-        <i class="bi bi-check-circle" style="color: var(--color-success); font-size: var(--text-lg); flex-shrink:0;"></i>
-        <span style="font-size: var(--text-sm);">Dashboard cargado correctamente</span>
+        <div style="width:36px; height:36px; border-radius:8px; background:#fff8ed; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <i class="bi bi-clock-history" style="color:#d4900a;"></i>
+        </div>
+        <div style="min-width:0; flex:1;">
+          <div style="font-size: var(--text-sm); font-weight: var(--font-medium);">
+            {{ pago.usuario.nombre if pago.usuario else '—' }}
+          </div>
+          <div style="font-size: var(--text-xs); color: var(--color-text-muted);">
+            Vence: {{ pago.fecha_vencimiento.strftime('%d/%m/%Y') if pago.fecha_vencimiento else '—' }}
+          </div>
+        </div>
+        <span style="font-weight:700; font-size:var(--text-sm);">
+          €{{ "%.2f"|format(pago.cantidad) if pago.cantidad else '0.00' }}
+        </span>
       </div>
-      <div style="display:flex; align-items:center; gap: var(--space-3); padding: var(--space-4) var(--space-6); border-bottom: 1px solid var(--color-border);">
-        <i class="bi bi-people" style="color: var(--color-primary); font-size: var(--text-lg); flex-shrink:0;"></i>
-        <span style="font-size: var(--text-sm);">{{ total_usuarios }} usuarios en el sistema</span>
+      {% else %}
+      <div class="table-empty">
+        <i class="bi bi-calendar-check"></i>
+        Sin vencimientos próximos.
       </div>
-      <div style="display:flex; align-items:center; gap: var(--space-3); padding: var(--space-4) var(--space-6);">
-        <i class="bi bi-clock" style="color: var(--color-accent); font-size: var(--text-lg); flex-shrink:0;"></i>
-        <span style="font-size: var(--text-sm);">Última actualización: <strong id="last-update">ahora</strong></span>
-      </div>
+      {% endfor %}
     </div>
   </div>
 
@@ -203,13 +253,6 @@ document.addEventListener('DOMContentLoaded', function() {
     showCharts: true
   });
 
-  // Actualizar hora de última actualización cada minuto
-  function updateTimestamp() {
-    var el = document.getElementById('last-update');
-    if (el) el.textContent = new Date().toLocaleTimeString('es-ES');
-  }
-  setInterval(updateTimestamp, 60000);
-  updateTimestamp();
 });
 </script>
 {% endblock %}

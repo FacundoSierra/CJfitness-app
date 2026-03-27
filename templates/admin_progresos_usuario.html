@@ -63,6 +63,10 @@
                    value="{{ fecha_actual.strftime('%Y-%m-%d') }}"
                    onchange="cambiarVista()" style="width:auto;">
         </div>
+        <a href="{{ url_for('exportar_progreso_pdf', user_id=usuario.id) }}"
+           class="btn btn-secondary btn-sm" title="Exportar progreso a PDF">
+            <i class="bi bi-file-earmark-pdf me-1"></i>Exportar PDF
+        </a>
     </div>
 </div>
 

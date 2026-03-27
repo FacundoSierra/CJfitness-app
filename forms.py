@@ -81,6 +81,26 @@ class EjercicioForm(FlaskForm):
     ])
     submit = SubmitField('Guardar Ejercicio')
 
+class ForgotPasswordForm(FlaskForm):
+    """Formulario para solicitar reset de contraseña"""
+    email = EmailField('Correo electrónico', validators=[
+        DataRequired(message='El email es obligatorio'),
+        Email(message='Formato de email inválido')
+    ])
+    submit = SubmitField('Enviar instrucciones')
+
+class ResetPasswordForm(FlaskForm):
+    """Formulario para establecer nueva contraseña"""
+    password = PasswordField('Nueva contraseña', validators=[
+        DataRequired(message='La contraseña es obligatoria'),
+        Length(min=8, message='La contraseña debe tener al menos 8 caracteres')
+    ])
+    confirm_password = PasswordField('Confirmar contraseña', validators=[
+        DataRequired(message='Debes confirmar la contraseña'),
+        EqualTo('password', message='Las contraseñas no coinciden')
+    ])
+    submit = SubmitField('Cambiar contraseña')
+
 class UsuarioEditForm(FlaskForm):
     """Formulario para editar información de usuario"""
     nombre = StringField('Nombre', validators=[

@@ -10,7 +10,7 @@ import pytest
 from datetime import date, datetime, timedelta
 from models import (
     db, Usuario, Ejercicio, Rutina, Bloque,
-    EjercicioAsignado, SeguimientoEjercicio
+    EjercicioAsignado, SeguimientoEjercicio, PasswordResetToken
 )
 from werkzeug.security import generate_password_hash
 
@@ -197,6 +197,45 @@ class TestUsuarioModelo:
         db.session.add(duplicado)
         with pytest.raises(IntegrityError):
             db.session.commit()
+
+
+class TestPasswordResetToken:
+
+    def test_token_valido(self, db, usuario_normal):
+        """Un token no usado y no expirado es válido."""
+        token = PasswordResetToken(
+            user_id=usuario_normal.id,
+            token='abc123',
+            expires_at=datetime.utcnow() + timedelta(hours=2),
+            used=False,
+        )
+        db.session.add(token)
+        db.session.commit()
+        assert token.is_valid()
+
+    def test_token_expirado_no_valido(self, db, usuario_normal):
+        """Un token expirado no es válido."""
+        token = PasswordResetToken(
+            user_id=usuario_normal.id,
+            token='expired123',
+            expires_at=datetime.utcnow() - timedelta(hours=1),
+            used=False,
+        )
+        db.session.add(token)
+        db.session.commit()
+        assert not token.is_valid()
+
+    def test_token_usado_no_valido(self, db, usuario_normal):
+        """Un token ya usado no es válido."""
+        token = PasswordResetToken(
+            user_id=usuario_normal.id,
+            token='used123',
+            expires_at=datetime.utcnow() + timedelta(hours=2),
+            used=True,
+        )
+        db.session.add(token)
+        db.session.commit()
+        assert not token.is_valid()
 
 
 class TestEjercicioModelo:

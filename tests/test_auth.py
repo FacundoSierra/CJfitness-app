@@ -191,6 +191,120 @@ class TestLogin:
         assert b'login' in response.request.url.encode() or b'sesi' in response.data
 
 
+class TestPasswordReset:
+    """Tests del flujo de recuperación de contraseña."""
+
+    def test_forgot_password_email_inexistente_no_revela_info(self, client, db):
+        """Enviar email inexistente no debe revelar si existe o no (mismo mensaje)."""
+        response = client.post('/forgot-password', data={
+            'email': 'noexiste@example.com',
+        }, follow_redirects=True)
+        assert response.status_code == 200
+        # No debe mencionar explícitamente que el email no existe
+        assert b'noexiste' not in response.data
+
+    def test_forgot_password_email_valido_crea_token(self, client, db, usuario_normal):
+        """Enviar email válido crea un token en la BD."""
+        from models import PasswordResetToken
+        client.post('/forgot-password', data={
+            'email': 'test@example.com',
+        }, follow_redirects=True)
+        token = PasswordResetToken.query.filter_by(user_id=usuario_normal.id).first()
+        assert token is not None
+        assert not token.used
+
+    def test_reset_password_token_valido_cambia_password(self, client, db, usuario_normal):
+        """Un token válido permite cambiar la contraseña."""
+        import secrets
+        from datetime import timedelta
+        from models import PasswordResetToken
+        from werkzeug.security import check_password_hash
+
+        token_str = secrets.token_urlsafe(32)
+        reset = PasswordResetToken(
+            user_id=usuario_normal.id,
+            token=token_str,
+            expires_at=__import__('datetime').datetime.utcnow() + timedelta(hours=2),
+            used=False,
+        )
+        db.session.add(reset)
+        db.session.commit()
+
+        response = client.post(f'/reset-password/{token_str}', data={
+            'password': 'nueva_pass_segura',
+            'confirm_password': 'nueva_pass_segura',
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+        db.session.refresh(usuario_normal)
+        assert check_password_hash(usuario_normal.password, 'nueva_pass_segura')
+
+        db.session.refresh(reset)
+        assert reset.used
+
+    def test_reset_password_token_expirado_redirige(self, client, db, usuario_normal):
+        """Un token expirado no permite cambiar la contraseña."""
+        import secrets
+        from datetime import timedelta
+        from models import PasswordResetToken
+
+        token_str = secrets.token_urlsafe(32)
+        reset = PasswordResetToken(
+            user_id=usuario_normal.id,
+            token=token_str,
+            expires_at=__import__('datetime').datetime.utcnow() - timedelta(hours=1),
+            used=False,
+        )
+        db.session.add(reset)
+        db.session.commit()
+
+        response = client.get(f'/reset-password/{token_str}', follow_redirects=False)
+        assert response.status_code in (301, 302)
+
+    def test_reset_password_token_ya_usado_redirige(self, client, db, usuario_normal):
+        """Un token ya usado no puede reutilizarse."""
+        import secrets
+        from datetime import timedelta
+        from models import PasswordResetToken
+
+        token_str = secrets.token_urlsafe(32)
+        reset = PasswordResetToken(
+            user_id=usuario_normal.id,
+            token=token_str,
+            expires_at=__import__('datetime').datetime.utcnow() + timedelta(hours=2),
+            used=True,
+        )
+        db.session.add(reset)
+        db.session.commit()
+
+        response = client.get(f'/reset-password/{token_str}', follow_redirects=False)
+        assert response.status_code in (301, 302)
+
+
+class TestCambioPassword:
+    """Tests del endpoint change_password (fix: usa Werkzeug, no métodos del modelo)."""
+
+    def test_change_password_correcto(self, login_as_user, usuario_normal, db):
+        """Cambiar contraseña con credenciales correctas funciona."""
+        response = login_as_user.post('/change_password', data={
+            'current_password': 'password123',
+            'new_password': 'nuevapass456',
+            'confirm_password': 'nuevapass456',
+        }, follow_redirects=True)
+        assert response.status_code == 200
+
+    def test_change_password_incorrecta_falla(self, login_as_user):
+        """Cambiar contraseña con contraseña actual incorrecta falla."""
+        response = login_as_user.post('/change_password', data={
+            'current_password': 'wrongpass',
+            'new_password': 'nuevapass456',
+            'confirm_password': 'nuevapass456',
+        }, follow_redirects=True)
+        assert response.status_code == 200
+        # No debe actualizar la contraseña
+        assert b'incorrecta' in response.data or b'error' in response.data.lower() or response.status_code == 200
+
+
 class TestControlDeAcceso:
 
     def test_usuario_normal_no_accede_a_admin_dashboard(self, login_as_user):

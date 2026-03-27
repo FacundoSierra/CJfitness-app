@@ -123,6 +123,41 @@ class TestRutasUsuario:
         assert response.status_code == 200
 
 
+class TestNuevasRutasPublicas:
+    """Tests para las rutas añadidas en los últimos fixes."""
+
+    def test_forgot_password_accesible(self, client):
+        """/forgot-password devuelve 200."""
+        response = client.get('/forgot-password')
+        assert response.status_code == 200
+
+    def test_reset_password_token_invalido_redirige(self, client):
+        """/reset-password/<token> con token inválido redirige a forgot-password."""
+        response = client.get('/reset-password/token-invalido-xyz', follow_redirects=False)
+        assert response.status_code in (301, 302)
+
+    def test_sobre_mi_redirige_sin_sesion(self, client):
+        """/sobre_mi redirige al login si no hay sesión."""
+        response = client.get('/sobre_mi', follow_redirects=False)
+        assert response.status_code in (301, 302)
+        assert 'login' in response.headers.get('Location', '')
+
+    def test_sobre_mi_accesible_autenticado(self, login_as_user):
+        """/sobre_mi devuelve 200 para un usuario autenticado."""
+        response = login_as_user.get('/sobre_mi', follow_redirects=True)
+        assert response.status_code == 200
+
+    def test_pagos_accesible_autenticado(self, login_as_user):
+        """/pagos ya no falla con NameError de Suscripcion (bug fix)."""
+        response = login_as_user.get('/pagos', follow_redirects=True)
+        assert response.status_code == 200
+
+    def test_forgot_password_redirige_si_sesion_activa(self, login_as_user):
+        """/forgot-password redirige al dashboard si ya hay sesión."""
+        response = login_as_user.get('/forgot-password', follow_redirects=False)
+        assert response.status_code in (301, 302)
+
+
 class TestApiEjercicios:
 
     def test_api_ejercicios_devuelve_json(self, client, ejercicio):
