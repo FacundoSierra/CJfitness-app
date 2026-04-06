@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}Menú del día — CJFitness{% endblock %}
+{% block page_title %}Menú del día{% endblock %}
+
+{% block head_extra %}
+<style>
+  .comida-section {
+    margin-bottom: var(--space-6);
+  }
+  .comida-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+  .comida-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+  .comida-title {
+    font-size: var(--text-base);
+    font-weight: var(--font-semibold);
+    color: var(--color-text);
+    margin: 0;
+  }
+  .comida-cals {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+  .alimento-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  .alimento-nombre {
+    font-weight: var(--font-medium);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+    margin-bottom: 2px;
+  }
+  .alimento-macros {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+  .alimento-cals {
+    font-size: var(--text-base);
+    font-weight: var(--font-bold);
+    color: var(--color-text);
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .progress-bar-custom {
+    height: 12px;
+    border-radius: 6px;
+    background: var(--color-border);
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.8s ease;
+  }
+  .macro-summary-row {
+    display: flex;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+  }
+  .macro-pill {
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+  }
+  /* Estrellas valoración */
+  .star-btn {
+    background: none;
+    border: none;
+    font-size: 1.6rem;
+    cursor: pointer;
+    color: #d1d5db;
+    transition: color 0.15s, transform 0.1s;
+    padding: 0 2px;
+  }
+  .star-btn.active, .star-btn:hover { color: #f59e0b; transform: scale(1.1); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Barra de progreso calórico -->
+<div class="card mb-5">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h6 class="mb-0" style="font-weight: var(--font-semibold);">
+        <i class="bi bi-fire me-2" style="color:#f59e0b;"></i>Calorías del día
+      </h6>
+      <span class="text-muted small">
+        {{ recomendacion.calorias_totales }} / {{ calorias_objetivo }} kcal
+      </span>
+    </div>
+
+    {% set pct_cal = [(recomendacion.calorias_totales / calorias_objetivo * 100) | int, 100] | min %}
+    <div class="progress-bar-custom mb-4">
+      <div class="progress-bar-fill" style="width:{{ pct_cal }}%; background: var(--color-primary);"></div>
+    </div>
+
+    {% if recomendacion.macros_json %}
+    <div class="macro-summary-row">
+      <span class="macro-pill" style="background:#eff6ff; color:#1d4ed8;">
+        P: {{ recomendacion.macros_json.proteinas }}g
+        {% if macros_objetivo %}/ {{ macros_objetivo.proteinas }}g{% endif %}
+      </span>
+      <span class="macro-pill" style="background:#fffbeb; color:#b45309;">
+        C: {{ recomendacion.macros_json.carbohidratos }}g
+        {% if macros_objetivo %}/ {{ macros_objetivo.carbohidratos }}g{% endif %}
+      </span>
+      <span class="macro-pill" style="background:#f0fdf4; color:#166534;">
+        G: {{ recomendacion.macros_json.grasas }}g
+        {% if macros_objetivo %}/ {{ macros_objetivo.grasas }}g{% endif %}
+      </span>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Comidas del día -->
+{% set comida_icons = {
+  'desayuno': ('bi-cup-hot-fill',    '#eff6ff', '#1d4ed8'),
+  'almuerzo': ('bi-brightness-high-fill', '#fffbeb', '#b45309'),
+  'cena':     ('bi-moon-stars-fill', '#f5f3ff', '#6d28d9'),
+  'snack':    ('bi-apple',           '#f0fdf4', '#166534'),
+} %}
+{% set comida_labels = {
+  'desayuno': 'Desayuno',
+  'almuerzo': 'Almuerzo',
+  'cena':     'Cena',
+  'snack':    'Snack',
+} %}
+
+{% if recomendacion.menu_json %}
+  {% for comida in ['desayuno', 'almuerzo', 'cena', 'snack'] %}
+    {% set items = recomendacion.menu_json.get(comida, []) %}
+    {% if items %}
+    {% set icon_data = comida_icons.get(comida, ('bi-circle', '#f3f4f6', '#6b7280')) %}
+    <div class="comida-section">
+      <div class="comida-header">
+        <div class="comida-icon" style="background:{{ icon_data[1] }}; color:{{ icon_data[2] }};">
+          <i class="bi {{ icon_data[0] }}"></i>
+        </div>
+        <div>
+          <p class="comida-title">{{ comida_labels.get(comida, comida) | capitalize }}</p>
+          <p class="comida-cals">
+            {% set cal_comida = namespace(total=0) %}
+            {% for item in items %}{% set cal_comida.total = cal_comida.total + item.calorias %}{% endfor %}
+            {{ cal_comida.total }} kcal
+          </p>
+        </div>
+      </div>
+
+      <div class="d-flex flex-column gap-3">
+        {% for item in items %}
+        <div class="alimento-card">
+          <div class="flex-grow-1">
+            <div class="alimento-nombre">{{ item.nombre }}</div>
+            <div class="alimento-macros">
+              {{ item.cantidad_g }}g &nbsp;·&nbsp;
+              P {{ item.proteinas_g }}g &nbsp;·&nbsp;
+              C {{ item.carbohidratos_g }}g &nbsp;·&nbsp;
+              G {{ item.grasas_g }}g
+            </div>
+          </div>
+          <div class="alimento-cals">
+            {{ item.calorias }}<br>
+            <span class="text-muted" style="font-size:var(--text-xs); font-weight: normal;">kcal</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+<!-- Botón regenerar -->
+<form method="POST" action="{{ url_for('nutricion_recomendar') }}" class="mb-6">
+  <button type="submit" class="btn btn-outline-primary">
+    <i class="bi bi-arrow-clockwise me-1"></i>Generar otro menú
+  </button>
+</form>
+
+<!-- Valoración -->
+<div class="card">
+  <div class="card-body">
+    <h6 class="mb-4" style="font-weight: var(--font-semibold);">
+      <i class="bi bi-star me-2 text-muted"></i>¿Cómo te ha parecido este menú?
+    </h6>
+
+    <form method="POST" action="{{ url_for('nutricion_valorar', rec_id=recomendacion.id) }}">
+      <!-- Estrellas -->
+      <div class="mb-4" id="starsContainer">
+        {% for i in range(1, 6) %}
+        <button type="button" class="star-btn {% if recomendacion.valoracion_usuario and i <= recomendacion.valoracion_usuario %}active{% endif %}"
+                data-val="{{ i }}" onclick="setStarRating({{ i }})">★</button>
+        {% endfor %}
+        <input type="hidden" name="valoracion" id="valoracionInput"
+               value="{{ recomendacion.valoracion_usuario or '' }}">
+      </div>
+
+      <!-- Notas -->
+      <div class="mb-4">
+        <textarea name="notas_usuario" class="form-control" rows="2"
+                  placeholder="Comentarios opcionales…">{{ recomendacion.notas_usuario or '' }}</textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-sm">
+        <i class="bi bi-check-lg me-1"></i>Enviar valoración
+      </button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+function setStarRating(val) {
+  document.getElementById('valoracionInput').value = val;
+  document.querySelectorAll('.star-btn').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.val) <= val);
+  });
+}
+document.querySelectorAll('.star-btn').forEach(btn => {
+  btn.addEventListener('mouseenter', () => {
+    const v = parseInt(btn.dataset.val);
+    document.querySelectorAll('.star-btn').forEach(b =>
+      b.classList.toggle('active', parseInt(b.dataset.val) <= v)
+    );
+  });
+  btn.addEventListener('mouseleave', () => {
+    const current = parseInt(document.getElementById('valoracionInput').value) || 0;
+    document.querySelectorAll('.star-btn').forEach(b =>
+      b.classList.toggle('active', parseInt(b.dataset.val) <= current)
+    );
+  });
+});
+</script>
+{% endblock %}

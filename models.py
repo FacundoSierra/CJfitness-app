@@ -246,3 +246,69 @@ class FeedbackSesion(db.Model):
 
 # Tablas simplificadas para el sistema de pagos básico
 # Estas se pueden agregar más adelante si se necesitan
+
+
+# ── MÓDULO NUTRICIONAL ──────────────────────────────────────────────────────
+
+class PerfilNutricional(db.Model):
+    """Datos del usuario necesarios para el motor de recomendación nutricional."""
+    __tablename__ = 'perfiles_nutricionales'
+
+    id            = db.Column(db.Integer, primary_key=True)
+    usuario_id    = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False, unique=True)
+    objetivo      = db.Column(db.String(30), nullable=False, default='mantener')
+    # opciones: perder_peso | ganar_masa | mantener | mejorar_rendimiento
+    nivel_actividad = db.Column(db.String(20), nullable=False, default='moderado')
+    # opciones: sedentario | ligero | moderado | activo | muy_activo
+    peso_kg       = db.Column(db.Float, nullable=True)
+    altura_cm     = db.Column(db.Float, nullable=True)
+    alergias      = db.Column(db.JSON, nullable=True)       # lista de strings
+    preferencias  = db.Column(db.JSON, nullable=True)       # lista de strings
+    calorias_objetivo = db.Column(db.Integer, nullable=True)  # calculado con Mifflin-St Jeor
+    fecha_actualizacion = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    usuario = db.relationship('Usuario', backref=db.backref('perfil_nutricional', uselist=False))
+
+    def __repr__(self):
+        return f'<PerfilNutricional usuario={self.usuario_id} objetivo={self.objetivo}>'
+
+
+class Alimento(db.Model):
+    """Base de datos nutricional local (USDA + caché de Open Food Facts)."""
+    __tablename__ = 'alimentos'
+
+    id                  = db.Column(db.Integer, primary_key=True)
+    nombre              = db.Column(db.String(300), nullable=False)
+    calorias_100g       = db.Column(db.Float, nullable=False)
+    proteinas_100g      = db.Column(db.Float, nullable=False)
+    carbohidratos_100g  = db.Column(db.Float, nullable=False)
+    grasas_100g         = db.Column(db.Float, nullable=False)
+    categoria           = db.Column(db.String(30), nullable=False, default='otro')
+    # opciones: proteina | cereal | verdura | fruta | lacteo | grasa | otro
+    fuente              = db.Column(db.String(20), nullable=False, default='usda')
+    # opciones: usda | openfoodfacts
+    fuente_id           = db.Column(db.String(100), nullable=True, unique=True)
+    # ID externo para evitar duplicados (fdcId o barcode)
+
+    def __repr__(self):
+        return f'<Alimento {self.nombre} [{self.categoria}]>'
+
+
+class RecomendacionDiaria(db.Model):
+    """Historial de menús diarios recomendados al usuario."""
+    __tablename__ = 'recomendaciones_diarias'
+
+    id              = db.Column(db.Integer, primary_key=True)
+    usuario_id      = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
+    fecha           = db.Column(db.Date, nullable=False)
+    menu_json       = db.Column(db.JSON, nullable=False)    # estructura completa del menú
+    calorias_totales = db.Column(db.Integer, nullable=True)
+    macros_json     = db.Column(db.JSON, nullable=True)     # {'proteinas': x, 'carbohidratos': x, 'grasas': x}
+    valoracion_usuario = db.Column(db.Integer, nullable=True)  # 1-5
+    notas_usuario   = db.Column(db.Text, nullable=True)
+    fecha_creacion  = db.Column(db.DateTime, default=datetime.utcnow)
+
+    usuario = db.relationship('Usuario', backref=db.backref('recomendaciones', lazy='dynamic'))
+
+    def __repr__(self):
+        return f'<RecomendacionDiaria usuario={self.usuario_id} fecha={self.fecha}>'

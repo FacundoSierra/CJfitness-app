@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Historial Nutricional — CJFitness{% endblock %}
+{% block page_title %}Historial Nutricional{% endblock %}
+
+{% block head_extra %}
+<style>
+  .star-display { color: #f59e0b; letter-spacing: 1px; }
+  .star-empty   { color: #d1d5db; letter-spacing: 1px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-5">
+  <p class="text-muted mb-0 small">{{ total }} menú{% if total != 1 %}s{% endif %} generado{% if total != 1 %}s{% endif %}</p>
+  <a href="{{ url_for('nutricion_recomendar') }}" class="btn btn-primary btn-sm">
+    <i class="bi bi-calendar2-check me-1"></i>Menú de hoy
+  </a>
+</div>
+
+{% if recomendaciones %}
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th class="text-end">Calorías</th>
+            <th class="text-center d-none d-md-table-cell">Proteínas</th>
+            <th class="text-center d-none d-md-table-cell">Carbos</th>
+            <th class="text-center d-none d-md-table-cell">Grasas</th>
+            <th class="text-center">Valoración</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for rec in recomendaciones %}
+          <tr>
+            <td>
+              <span style="font-weight: var(--font-medium);">{{ rec.fecha.strftime('%d %b %Y') }}</span>
+              {% if rec.notas_usuario %}
+              <br><span class="text-muted small">{{ rec.notas_usuario | truncate(40) }}</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <span style="font-weight: var(--font-semibold);">{{ rec.calorias_totales or '—' }}</span>
+              <span class="text-muted small"> kcal</span>
+            </td>
+            <td class="text-center d-none d-md-table-cell">
+              {% if rec.macros_json %}{{ rec.macros_json.proteinas }}g{% else %}—{% endif %}
+            </td>
+            <td class="text-center d-none d-md-table-cell">
+              {% if rec.macros_json %}{{ rec.macros_json.carbohidratos }}g{% else %}—{% endif %}
+            </td>
+            <td class="text-center d-none d-md-table-cell">
+              {% if rec.macros_json %}{{ rec.macros_json.grasas }}g{% else %}—{% endif %}
+            </td>
+            <td class="text-center">
+              {% if rec.valoracion_usuario %}
+                <span class="star-display">{% for i in range(rec.valoracion_usuario) %}★{% endfor %}</span><span class="star-empty">{% for i in range(5 - rec.valoracion_usuario) %}★{% endfor %}</span>
+              {% else %}
+                <span class="text-muted small">—</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              {% if rec.fecha == today %}
+              <a href="{{ url_for('nutricion_recomendar') }}" class="btn btn-sm btn-outline-primary">Ver</a>
+              {% else %}
+              <button type="button" class="btn btn-sm btn-outline-secondary"
+                      data-bs-toggle="modal" data-bs-target="#detalleModal{{ rec.id }}">Ver</button>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Paginación -->
+{% if total_paginas > 1 %}
+<nav class="mt-4">
+  <ul class="pagination pagination-sm justify-content-center">
+    {% if pagina > 1 %}
+    <li class="page-item">
+      <a class="page-link" href="{{ url_for('nutricion_historial', pagina=pagina-1) }}">
+        <i class="bi bi-chevron-left"></i>
+      </a>
+    </li>
+    {% endif %}
+
+    {% for p in range(1, total_paginas + 1) %}
+    <li class="page-item {% if p == pagina %}active{% endif %}">
+      <a class="page-link" href="{{ url_for('nutricion_historial', pagina=p) }}">{{ p }}</a>
+    </li>
+    {% endfor %}
+
+    {% if pagina < total_paginas %}
+    <li class="page-item">
+      <a class="page-link" href="{{ url_for('nutricion_historial', pagina=pagina+1) }}">
+        <i class="bi bi-chevron-right"></i>
+      </a>
+    </li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+
+<!-- Modales de detalle -->
+{% for rec in recomendaciones %}
+{% if rec.fecha != today %}
+<div class="modal fade" id="detalleModal{{ rec.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Menú del {{ rec.fecha.strftime('%d %b %Y') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        {% if rec.menu_json %}
+          {% for comida, items in rec.menu_json.items() %}
+            {% if items %}
+            <h6 class="text-capitalize mb-2">{{ comida }}</h6>
+            <ul class="list-unstyled mb-4">
+              {% for item in items %}
+              <li class="mb-1">
+                <span style="font-weight: var(--font-medium);">{{ item.nombre }}</span>
+                <span class="text-muted small">
+                  — {{ item.cantidad_g }}g · {{ item.calorias }} kcal
+                  (P{{ item.proteinas_g }}g C{{ item.carbohidratos_g }}g G{{ item.grasas_g }}g)
+                </span>
+              </li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+          {% endfor %}
+          <hr>
+          <p class="text-muted small mb-0">
+            Total: <strong>{{ rec.calorias_totales }} kcal</strong>
+            {% if rec.macros_json %}
+            · P {{ rec.macros_json.proteinas }}g
+            · C {{ rec.macros_json.carbohidratos }}g
+            · G {{ rec.macros_json.grasas }}g
+            {% endif %}
+          </p>
+        {% else %}
+          <p class="text-muted">No hay datos de menú disponibles.</p>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endfor %}
+
+{% else %}
+  <div class="text-center py-10 text-muted">
+    <i class="bi bi-calendar-x" style="font-size: 2.5rem; display:block; margin-bottom: var(--space-4);"></i>
+    <p>Aún no tienes menús generados.</p>
+    <a href="{{ url_for('nutricion_recomendar') }}" class="btn btn-primary mt-2">
+      Generar mi primer menú
+    </a>
+  </div>
+{% endif %}
+
+{% endblock %}

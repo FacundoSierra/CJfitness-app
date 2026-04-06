@@ -12,6 +12,12 @@ gunicorn
 # PDF export
 reportlab>=4.0.0
 
+# Módulo nutricional
+requests>=2.31.0
+scikit-learn>=1.3.0
+pandas>=2.0.0
+numpy>=1.24.0
+
 # Testing
 pytest==8.3.5
 pytest-flask==1.3.0

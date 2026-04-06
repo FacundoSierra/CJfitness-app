@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}Perfil Nutricional — CJFitness{% endblock %}
+{% block page_title %}Perfil Nutricional{% endblock %}
+
+{% block head_extra %}
+<style>
+  .chip-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    min-height: 42px;
+    cursor: text;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    border-radius: var(--radius-full);
+    padding: 2px var(--space-3);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+  }
+  .chip-remove {
+    cursor: pointer;
+    font-weight: bold;
+    line-height: 1;
+    color: var(--color-primary);
+    background: none;
+    border: none;
+    padding: 0;
+  }
+  .chip-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: var(--text-sm);
+    flex: 1;
+    min-width: 120px;
+  }
+  #cal-preview {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-bold);
+    color: var(--color-primary);
+  }
+  .preview-card {
+    background: var(--color-primary-light);
+    border-radius: var(--radius-xl);
+    padding: var(--space-5);
+    text-align: center;
+    border: 1px solid rgba(var(--color-primary-rgb, 59 130 246), 0.15);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="row g-5">
+  <!-- Formulario -->
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="mb-5" style="font-weight: var(--font-semibold);">
+          <i class="bi bi-person-gear me-2 text-muted"></i>Tus datos nutricionales
+        </h6>
+
+        <form method="POST" id="perfilForm">
+
+          <!-- Datos físicos -->
+          <div class="row g-4 mb-5">
+            <div class="col-sm-6">
+              <label class="form-label">Peso (kg)</label>
+              <input type="number" step="0.1" min="30" max="300"
+                     name="peso_kg" id="peso_kg" class="form-control"
+                     value="{{ perfil.peso_kg if perfil and perfil.peso_kg else '' }}"
+                     placeholder="Ej: 75.5">
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label">Altura (cm)</label>
+              <input type="number" step="0.1" min="100" max="250"
+                     name="altura_cm" id="altura_cm" class="form-control"
+                     value="{{ perfil.altura_cm if perfil and perfil.altura_cm else '' }}"
+                     placeholder="Ej: 178">
+            </div>
+          </div>
+
+          <!-- Objetivo -->
+          <div class="mb-4">
+            <label class="form-label">Objetivo</label>
+            <select name="objetivo" id="objetivo" class="form-select">
+              {% set obj_actual = perfil.objetivo if perfil else 'mantener' %}
+              <option value="perder_peso"         {% if obj_actual == 'perder_peso'         %}selected{% endif %}>Perder peso</option>
+              <option value="ganar_masa"           {% if obj_actual == 'ganar_masa'           %}selected{% endif %}>Ganar masa muscular</option>
+              <option value="mantener"             {% if obj_actual == 'mantener'             %}selected{% endif %}>Mantener peso</option>
+              <option value="mejorar_rendimiento"  {% if obj_actual == 'mejorar_rendimiento'  %}selected{% endif %}>Mejorar rendimiento deportivo</option>
+            </select>
+          </div>
+
+          <!-- Nivel de actividad -->
+          <div class="mb-5">
+            <label class="form-label">Nivel de actividad física</label>
+            <select name="nivel_actividad" id="nivel_actividad" class="form-select">
+              {% set nivel_actual = perfil.nivel_actividad if perfil else 'moderado' %}
+              <option value="sedentario"  {% if nivel_actual == 'sedentario'  %}selected{% endif %}>Sedentario (sin ejercicio)</option>
+              <option value="ligero"      {% if nivel_actual == 'ligero'      %}selected{% endif %}>Ligero (1-3 días/semana)</option>
+              <option value="moderado"    {% if nivel_actual == 'moderado'    %}selected{% endif %}>Moderado (3-5 días/semana)</option>
+              <option value="activo"      {% if nivel_actual == 'activo'      %}selected{% endif %}>Activo (6-7 días/semana)</option>
+              <option value="muy_activo"  {% if nivel_actual == 'muy_activo'  %}selected{% endif %}>Muy activo (atleta / doble sesión)</option>
+            </select>
+          </div>
+
+          <!-- Alergias -->
+          <div class="mb-4">
+            <label class="form-label">Alergias / intolerancias</label>
+            <div class="chip-container" id="chipContainer" onclick="document.getElementById('chipInput').focus()">
+              {% if perfil and perfil.alergias %}
+                {% for alergia in perfil.alergias %}
+                  <span class="chip">{{ alergia }}<button type="button" class="chip-remove" onclick="removeChip(this)">×</button></span>
+                {% endfor %}
+              {% endif %}
+              <input type="text" id="chipInput" class="chip-input" placeholder="Escribe y pulsa Enter…">
+            </div>
+            <input type="hidden" name="alergias" id="alergiasHidden"
+                   value="{{ (perfil.alergias | join(', ')) if perfil and perfil.alergias else '' }}">
+            <div class="form-text">Ej: gluten, lactosa, frutos secos</div>
+          </div>
+
+          <!-- Preferencias -->
+          <div class="mb-6">
+            <label class="form-label">Preferencias alimentarias</label>
+            {% set prefs_actuales = perfil.preferencias if perfil and perfil.preferencias else [] %}
+            <div class="row g-2">
+              {% for pref in ['vegetariano', 'vegano', 'mediterraneo', 'sin gluten', 'sin lactosa', 'keto'] %}
+              <div class="col-6 col-sm-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="preferencias"
+                         value="{{ pref }}" id="pref_{{ loop.index }}"
+                         {% if pref in prefs_actuales %}checked{% endif %}>
+                  <label class="form-check-label" for="pref_{{ loop.index }}">
+                    {{ pref | capitalize }}
+                  </label>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="d-flex gap-3">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-lg me-1"></i>Guardar perfil
+            </button>
+            <a href="{{ url_for('nutricion_dashboard') }}" class="btn btn-outline-secondary">
+              Cancelar
+            </a>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview de calorías en tiempo real -->
+  <div class="col-lg-4">
+    <div class="preview-card">
+      <div class="nutri-stat-label mb-2">
+        <i class="bi bi-calculator me-1"></i>Calorías estimadas
+      </div>
+      <div id="cal-preview">— kcal</div>
+      <div class="text-muted small mt-2">Se actualiza al cambiar los datos</div>
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-body">
+        <h6 class="mb-3" style="font-weight: var(--font-semibold);">Distribución de macros</h6>
+        <div id="macros-preview" class="text-muted small">
+          Completa peso, altura y objetivo para ver la distribución.
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-body">
+        <h6 class="mb-3" style="font-weight: var(--font-semibold);">Sobre la fórmula</h6>
+        <p class="text-muted small mb-0">
+          Usamos <strong>Mifflin-St Jeor</strong>, la fórmula más validada clínicamente
+          para estimar el metabolismo basal. El resultado se ajusta por tu nivel de
+          actividad y objetivo.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+// ── Chips de alergias ────────────────────────────────────────────────────────
+const chipInput     = document.getElementById('chipInput');
+const chipContainer = document.getElementById('chipContainer');
+const alergiasHidden = document.getElementById('alergiasHidden');
+
+function updateHidden() {
+  const chips = chipContainer.querySelectorAll('.chip');
+  alergiasHidden.value = Array.from(chips)
+    .map(c => c.textContent.replace('×', '').trim())
+    .join(', ');
+}
+
+chipInput.addEventListener('keydown', function(e) {
+  if ((e.key === 'Enter' || e.key === ',') && this.value.trim()) {
+    e.preventDefault();
+    addChip(this.value.trim().replace(',', ''));
+    this.value = '';
+  }
+});
+
+function addChip(text) {
+  if (!text) return;
+  const chip = document.createElement('span');
+  chip.className = 'chip';
+  chip.innerHTML = `${text}<button type="button" class="chip-remove" onclick="removeChip(this)">×</button>`;
+  chipContainer.insertBefore(chip, chipInput);
+  updateHidden();
+}
+
+function removeChip(btn) {
+  btn.parentElement.remove();
+  updateHidden();
+}
+
+// ── Preview calorías en tiempo real ─────────────────────────────────────────
+const ACTIVIDAD = { sedentario:1.2, ligero:1.375, moderado:1.55, activo:1.725, muy_activo:1.9 };
+const AJUSTE    = { perder_peso:0.82, ganar_masa:1.12, mantener:1.0, mejorar_rendimiento:1.0 };
+const MACROS    = {
+  perder_peso:         { p:0.30, c:0.40, g:0.30 },
+  ganar_masa:          { p:0.25, c:0.50, g:0.25 },
+  mantener:            { p:0.20, c:0.50, g:0.30 },
+  mejorar_rendimiento: { p:0.25, c:0.55, g:0.20 },
+};
+
+// Datos del usuario desde el servidor (para la fórmula)
+const GENERO      = "{{ (usuario.genero or 'hombre') | lower }}";
+const BIRTH_YEAR  = {{ usuario.fecha_nacimiento.year if usuario.fecha_nacimiento else 1990 }};
+const BIRTH_MONTH = {{ usuario.fecha_nacimiento.month if usuario.fecha_nacimiento else 1 }};
+const BIRTH_DAY   = {{ usuario.fecha_nacimiento.day if usuario.fecha_nacimiento else 1 }};
+
+function calcularEdad() {
+  const hoy   = new Date();
+  let edad    = hoy.getFullYear() - BIRTH_YEAR;
+  if (hoy.getMonth() + 1 < BIRTH_MONTH || (hoy.getMonth() + 1 === BIRTH_MONTH && hoy.getDate() < BIRTH_DAY)) {
+    edad--;
+  }
+  return Math.max(edad, 1);
+}
+
+function actualizarPreview() {
+  const peso    = parseFloat(document.getElementById('peso_kg').value);
+  const altura  = parseFloat(document.getElementById('altura_cm').value);
+  const obj     = document.getElementById('objetivo').value;
+  const nivel   = document.getElementById('nivel_actividad').value;
+
+  if (!peso || !altura) {
+    document.getElementById('cal-preview').textContent = '— kcal';
+    document.getElementById('macros-preview').innerHTML = 'Completa peso, altura y objetivo para ver la distribución.';
+    return;
+  }
+
+  const edad = calcularEdad();
+  const esHombre = ['hombre', 'masculino', 'male', 'm'].includes(GENERO);
+  const tmb  = (10 * peso) + (6.25 * altura) - (5 * edad) + (esHombre ? 5 : -161);
+  const tdee = tmb * (ACTIVIDAD[nivel] || 1.55);
+  const cal  = Math.round(tdee * (AJUSTE[obj] || 1.0));
+
+  document.getElementById('cal-preview').textContent = cal + ' kcal';
+
+  const m = MACROS[obj] || MACROS.mantener;
+  const prot  = Math.round(cal * m.p / 4);
+  const carbs = Math.round(cal * m.c / 4);
+  const gras  = Math.round(cal * m.g / 9);
+
+  document.getElementById('macros-preview').innerHTML = `
+    <div class="d-flex justify-content-between mb-1"><span>Proteínas</span><strong>${prot} g</strong></div>
+    <div style="height:6px;border-radius:3px;background:#3b82f6;width:100%;margin-bottom:8px;"></div>
+    <div class="d-flex justify-content-between mb-1"><span>Carbohidratos</span><strong>${carbs} g</strong></div>
+    <div style="height:6px;border-radius:3px;background:#f59e0b;width:100%;margin-bottom:8px;"></div>
+    <div class="d-flex justify-content-between mb-1"><span>Grasas</span><strong>${gras} g</strong></div>
+    <div style="height:6px;border-radius:3px;background:#10b981;width:100%;"></div>
+  `;
+}
+
+['peso_kg','altura_cm','objetivo','nivel_actividad'].forEach(id =>
+  document.getElementById(id).addEventListener('input', actualizarPreview)
+);
+actualizarPreview();
+</script>
+{% endblock %}

@@ -60,11 +60,12 @@ with app.app_context():
 
 # ------------------ REGISTRAR MÓDULOS DE RUTAS ------------------
 
-from routes import auth, admin, usuario, api
+from routes import auth, admin, usuario, api, nutricion
 auth.init_app(app)
 admin.init_app(app)
 usuario.init_app(app)
 api.init_app(app)
+nutricion.init_app(app)
 
 # ------------------ MAIN ------------------
 

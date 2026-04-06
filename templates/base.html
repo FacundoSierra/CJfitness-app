@@ -82,6 +82,12 @@
           Ejercicios
         </a>
 
+        <a href="{{ url_for('nutricion_dashboard') }}"
+           class="sidebar-link {% if request.endpoint in ('nutricion_dashboard','nutricion_perfil','nutricion_recomendar','nutricion_historial') %}active{% endif %}">
+          <i class="bi bi-egg-fried"></i>
+          Nutrición
+        </a>
+
         <span class="sidebar-section-label">Perfil</span>
 
         <a href="{{ url_for('my_info') }}"

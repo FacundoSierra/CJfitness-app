@@ -51,3 +51,5 @@ instance/
 
 # macOS AppleDouble metadata files
 ._*
+
+*.csv
