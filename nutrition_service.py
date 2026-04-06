@@ -232,18 +232,22 @@ class NutritionService:
 
     def buscar_alimento_off(self, nombre: str) -> list:
         """
-        Busca alimentos en Open Food Facts (sin credenciales).
-        Guarda los resultados nuevos en la tabla Alimento.
+        Busca alimentos en Open Food Facts filtrado por España (sin credenciales).
+        Filtra productos de comida basura. Guarda los resultados nuevos en Alimento.
         Retorna lista vacía silenciosamente si falla.
         """
         try:
             resp = requests.get(
                 OFF_SEARCH_URL,
                 params={
-                    'search_terms': nombre,
-                    'json':         'true',
-                    'page_size':    5,
-                    'fields':       'product_name,nutriments,code,pnns_groups_1',
+                    'search_terms':  nombre,
+                    'tagtype_0':     'countries',
+                    'tag_contains_0':'contains',
+                    'tag_0':         'spain',
+                    'action':        'process',
+                    'json':          1,
+                    'page_size':     5,
+                    'fields':        'product_name,nutriments,categories_tags,code',
                 },
                 timeout=OFF_TIMEOUT,
             )
@@ -253,6 +257,8 @@ class NutritionService:
             productos = resp.json().get('products', [])
             guardados = []
             for p in productos:
+                if self._es_comida_basura(p):
+                    continue
                 resultado = self._guardar_producto_off(p)
                 if resultado:
                     guardados.append(resultado)
@@ -261,6 +267,17 @@ class NutritionService:
         except Exception as exc:
             logger.debug(f'OFF lookup silently failed for "{nombre}": {exc}')
             return []
+
+    _JUNK_KEYWORDS = {
+        'pizza', 'burger', 'mcdonald', 'kfc', 'subway', 'kebab',
+        'chips', 'cola', 'soda', 'candy',
+    }
+
+    def _es_comida_basura(self, producto: dict) -> bool:
+        nombre = (producto.get('product_name') or '').lower()
+        tags   = ' '.join(producto.get('categories_tags') or []).lower()
+        texto  = nombre + ' ' + tags
+        return any(k in texto for k in self._JUNK_KEYWORDS)
 
     def _guardar_producto_off(self, producto: dict):
         """Persiste un producto de OFF en la BD si no existe ya."""
