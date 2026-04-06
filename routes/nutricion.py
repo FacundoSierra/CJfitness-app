@@ -85,6 +85,7 @@ def init_app(app):
         return render_template(
             'nutricion_perfil.html',
             username=usuario.nombre,
+            usuario=usuario,
             perfil=perfil,
         )
 
