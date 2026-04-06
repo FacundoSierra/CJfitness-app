@@ -250,6 +250,26 @@ class FeedbackSesion(db.Model):
 
 # ── MÓDULO NUTRICIONAL ──────────────────────────────────────────────────────
 
+class ComidaCompleta(db.Model):
+    """Comidas predefinidas para generar menús diarios recomendados."""
+    __tablename__ = 'comidas_completas'
+
+    id               = db.Column(db.Integer, primary_key=True)
+    nombre           = db.Column(db.String(200), nullable=False)
+    franja           = db.Column(db.String(20),  nullable=False)   # desayuno|almuerzo|cena|snack
+    calorias         = db.Column(db.Integer,      nullable=False)
+    proteinas_g      = db.Column(db.Float,        nullable=False)
+    carbohidratos_g  = db.Column(db.Float,        nullable=False)
+    grasas_g         = db.Column(db.Float,        nullable=False)
+    vegetariano      = db.Column(db.Boolean, default=False)
+    sin_gluten       = db.Column(db.Boolean, default=False)
+    sin_lacteos      = db.Column(db.Boolean, default=False)
+    descripcion      = db.Column(db.Text, nullable=True)
+
+    def __repr__(self):
+        return f'<ComidaCompleta {self.nombre} [{self.franja}]>'
+
+
 class PerfilNutricional(db.Model):
     """Datos del usuario necesarios para el motor de recomendación nutricional."""
     __tablename__ = 'perfiles_nutricionales'

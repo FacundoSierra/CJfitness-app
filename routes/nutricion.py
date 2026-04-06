@@ -217,6 +217,15 @@ def init_app(app):
             today=date.today(),
         )
 
+    # ── Biblioteca de alimentos ───────────────────────────────────────────────
+
+    @app.route('/nutricion/alimentos')
+    @login_required
+    @handle_db_error
+    def nutricion_alimentos():
+        usuario = Usuario.query.get(session['user_id'])
+        return render_template('nutricion_alimentos.html', username=usuario.nombre)
+
     # ── API búsqueda de alimentos ─────────────────────────────────────────────
 
     @app.route('/api/nutricion/buscar')
@@ -230,4 +239,26 @@ def init_app(app):
             return jsonify(resultados)
         except Exception as exc:
             logger.error(f'api_nutricion_buscar error: {exc}')
+            return jsonify([])
+
+    @app.route('/api/nutricion/alimentos')
+    @login_required
+    def api_nutricion_alimentos():
+        from models import Alimento
+        q         = request.args.get('q', '').strip()
+        categoria = request.args.get('categoria', '').strip()
+        try:
+            query = Alimento.query
+            if q:
+                query = query.filter(Alimento.nombre.ilike(f'%{q}%'))
+            if categoria:
+                query = query.filter_by(categoria=categoria)
+            alimentos = query.limit(20).all()
+            # Si < 3 resultados y hay búsqueda, intentar OFF
+            if len(alimentos) < 3 and q:
+                nutrition_service.buscar_alimento_off(q)
+                alimentos = query.limit(20).all()
+            return jsonify([nutrition_service._alimento_to_dict(a) for a in alimentos])
+        except Exception as exc:
+            logger.error(f'api_nutricion_alimentos error: {exc}')
             return jsonify([])

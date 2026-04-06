@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Biblioteca de Alimentos — CJFitness{% endblock %}
+{% block page_title %}Biblioteca Nutricional{% endblock %}
+
+{% block head_extra %}
+<style>
+  .categoria-btn {
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-full);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .categoria-btn:hover,
+  .categoria-btn.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+  }
+  .macro-badge {
+    display: inline-block;
+    padding: 1px var(--space-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+    font-weight: var(--font-semibold);
+  }
+  #resultados-container .alimento-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+    gap: var(--space-4);
+  }
+  #resultados-container .alimento-row:last-child { border-bottom: none; }
+  .empty-state {
+    text-align: center;
+    padding: var(--space-10) 0;
+    color: var(--color-text-muted);
+  }
+  .search-spinner {
+    display: none;
+    width: 16px; height: 16px;
+    border: 2px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<p class="text-muted mb-5">Consulta el valor nutricional de cada alimento por cada 100g.</p>
+
+<!-- Buscador -->
+<div class="card mb-5">
+  <div class="card-body">
+    <div class="d-flex gap-3 align-items-center mb-4">
+      <div class="flex-grow-1" style="position:relative;">
+        <i class="bi bi-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--color-text-muted);"></i>
+        <input type="text" id="searchInput" class="form-control"
+               style="padding-left:2.25rem;"
+               placeholder="Buscar alimento… (ej: pollo, arroz, manzana)">
+      </div>
+      <div class="search-spinner" id="spinner"></div>
+    </div>
+
+    <!-- Filtros por categoría -->
+    <div class="d-flex flex-wrap gap-2" id="categoriaFiltros">
+      <button class="categoria-btn active" data-cat="">Todos</button>
+      <button class="categoria-btn" data-cat="proteina">Proteína</button>
+      <button class="categoria-btn" data-cat="cereal">Cereales</button>
+      <button class="categoria-btn" data-cat="verdura">Verduras</button>
+      <button class="categoria-btn" data-cat="fruta">Frutas</button>
+      <button class="categoria-btn" data-cat="lacteo">Lácteos</button>
+      <button class="categoria-btn" data-cat="grasa">Grasas</button>
+      <button class="categoria-btn" data-cat="legumbre">Legumbres</button>
+    </div>
+  </div>
+</div>
+
+<!-- Resultados -->
+<div class="card">
+  <div class="card-body p-0" id="resultados-container">
+    <div class="empty-state">
+      <i class="bi bi-search" style="font-size:2rem; display:block; margin-bottom:var(--space-3);"></i>
+      <p>Escribe al menos 2 letras para buscar, o selecciona una categoría.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Enlace al menú del día -->
+<div class="mt-4 text-center">
+  <a href="{{ url_for('nutricion_recomendar') }}" class="btn btn-outline-primary btn-sm">
+    <i class="bi bi-calendar2-check me-1"></i>Ver mi menú del día
+  </a>
+</div>
+
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+const CATEGORIA_COLORS = {
+  proteina: '#eff6ff:#1d4ed8',
+  cereal:   '#fffbeb:#b45309',
+  verdura:  '#f0fdf4:#166534',
+  fruta:    '#fef9c3:#854d0e',
+  lacteo:   '#f0f9ff:#0369a1',
+  grasa:    '#fef3c7:#92400e',
+  legumbre: '#f5f3ff:#6d28d9',
+};
+
+let timer     = null;
+let catActual = '';
+
+function buildRow(a) {
+  const colors  = (CATEGORIA_COLORS[a.categoria] || '#f3f4f6:#6b7280').split(':');
+  const catBg   = colors[0], catFg = colors[1];
+  return `
+    <div class="alimento-row">
+      <div class="flex-grow-1">
+        <span style="font-weight:var(--font-medium);">${a.nombre}</span>
+        <span class="macro-badge ms-2" style="background:${catBg}; color:${catFg};">
+          ${a.categoria || '—'}
+        </span>
+      </div>
+      <div class="d-flex gap-3 flex-shrink-0 text-center" style="font-size:var(--text-sm);">
+        <div>
+          <div style="font-weight:var(--font-semibold);">${Math.round(a.calorias_100g)}</div>
+          <div class="text-muted" style="font-size:10px;">kcal</div>
+        </div>
+        <div>
+          <div style="font-weight:var(--font-semibold); color:#1d4ed8;">${(+a.proteinas_100g).toFixed(1)}g</div>
+          <div class="text-muted" style="font-size:10px;">prot</div>
+        </div>
+        <div>
+          <div style="font-weight:var(--font-semibold); color:#b45309;">${(+a.carbohidratos_100g).toFixed(1)}g</div>
+          <div class="text-muted" style="font-size:10px;">carbs</div>
+        </div>
+        <div>
+          <div style="font-weight:var(--font-semibold); color:#166534;">${(+a.grasas_100g).toFixed(1)}g</div>
+          <div class="text-muted" style="font-size:10px;">grasas</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderResultados(data) {
+  const container = document.getElementById('resultados-container');
+  if (!data.length) {
+    container.innerHTML = `<div class="empty-state"><i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:var(--space-3);"></i><p>Sin resultados.</p></div>`;
+    return;
+  }
+  container.innerHTML = data.map(buildRow).join('');
+}
+
+function buscar() {
+  const q = document.getElementById('searchInput').value.trim();
+  const spinner = document.getElementById('spinner');
+
+  if (q.length < 2 && !catActual) {
+    document.getElementById('resultados-container').innerHTML = `
+      <div class="empty-state">
+        <i class="bi bi-search" style="font-size:2rem;display:block;margin-bottom:var(--space-3);"></i>
+        <p>Escribe al menos 2 letras para buscar, o selecciona una categoría.</p>
+      </div>`;
+    return;
+  }
+
+  spinner.style.display = 'block';
+  let url = `/api/nutricion/alimentos?q=${encodeURIComponent(q)}`;
+  if (catActual) url += `&categoria=${catActual}`;
+
+  fetch(url)
+    .then(r => r.json())
+    .then(data => { renderResultados(data); spinner.style.display = 'none'; })
+    .catch(() => { spinner.style.display = 'none'; });
+}
+
+document.getElementById('searchInput').addEventListener('input', () => {
+  clearTimeout(timer);
+  timer = setTimeout(buscar, 350);
+});
+
+document.getElementById('categoriaFiltros').addEventListener('click', e => {
+  const btn = e.target.closest('.categoria-btn');
+  if (!btn) return;
+  document.querySelectorAll('.categoria-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  catActual = btn.dataset.cat;
+  buscar();
+});
+</script>
+{% endblock %}

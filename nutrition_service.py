@@ -1,20 +1,21 @@
 """
-NutritionService — motor de recomendación nutricional basado en contenido + reglas.
+NutritionService — motor de recomendación nutricional.
 
-Algoritmo:
-  1. Calcula TDEE con Mifflin-St Jeor y ajusta por objetivo.
-  2. Distribuye macronutrientes según objetivo.
-  3. Para cada comida, selecciona alimentos usando similitud coseno entre el
-     vector de macros del alimento y el vector objetivo del usuario.
-  4. Construye menú diario con distribución calórica: desayuno 25%, almuerzo 35%,
-     cena 30%, snack 10%.
-  5. Consulta Open Food Facts (sin credenciales) si no hay suficientes alimentos
-     en la BD local.
+Arquitectura dual:
+  - ComidaCompleta  → genera menús diarios (comidas predefinidas con macros reales)
+  - Alimento (BEDCA)→ biblioteca consultable por el usuario (valores por 100g)
+
+Algoritmo anti-monotonía:
+  1. Obtiene historial de los últimos 7 días del usuario.
+  2. Para cada franja, filtra candidatos por preferencias (vegetariano, sin_gluten…).
+  3. Puntúa con similitud coseno + penalización por repetición reciente.
+  4. Elige 1 de los top-8 con random.choices ponderado.
 """
 
 import logging
+import random
 import requests
-from datetime import date, datetime
+from datetime import date, timedelta
 
 logger = logging.getLogger('fitness_app')
 
@@ -35,7 +36,6 @@ AJUSTE_OBJETIVO = {
     'mejorar_rendimiento': 1.0,
 }
 
-# Porcentajes de macros por objetivo (proteína, carbos, grasas)
 MACROS_OBJETIVO = {
     'perder_peso':         {'proteinas': 0.30, 'carbohidratos': 0.40, 'grasas': 0.30},
     'ganar_masa':          {'proteinas': 0.25, 'carbohidratos': 0.50, 'grasas': 0.25},
@@ -43,24 +43,31 @@ MACROS_OBJETIVO = {
     'mejorar_rendimiento': {'proteinas': 0.25, 'carbohidratos': 0.55, 'grasas': 0.20},
 }
 
-# Distribución calórica por comida
-DISTRIBUCION_COMIDAS = {
+DISTRIBUCION_FRANJAS = {
     'desayuno': 0.25,
     'almuerzo': 0.35,
     'cena':     0.30,
     'snack':    0.10,
 }
 
-# Cantidad de alimentos por comida
-ALIMENTOS_POR_COMIDA = {
-    'desayuno': 2,
-    'almuerzo': 3,
-    'cena':     3,
-    'snack':    1,
+# Palabras clave para detectar tipo de proteína principal (bonus diversidad)
+PROTEINA_TIPOS = {
+    'pollo':    ('pollo', 'pechuga', 'muslo', 'alita'),
+    'ternera':  ('ternera', 'buey', 'vaca', 'res', 'carne picada'),
+    'cerdo':    ('cerdo', 'lomo', 'costilla', 'jamón', 'panceta'),
+    'pescado':  ('pescado', 'merluza', 'salmón', 'atún', 'bacalao', 'dorada', 'lubina'),
+    'mariscos': ('marisco', 'gamba', 'langostino', 'mejillón', 'calamar', 'sepia'),
+    'huevo':    ('huevo', 'tortilla'),
+    'legumbre': ('lentejas', 'garbanzos', 'alubias', 'judías', 'soja'),
 }
 
 OFF_SEARCH_URL = 'https://world.openfoodfacts.org/cgi/search.pl'
-OFF_TIMEOUT    = 3  # segundos
+OFF_TIMEOUT    = 3
+
+_JUNK_KEYWORDS = {
+    'pizza', 'burger', 'mcdonald', 'kfc', 'subway', 'kebab',
+    'chips', 'cola', 'soda', 'candy',
+}
 
 
 class NutritionService:
@@ -68,24 +75,19 @@ class NutritionService:
     # ── Cálculos energéticos ─────────────────────────────────────────────────
 
     def calcular_tmb(self, peso_kg: float, altura_cm: float, edad: int, genero: str) -> float:
-        """Fórmula Mifflin-St Jeor."""
         base = (10 * peso_kg) + (6.25 * altura_cm) - (5 * edad)
         return base + 5 if genero and genero.lower() in ('hombre', 'masculino', 'male', 'm') else base - 161
 
     def calcular_calorias_objetivo(self, perfil, usuario) -> int:
-        """Devuelve las calorías diarias objetivo para el usuario."""
         if not perfil.peso_kg or not perfil.altura_cm:
-            return 2000  # fallback razonable
-
-        edad = self._calcular_edad(usuario.fecha_nacimiento)
+            return 2000
+        edad   = self._calcular_edad(usuario.fecha_nacimiento)
         genero = usuario.genero or 'hombre'
-        tmb  = self.calcular_tmb(perfil.peso_kg, perfil.altura_cm, edad, genero)
-        tdee = tmb * MULTIPLICADORES_ACTIVIDAD.get(perfil.nivel_actividad, 1.55)
-        ajuste = AJUSTE_OBJETIVO.get(perfil.objetivo, 1.0)
-        return round(tdee * ajuste)
+        tmb    = self.calcular_tmb(perfil.peso_kg, perfil.altura_cm, edad, genero)
+        tdee   = tmb * MULTIPLICADORES_ACTIVIDAD.get(perfil.nivel_actividad, 1.55)
+        return round(tdee * AJUSTE_OBJETIVO.get(perfil.objetivo, 1.0))
 
     def calcular_macros_objetivo(self, calorias: int, objetivo: str) -> dict:
-        """Devuelve los gramos objetivo de cada macro."""
         dist = MACROS_OBJETIVO.get(objetivo, MACROS_OBJETIVO['mantener'])
         return {
             'proteinas':     round(calorias * dist['proteinas']     / 4),
@@ -93,74 +95,127 @@ class NutritionService:
             'grasas':        round(calorias * dist['grasas']        / 9),
         }
 
-    # ── Generación del menú ──────────────────────────────────────────────────
+    # ── Generación del menú (arquitectura dual + anti-monotonía) ────────────
 
     def generar_menu(self, perfil, usuario, recomendacion_anterior=None) -> dict:
         """
-        Genera un menú diario completo. Retorna dict con:
-          menu_json, calorias_totales, macros_json
+        Genera un menú diario usando ComidaCompleta con lógica anti-monotonía.
+        Retorna dict con: menu_json, calorias_totales, macros_json
         """
-        from models import Alimento
+        from models import ComidaCompleta, RecomendacionDiaria
 
-        calorias_objetivo = perfil.calorias_objetivo or self.calcular_calorias_objetivo(perfil, usuario)
-        objetivo = perfil.objetivo or 'mantener'
+        calorias_obj = perfil.calorias_objetivo or self.calcular_calorias_objetivo(perfil, usuario)
+        objetivo     = perfil.objetivo or 'mantener'
+        dist_macros  = MACROS_OBJETIVO.get(objetivo, MACROS_OBJETIVO['mantener'])
 
-        # Vector objetivo de macros (normalizado para similitud coseno)
-        dist = MACROS_OBJETIVO.get(objetivo, MACROS_OBJETIVO['mantener'])
-        vector_objetivo = [dist['proteinas'], dist['carbohidratos'], dist['grasas']]
+        # ── Paso 1: historial reciente ────────────────────────────────────
+        hoy          = date.today()
+        hace_3       = hoy - timedelta(days=3)
+        hace_7       = hoy - timedelta(days=7)
 
-        # Alimentos excluidos (alergias + preferencias)
-        alimentos_excluidos = self._nombres_excluidos(perfil)
+        historial_7  = RecomendacionDiaria.query.filter(
+            RecomendacionDiaria.usuario_id == usuario.id,
+            RecomendacionDiaria.fecha >= hace_7,
+            RecomendacionDiaria.fecha < hoy,
+        ).all()
 
-        # Alimentos ya usados el día anterior (para rotar)
-        usados_ayer: set = set()
-        if recomendacion_anterior and recomendacion_anterior.menu_json:
-            usados_ayer = self._nombres_del_menu(recomendacion_anterior.menu_json)
+        nombres_3dias: set = set()
+        nombres_7dias: set = set()
+        proteina_ayer: str = ''
 
-        # Cargar alimentos compatibles desde BD
-        candidatos = Alimento.query.all()
-        candidatos = [a for a in candidatos if not self._esta_excluido(a, alimentos_excluidos)]
+        for rec in historial_7:
+            if not rec.menu_json:
+                continue
+            for franja, item in rec.menu_json.items():
+                if not isinstance(item, dict):
+                    continue
+                nombre_lower = item.get('nombre', '').lower()
+                nombres_7dias.add(nombre_lower)
+                if rec.fecha >= hace_3:
+                    nombres_3dias.add(nombre_lower)
+                # Detectar proteína del almuerzo de ayer para diversidad
+                if franja == 'almuerzo' and rec.fecha == hoy - timedelta(days=1):
+                    proteina_ayer = self._detectar_tipo_proteina(nombre_lower)
 
-        # Si hay muy pocos alimentos, buscar en OFF los básicos
-        if len(candidatos) < 20:
-            self._poblar_desde_off(['pollo', 'arroz', 'huevos', 'avena', 'manzana', 'yogur'])
-            candidatos = Alimento.query.all()
-            candidatos = [a for a in candidatos if not self._esta_excluido(a, alimentos_excluidos)]
+        # ── Paso 2-3-4: construir menú franja a franja ────────────────────
+        menu      = {}
+        totales   = {'proteinas': 0.0, 'carbohidratos': 0.0, 'grasas': 0.0, 'calorias': 0}
 
-        # Construir menú comida a comida
-        menu = {}
-        usados_hoy: set = set()
-        totales = {'proteinas': 0, 'carbohidratos': 0, 'grasas': 0, 'calorias': 0}
+        for franja, fraccion in DISTRIBUCION_FRANJAS.items():
+            # Vector objetivo para esta franja
+            vector_obj = [
+                dist_macros['proteinas'],
+                dist_macros['carbohidratos'],
+                dist_macros['grasas'],
+            ]
 
-        for comida, fraccion in DISTRIBUCION_COMIDAS.items():
-            cal_comida = calorias_objetivo * fraccion
-            n_alimentos = ALIMENTOS_POR_COMIDA[comida]
+            # Candidatos filtrados por franja y preferencias
+            q = ComidaCompleta.query.filter_by(franja=franja)
+            preferencias = perfil.preferencias or []
+            if 'vegetariano' in preferencias or 'vegano' in preferencias:
+                q = q.filter_by(vegetariano=True)
+            if 'sin gluten' in preferencias:
+                q = q.filter_by(sin_gluten=True)
+            if 'sin lactosa' in preferencias:
+                q = q.filter_by(sin_lacteos=True)
+            candidatos = q.all()
 
-            seleccionados = self._seleccionar_alimentos(
-                candidatos, vector_objetivo, cal_comida,
-                n_alimentos, usados_hoy, usados_ayer, comida
-            )
+            if not candidatos:
+                # Sin candidatos tras filtrar — usar todos los de esa franja
+                candidatos = ComidaCompleta.query.filter_by(franja=franja).all()
 
-            items = []
-            for alimento, gramos in seleccionados:
-                factor = gramos / 100
-                item = {
-                    'nombre':         alimento.nombre,
-                    'cantidad_g':     round(gramos),
-                    'calorias':       round(alimento.calorias_100g * factor),
-                    'proteinas_g':    round(alimento.proteinas_100g * factor, 1),
-                    'carbohidratos_g':round(alimento.carbohidratos_100g * factor, 1),
-                    'grasas_g':       round(alimento.grasas_100g * factor, 1),
-                    'categoria':      alimento.categoria,
-                }
-                items.append(item)
-                usados_hoy.add(alimento.nombre.lower())
-                totales['proteinas']     += item['proteinas_g']
-                totales['carbohidratos'] += item['carbohidratos_g']
-                totales['grasas']        += item['grasas_g']
-                totales['calorias']      += item['calorias']
+            if not candidatos:
+                continue
 
-            menu[comida] = items
+            # Relajar penalización si hay < 8 candidatos
+            penalizar_3dias = len(candidatos) >= 8
+
+            # Puntuar cada candidato
+            scored = []
+            for c in candidatos:
+                vec_c = [c.proteinas_g, c.carbohidratos_g, c.grasas_g]
+                sim   = self._similitud_coseno(vector_obj, vec_c)
+                nombre_lower = c.nombre.lower()
+
+                if nombre_lower in nombres_3dias and penalizar_3dias:
+                    sim *= 0.0   # excluir de los últimos 3 días
+                elif nombre_lower in nombres_7dias:
+                    sim *= 0.3   # penalizar si apareció en la semana
+                # else: sin penalización
+
+                # Bonus diversidad de proteína en almuerzo
+                if franja == 'almuerzo' and proteina_ayer:
+                    tipo_c = self._detectar_tipo_proteina(nombre_lower)
+                    if tipo_c and tipo_c == proteina_ayer:
+                        sim *= 0.5
+
+                scored.append((max(sim, 0.001), c))  # mínimo 0.001 para no excluir totalmente
+
+            # Ordenar y tomar top-8
+            scored.sort(key=lambda x: x[0], reverse=True)
+            top8 = scored[:8]
+
+            # Elección aleatoria ponderada por puntuación
+            pesos      = [s for s, _ in top8]
+            elegida    = random.choices([c for _, c in top8], weights=pesos, k=1)[0]
+
+            item = {
+                'nombre':           elegida.nombre,
+                'descripcion':      elegida.descripcion or '',
+                'calorias':         elegida.calorias,
+                'proteinas_g':      elegida.proteinas_g,
+                'carbohidratos_g':  elegida.carbohidratos_g,
+                'grasas_g':         elegida.grasas_g,
+                'vegetariano':      elegida.vegetariano,
+                'sin_gluten':       elegida.sin_gluten,
+                'sin_lacteos':      elegida.sin_lacteos,
+            }
+            menu[franja] = item
+
+            totales['proteinas']     += elegida.proteinas_g
+            totales['carbohidratos'] += elegida.carbohidratos_g
+            totales['grasas']        += elegida.grasas_g
+            totales['calorias']      += elegida.calorias
 
         macros = {
             'proteinas':     round(totales['proteinas'], 1),
@@ -174,7 +229,7 @@ class NutritionService:
             'macros_json':      macros,
         }
 
-    # ── Similitud coseno (sin sklearn si no está disponible) ─────────────────
+    # ── Similitud coseno ─────────────────────────────────────────────────────
 
     def _similitud_coseno(self, v1: list, v2: list) -> float:
         try:
@@ -184,79 +239,64 @@ class NutritionService:
             b = np.array(v2).reshape(1, -1)
             return float(cosine_similarity(a, b)[0][0])
         except ImportError:
-            # Implementación manual si sklearn no está instalado
-            dot   = sum(a * b for a, b in zip(v1, v2))
-            mag1  = sum(x ** 2 for x in v1) ** 0.5
-            mag2  = sum(x ** 2 for x in v2) ** 0.5
-            if mag1 == 0 or mag2 == 0:
-                return 0.0
-            return dot / (mag1 * mag2)
+            dot  = sum(a * b for a, b in zip(v1, v2))
+            mag1 = sum(x ** 2 for x in v1) ** 0.5
+            mag2 = sum(x ** 2 for x in v2) ** 0.5
+            return dot / (mag1 * mag2) if mag1 and mag2 else 0.0
 
-    def _seleccionar_alimentos(self, candidatos, vector_objetivo, cal_comida,
-                                n_alimentos, usados_hoy, usados_ayer, comida):
-        """
-        Ordena candidatos por similitud coseno con el vector objetivo,
-        penaliza los usados (hoy o ayer), selecciona los top-n y calcula
-        los gramos necesarios para alcanzar cal_comida distribuida en partes iguales.
-        """
-        cal_por_alimento = cal_comida / max(n_alimentos, 1)
+    def _detectar_tipo_proteina(self, nombre_lower: str) -> str:
+        for tipo, palabras in PROTEINA_TIPOS.items():
+            if any(p in nombre_lower for p in palabras):
+                return tipo
+        return ''
 
-        scored = []
-        for a in candidatos:
-            if a.calorias_100g <= 0:
-                continue
-            nombre_lower = a.nombre.lower()
-            vec_a = [a.proteinas_100g, a.carbohidratos_100g, a.grasas_100g]
-            sim = self._similitud_coseno(vector_objetivo, vec_a)
+    # ── Búsqueda de alimentos (biblioteca BEDCA + OFF) ───────────────────────
 
-            # Penalizar repetición
-            if nombre_lower in usados_hoy:
-                sim -= 1.0
-            elif nombre_lower in usados_ayer:
-                sim -= 0.3
+    def buscar_alimento(self, query: str) -> list:
+        """Busca en tabla alimentos (BEDCA); complementa con OFF si < 3 resultados."""
+        from models import Alimento
 
-            scored.append((sim, a))
+        locales = Alimento.query.filter(
+            Alimento.nombre.ilike(f'%{query}%')
+        ).limit(20).all()
 
-        scored.sort(key=lambda x: x[0], reverse=True)
+        if len(locales) < 3:
+            self.buscar_alimento_off(query)
+            locales = Alimento.query.filter(
+                Alimento.nombre.ilike(f'%{query}%')
+            ).limit(20).all()
 
-        resultado = []
-        for _, alimento in scored[:n_alimentos]:
-            # Calcular gramos para aportar cal_por_alimento
-            gramos = (cal_por_alimento / alimento.calorias_100g) * 100
-            gramos = max(20, min(gramos, 400))  # entre 20g y 400g
-            resultado.append((alimento, gramos))
+        return [self._alimento_to_dict(a) for a in locales]
 
-        return resultado
+    def buscar_por_categoria(self, categoria: str) -> list:
+        from models import Alimento
+        resultados = Alimento.query.filter_by(categoria=categoria).limit(50).all()
+        return [self._alimento_to_dict(a) for a in resultados]
 
     # ── Open Food Facts ──────────────────────────────────────────────────────
 
     def buscar_alimento_off(self, nombre: str) -> list:
-        """
-        Busca alimentos en Open Food Facts filtrado por España (sin credenciales).
-        Filtra productos de comida basura. Guarda los resultados nuevos en Alimento.
-        Retorna lista vacía silenciosamente si falla.
-        """
+        """Busca en OFF España. Fallback silencioso si falla."""
         try:
             resp = requests.get(
                 OFF_SEARCH_URL,
                 params={
-                    'search_terms':  nombre,
-                    'tagtype_0':     'countries',
-                    'tag_contains_0':'contains',
-                    'tag_0':         'spain',
-                    'action':        'process',
-                    'json':          1,
-                    'page_size':     5,
-                    'fields':        'product_name,nutriments,categories_tags,code',
+                    'search_terms':   nombre,
+                    'tagtype_0':      'countries',
+                    'tag_contains_0': 'contains',
+                    'tag_0':          'spain',
+                    'action':         'process',
+                    'json':           1,
+                    'page_size':      5,
+                    'fields':         'product_name,nutriments,categories_tags,code',
                 },
                 timeout=OFF_TIMEOUT,
             )
             if resp.status_code != 200:
                 return []
 
-            productos = resp.json().get('products', [])
             guardados = []
-            for p in productos:
+            for p in resp.json().get('products', []):
                 if self._es_comida_basura(p):
                     continue
                 resultado = self._guardar_producto_off(p)
@@ -268,19 +308,12 @@ class NutritionService:
             logger.debug(f'OFF lookup silently failed for "{nombre}": {exc}')
             return []
 
-    _JUNK_KEYWORDS = {
-        'pizza', 'burger', 'mcdonald', 'kfc', 'subway', 'kebab',
-        'chips', 'cola', 'soda', 'candy',
-    }
-
     def _es_comida_basura(self, producto: dict) -> bool:
         nombre = (producto.get('product_name') or '').lower()
         tags   = ' '.join(producto.get('categories_tags') or []).lower()
-        texto  = nombre + ' ' + tags
-        return any(k in texto for k in self._JUNK_KEYWORDS)
+        return any(k in nombre + ' ' + tags for k in _JUNK_KEYWORDS)
 
     def _guardar_producto_off(self, producto: dict):
-        """Persiste un producto de OFF en la BD si no existe ya."""
         from models import db, Alimento
 
         barcode    = str(producto.get('code', '') or '')
@@ -290,14 +323,11 @@ class NutritionService:
         if not nombre:
             return None
 
-        kcal  = nutriments.get('energy-kcal_100g') or nutriments.get('energy_100g', 0)
-        prot  = nutriments.get('proteins_100g', 0) or 0
-        carbs = nutriments.get('carbohydrates_100g', 0) or 0
-        fat   = nutriments.get('fat_100g', 0) or 0
-
-        # Descartar si no tiene datos nutricionales mínimos
         try:
-            kcal, prot, carbs, fat = float(kcal), float(prot), float(carbs), float(fat)
+            kcal  = float(nutriments.get('energy-kcal_100g') or nutriments.get('energy_100g', 0) or 0)
+            prot  = float(nutriments.get('proteins_100g', 0) or 0)
+            carbs = float(nutriments.get('carbohydrates_100g', 0) or 0)
+            fat   = float(nutriments.get('fat_100g', 0) or 0)
         except (ValueError, TypeError):
             return None
 
@@ -305,9 +335,7 @@ class NutritionService:
             return None
 
         fuente_id = f'off_{barcode}' if barcode else f'off_name_{nombre[:50]}'
-
-        # Evitar duplicados
-        existing = Alimento.query.filter_by(fuente_id=fuente_id).first()
+        existing  = Alimento.query.filter_by(fuente_id=fuente_id).first()
         if existing:
             return existing
 
@@ -329,38 +357,12 @@ class NutritionService:
             db.session.rollback()
             return None
 
-    def _poblar_desde_off(self, terminos: list):
-        """Busca una lista de términos en OFF para poblar la BD inicial."""
-        for termino in terminos:
-            self.buscar_alimento_off(termino)
-
-    # ── Búsqueda combinada (BD local + OFF) ──────────────────────────────────
-
-    def buscar_alimento(self, query: str) -> list:
-        """
-        Busca primero en BD local; si hay < 3 resultados, complementa con OFF.
-        Devuelve lista de dicts serializables.
-        """
-        from models import Alimento
-
-        locales = Alimento.query.filter(
-            Alimento.nombre.ilike(f'%{query}%')
-        ).limit(10).all()
-
-        if len(locales) < 3:
-            self.buscar_alimento_off(query)
-            locales = Alimento.query.filter(
-                Alimento.nombre.ilike(f'%{query}%')
-            ).limit(10).all()
-
-        return [self._alimento_to_dict(a) for a in locales]
-
     # ── Utilidades ───────────────────────────────────────────────────────────
 
     def _calcular_edad(self, fecha_nacimiento) -> int:
         if not fecha_nacimiento:
-            return 30  # valor por defecto
-        hoy = date.today()
+            return 30
+        hoy  = date.today()
         edad = hoy.year - fecha_nacimiento.year
         if (hoy.month, hoy.day) < (fecha_nacimiento.month, fecha_nacimiento.day):
             edad -= 1
@@ -368,16 +370,16 @@ class NutritionService:
 
     def _inferir_categoria(self, nombre: str) -> str:
         n = nombre.lower()
-        if any(k in n for k in ('chicken', 'beef', 'fish', 'egg', 'turkey',
-                                 'pork', 'salmon', 'tuna', 'pollo', 'ternera',
-                                 'atún', 'cerdo', 'jamón', 'carne')):
+        if any(k in n for k in ('chicken', 'beef', 'fish', 'egg', 'turkey', 'pork',
+                                 'salmon', 'tuna', 'pollo', 'ternera', 'atún',
+                                 'cerdo', 'jamón', 'carne')):
             return 'proteina'
-        if any(k in n for k in ('rice', 'bread', 'pasta', 'oat', 'wheat',
-                                 'corn', 'potato', 'arroz', 'pan', 'avena',
-                                 'trigo', 'maíz', 'patata', 'cereal')):
+        if any(k in n for k in ('rice', 'bread', 'pasta', 'oat', 'wheat', 'corn',
+                                 'potato', 'arroz', 'pan', 'avena', 'trigo',
+                                 'maíz', 'patata', 'cereal')):
             return 'cereal'
-        if any(k in n for k in ('milk', 'yogurt', 'cheese', 'cream',
-                                 'leche', 'yogur', 'queso', 'nata')):
+        if any(k in n for k in ('milk', 'yogurt', 'cheese', 'cream', 'leche',
+                                 'yogur', 'queso', 'nata')):
             return 'lacteo'
         if any(k in n for k in ('apple', 'banana', 'orange', 'berry', 'fruit',
                                  'grape', 'manzana', 'plátano', 'naranja',
@@ -385,42 +387,25 @@ class NutritionService:
             return 'fruta'
         if any(k in n for k in ('oil', 'butter', 'nuts', 'almond', 'walnut',
                                  'avocado', 'aceite', 'mantequilla', 'nuez',
-                                 'almendra', 'aguacate', 'palta')):
+                                 'almendra', 'aguacate')):
             return 'grasa'
+        if any(k in n for k in ('lentejas', 'garbanzos', 'alubias', 'judías',
+                                 'soja', 'legumbre', 'bean', 'lentil')):
+            return 'legumbre'
         return 'verdura'
-
-    def _nombres_excluidos(self, perfil) -> set:
-        excluidos = set()
-        alergias = perfil.alergias or []
-        for alergia in alergias:
-            excluidos.add(alergia.lower())
-        return excluidos
-
-    def _esta_excluido(self, alimento, excluidos: set) -> bool:
-        if not excluidos:
-            return False
-        nombre_lower = alimento.nombre.lower()
-        return any(exc in nombre_lower for exc in excluidos)
-
-    def _nombres_del_menu(self, menu_json: dict) -> set:
-        nombres = set()
-        for items in menu_json.values():
-            for item in items:
-                nombres.add(item.get('nombre', '').lower())
-        return nombres
 
     def _alimento_to_dict(self, a) -> dict:
         return {
-            'id':                a.id,
-            'nombre':            a.nombre,
-            'calorias_100g':     a.calorias_100g,
-            'proteinas_100g':    a.proteinas_100g,
-            'carbohidratos_100g':a.carbohidratos_100g,
-            'grasas_100g':       a.grasas_100g,
-            'categoria':         a.categoria,
-            'fuente':            a.fuente,
+            'id':                 a.id,
+            'nombre':             a.nombre,
+            'calorias_100g':      a.calorias_100g,
+            'proteinas_100g':     a.proteinas_100g,
+            'carbohidratos_100g': a.carbohidratos_100g,
+            'grasas_100g':        a.grasas_100g,
+            'categoria':          a.categoria,
+            'fuente':             a.fuente,
         }
 
 
-# Instancia global (importable directamente)
+# Instancia global
 nutrition_service = NutritionService()
