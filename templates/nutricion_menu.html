@@ -83,6 +83,13 @@
     transition: color 0.15s, transform 0.1s; padding: 0 2px;
   }
   .star-btn.active, .star-btn:hover { color: #f59e0b; transform: scale(1.1); }
+  .franja-star-btn {
+    background: none; border: none; font-size: 1.1rem;
+    cursor: pointer; color: #d1d5db;
+    transition: color 0.1s; padding: 0 1px; line-height: 1;
+  }
+  .franja-star-btn.active, .franja-star-btn:hover { color: #f59e0b; }
+  .franja-val-lbl { font-size: var(--text-xs); color: var(--color-text-muted); margin-left: var(--space-2); }
 </style>
 {% endblock %}
 
@@ -173,6 +180,19 @@
         <span class="badge-dieta" style="background:#f0f9ff; color:#0369a1;">Sin lácteos</span>
         {% endif %}
       </div>
+
+      <!-- Valoración individual de esta comida -->
+      <div class="mt-3 d-flex align-items-center">
+        <span style="font-size:var(--text-xs); color:var(--color-text-muted); margin-right:var(--space-2);">Valorar:</span>
+        <div id="stars-{{ franja }}">
+          {% for i in range(1, 6) %}
+          <button type="button" class="franja-star-btn"
+                  data-franja="{{ franja }}" data-val="{{ i }}"
+                  onclick="valorarComida('{{ franja }}', {{ i }}, '{{ item.nombre | replace("'", "\\'") }}')">★</button>
+          {% endfor %}
+        </div>
+        <span class="franja-val-lbl" id="lbl-{{ franja }}"></span>
+      </div>
     </div>
     {% endif %}
   {% endfor %}
@@ -237,6 +257,43 @@ document.querySelectorAll('.star-btn').forEach(btn => {
   btn.addEventListener('mouseleave', () => {
     const cur = parseInt(document.getElementById('valoracionInput').value) || 0;
     document.querySelectorAll('.star-btn').forEach(b =>
+      b.classList.toggle('active', parseInt(b.dataset.val) <= cur)
+    );
+  });
+});
+
+function valorarComida(franja, val, nombre) {
+  fetch('/api/nutricion/valorar_comida', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ nombre_comida: nombre, valoracion: val }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.ok) {
+      document.querySelectorAll(`#stars-${franja} .franja-star-btn`).forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.val) <= val);
+      });
+      document.getElementById(`lbl-${franja}`).textContent = `${val}/5`;
+    }
+  })
+  .catch(err => console.error('Error valorar comida:', err));
+}
+
+// Hover en estrellas de franja
+document.querySelectorAll('.franja-star-btn').forEach(btn => {
+  btn.addEventListener('mouseenter', () => {
+    const franja = btn.dataset.franja;
+    const v      = parseInt(btn.dataset.val);
+    document.querySelectorAll(`#stars-${franja} .franja-star-btn`).forEach(b =>
+      b.classList.toggle('active', parseInt(b.dataset.val) <= v)
+    );
+  });
+  btn.addEventListener('mouseleave', () => {
+    const franja = btn.dataset.franja;
+    const lbl    = document.getElementById(`lbl-${franja}`).textContent;
+    const cur    = lbl ? parseInt(lbl) : 0;
+    document.querySelectorAll(`#stars-${franja} .franja-star-btn`).forEach(b =>
       b.classList.toggle('active', parseInt(b.dataset.val) <= cur)
     );
   });

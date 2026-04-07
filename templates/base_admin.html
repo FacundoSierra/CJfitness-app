@@ -102,6 +102,12 @@
           <i class="bi bi-bicycle"></i>
           Ejercicios
         </a>
+
+        <a href="{{ url_for('admin_nutricion') }}"
+           class="sidebar-link {% if request.endpoint == 'admin_nutricion' %}active{% endif %}">
+          <i class="bi bi-egg-fried"></i>
+          Nutrición
+        </a>
       </nav>
 
       <div class="sidebar-footer">

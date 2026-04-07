@@ -102,11 +102,22 @@ class NutritionService:
         Genera un menú diario usando ComidaCompleta con lógica anti-monotonía.
         Retorna dict con: menu_json, calorias_totales, macros_json
         """
-        from models import ComidaCompleta, RecomendacionDiaria
+        from models import ComidaCompleta, RecomendacionDiaria, PreferenciaAlimento, ValoracionComida
+        from collections import defaultdict
 
         calorias_obj = perfil.calorias_objetivo or self.calcular_calorias_objetivo(perfil, usuario)
         objetivo     = perfil.objetivo or 'mantener'
         dist_macros  = MACROS_OBJETIVO.get(objetivo, MACROS_OBJETIVO['mantener'])
+
+        # ── Cargar datos de personalización del usuario ───────────────────
+        excluidos_raw     = PreferenciaAlimento.query.filter_by(usuario_id=usuario.id, tipo='no_me_gusta').all()
+        nombres_excluidos = {p.nombre_alimento.lower() for p in excluidos_raw}
+
+        valoraciones_raw  = ValoracionComida.query.filter_by(usuario_id=usuario.id).all()
+        val_acum = defaultdict(list)
+        for v in valoraciones_raw:
+            val_acum[v.nombre_comida.lower()].append(v.valoracion)
+        media_valoraciones = {n: sum(vs) / len(vs) for n, vs in val_acum.items()}
 
         # ── Paso 1: historial reciente ────────────────────────────────────
         hoy          = date.today()
@@ -174,48 +185,70 @@ class NutritionService:
             scored = []
             for c in candidatos:
                 vec_c = [c.proteinas_g, c.carbohidratos_g, c.grasas_g]
-                sim   = self._similitud_coseno(vector_obj, vec_c)
+                sim          = self._similitud_coseno(vector_obj, vec_c)
                 nombre_lower = c.nombre.lower()
+                desc_lower   = (c.descripcion or '').lower()
 
-                if nombre_lower in nombres_3dias and penalizar_3dias:
-                    sim *= 0.0   # excluir de los últimos 3 días
-                elif nombre_lower in nombres_7dias:
-                    sim *= 0.3   # penalizar si apareció en la semana
-                # else: sin penalización
+                # Excluir si contiene ingrediente que el usuario marcó como "no me gusta"
+                if nombres_excluidos and any(exc in nombre_lower or exc in desc_lower for exc in nombres_excluidos):
+                    sim = 0.0
 
-                # Bonus diversidad de proteína en almuerzo
-                if franja == 'almuerzo' and proteina_ayer:
-                    tipo_c = self._detectar_tipo_proteina(nombre_lower)
-                    if tipo_c and tipo_c == proteina_ayer:
-                        sim *= 0.5
+                if sim > 0:
+                    if nombre_lower in nombres_3dias and penalizar_3dias:
+                        sim *= 0.0   # excluir de los últimos 3 días
+                    elif nombre_lower in nombres_7dias:
+                        sim *= 0.3   # penalizar si apareció en la semana
 
-                scored.append((max(sim, 0.001), c))  # mínimo 0.001 para no excluir totalmente
+                    # Bonus diversidad de proteína en almuerzo
+                    if franja == 'almuerzo' and proteina_ayer:
+                        tipo_c = self._detectar_tipo_proteina(nombre_lower)
+                        if tipo_c and tipo_c == proteina_ayer:
+                            sim *= 0.5
 
-            # Ordenar y tomar top-8
+                    # Ajuste por valoraciones históricas del usuario
+                    avg = media_valoraciones.get(nombre_lower)
+                    if avg is not None:
+                        if avg >= 4.0:
+                            sim *= 1.3
+                        elif avg <= 1.5:
+                            sim = 0.0
+                        elif avg <= 2.0:
+                            sim *= 0.4
+
+                scored.append((sim, c))
+
+            # Ordenar, filtrar excluidos y tomar top-8
             scored.sort(key=lambda x: x[0], reverse=True)
-            top8 = scored[:8]
+            scored_validos = [(s, c) for s, c in scored if s > 0.0]
+            if not scored_validos:
+                scored_validos = scored  # fallback: usar todos si todos son 0
+            top8 = scored_validos[:8]
 
             # Elección aleatoria ponderada por puntuación
             pesos      = [s for s, _ in top8]
             elegida    = random.choices([c for _, c in top8], weights=pesos, k=1)[0]
 
+            # Escalar macros al objetivo calórico del usuario para esta franja
+            cal_objetivo_franja = calorias_obj * fraccion
+            factor = (cal_objetivo_franja / elegida.calorias) if elegida.calorias else 1.0
+
             item = {
                 'nombre':           elegida.nombre,
                 'descripcion':      elegida.descripcion or '',
-                'calorias':         elegida.calorias,
-                'proteinas_g':      elegida.proteinas_g,
-                'carbohidratos_g':  elegida.carbohidratos_g,
-                'grasas_g':         elegida.grasas_g,
+                'calorias':         round(cal_objetivo_franja),
+                'proteinas_g':      round(elegida.proteinas_g * factor, 1),
+                'carbohidratos_g':  round(elegida.carbohidratos_g * factor, 1),
+                'grasas_g':         round(elegida.grasas_g * factor, 1),
                 'vegetariano':      elegida.vegetariano,
                 'sin_gluten':       elegida.sin_gluten,
                 'sin_lacteos':      elegida.sin_lacteos,
             }
             menu[franja] = item
 
-            totales['proteinas']     += elegida.proteinas_g
-            totales['carbohidratos'] += elegida.carbohidratos_g
-            totales['grasas']        += elegida.grasas_g
-            totales['calorias']      += elegida.calorias
+            totales['proteinas']     += item['proteinas_g']
+            totales['carbohidratos'] += item['carbohidratos_g']
+            totales['grasas']        += item['grasas_g']
+            totales['calorias']      += item['calorias']
 
         macros = {
             'proteinas':     round(totales['proteinas'], 1),

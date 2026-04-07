@@ -5,7 +5,7 @@ from flask import render_template, request, redirect, url_for, session, flash, j
 
 
 def init_app(app):
-    from models import db, Usuario, PerfilNutricional, Alimento, RecomendacionDiaria
+    from models import db, Usuario, PerfilNutricional, Alimento, RecomendacionDiaria, PreferenciaAlimento, ValoracionComida
     from utils import handle_db_error, login_required
     from nutrition_service import nutrition_service
 
@@ -262,3 +262,135 @@ def init_app(app):
         except Exception as exc:
             logger.error(f'api_nutricion_alimentos error: {exc}')
             return jsonify([])
+
+    # ── Preferencias de alimentos ─────────────────────────────────────────────
+
+    @app.route('/api/nutricion/preferencias', methods=['GET'])
+    @login_required
+    def api_nutricion_preferencias_get():
+        try:
+            prefs = PreferenciaAlimento.query.filter_by(
+                usuario_id=session['user_id']
+            ).order_by(PreferenciaAlimento.creado.desc()).all()
+            return jsonify([{'nombre': p.nombre_alimento, 'tipo': p.tipo} for p in prefs])
+        except Exception as exc:
+            logger.error(f'api_nutricion_preferencias get error: {exc}')
+            return jsonify([])
+
+    @app.route('/api/nutricion/preferencia', methods=['POST'])
+    @login_required
+    def api_nutricion_preferencia_add():
+        data   = request.get_json(silent=True) or {}
+        nombre = (data.get('nombre') or '').strip()[:200]
+        tipo   = data.get('tipo', 'no_me_gusta')
+        if not nombre:
+            return jsonify({'ok': False, 'error': 'nombre requerido'}), 400
+        try:
+            pref = PreferenciaAlimento.query.filter_by(
+                usuario_id=session['user_id'], nombre_alimento=nombre
+            ).first()
+            if not pref:
+                pref = PreferenciaAlimento(
+                    usuario_id=session['user_id'],
+                    nombre_alimento=nombre,
+                    tipo=tipo,
+                )
+                db.session.add(pref)
+                db.session.commit()
+            return jsonify({'ok': True})
+        except Exception as exc:
+            db.session.rollback()
+            logger.error(f'api_nutricion_preferencia add error: {exc}')
+            return jsonify({'ok': False, 'error': str(exc)}), 500
+
+    @app.route('/api/nutricion/preferencia', methods=['DELETE'])
+    @login_required
+    def api_nutricion_preferencia_del():
+        data   = request.get_json(silent=True) or {}
+        nombre = (data.get('nombre') or '').strip()
+        if not nombre:
+            return jsonify({'ok': False, 'error': 'nombre requerido'}), 400
+        try:
+            PreferenciaAlimento.query.filter_by(
+                usuario_id=session['user_id'], nombre_alimento=nombre
+            ).delete()
+            db.session.commit()
+            return jsonify({'ok': True})
+        except Exception as exc:
+            db.session.rollback()
+            logger.error(f'api_nutricion_preferencia del error: {exc}')
+            return jsonify({'ok': False, 'error': str(exc)}), 500
+
+    # ── Valoración por comida individual ─────────────────────────────────────
+
+    @app.route('/api/nutricion/valorar_comida', methods=['POST'])
+    @login_required
+    def api_nutricion_valorar_comida():
+        data          = request.get_json(silent=True) or {}
+        nombre_comida = (data.get('nombre_comida') or '').strip()[:200]
+        try:
+            valoracion = int(data.get('valoracion', 0))
+        except (ValueError, TypeError):
+            valoracion = 0
+        if not nombre_comida or not (1 <= valoracion <= 5):
+            return jsonify({'ok': False, 'error': 'datos inválidos'}), 400
+        try:
+            v = ValoracionComida(
+                usuario_id    = session['user_id'],
+                nombre_comida = nombre_comida,
+                valoracion    = valoracion,
+            )
+            db.session.add(v)
+            db.session.commit()
+            return jsonify({'ok': True})
+        except Exception as exc:
+            db.session.rollback()
+            logger.error(f'api_nutricion_valorar_comida error: {exc}')
+            return jsonify({'ok': False, 'error': str(exc)}), 500
+
+    # ── Estadísticas de valoraciones ─────────────────────────────────────────
+
+    @app.route('/nutricion/estadisticas')
+    @login_required
+    @handle_db_error
+    def nutricion_estadisticas():
+        from sqlalchemy import func
+        usuario = Usuario.query.get(session['user_id'])
+
+        stats_comidas = (
+            db.session.query(
+                ValoracionComida.nombre_comida,
+                func.avg(ValoracionComida.valoracion).label('media'),
+                func.count(ValoracionComida.id).label('total'),
+            )
+            .filter_by(usuario_id=session['user_id'])
+            .group_by(ValoracionComida.nombre_comida)
+            .order_by(func.avg(ValoracionComida.valoracion).desc())
+            .all()
+        )
+
+        top_mejores = stats_comidas[:3]
+        top_peores  = list(reversed(stats_comidas))[:3]
+
+        avg_menus = (
+            db.session.query(func.avg(RecomendacionDiaria.valoracion_usuario))
+            .filter(
+                RecomendacionDiaria.usuario_id == session['user_id'],
+                RecomendacionDiaria.valoracion_usuario.isnot(None),
+            )
+            .scalar()
+        )
+        avg_comidas = (
+            db.session.query(func.avg(ValoracionComida.valoracion))
+            .filter_by(usuario_id=session['user_id'])
+            .scalar()
+        )
+
+        return render_template(
+            'nutricion_estadisticas.html',
+            username    = usuario.nombre,
+            top_mejores = top_mejores,
+            top_peores  = top_peores,
+            avg_menus   = round(float(avg_menus), 1) if avg_menus else None,
+            avg_comidas = round(float(avg_comidas), 1) if avg_comidas else None,
+        )

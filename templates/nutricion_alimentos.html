@@ -51,6 +51,24 @@
     animation: spin 0.6s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .btn-no-me-gusta {
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 2px var(--space-2);
+    font-size: var(--text-xs);
+    cursor: pointer;
+    color: var(--color-text-muted);
+    transition: all 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .btn-no-me-gusta:hover { border-color: #ef4444; color: #ef4444; }
+  .btn-no-me-gusta.activo {
+    background: #fef2f2;
+    border-color: #ef4444;
+    color: #ef4444;
+  }
 </style>
 {% endblock %}
 
@@ -116,12 +134,17 @@ const CATEGORIA_COLORS = {
   legumbre: '#f5f3ff:#6d28d9',
 };
 
-let timer     = null;
-let catActual = '';
+let timer          = null;
+let catActual      = '';
+let preferenciasSet = new Set();
 
 function buildRow(a) {
-  const colors  = (CATEGORIA_COLORS[a.categoria] || '#f3f4f6:#6b7280').split(':');
-  const catBg   = colors[0], catFg = colors[1];
+  const colors    = (CATEGORIA_COLORS[a.categoria] || '#f3f4f6:#6b7280').split(':');
+  const catBg     = colors[0], catFg = colors[1];
+  const esExcluido = preferenciasSet.has(a.nombre.toLowerCase());
+  const btnClass   = 'btn-no-me-gusta' + (esExcluido ? ' activo' : '');
+  const btnLabel   = esExcluido ? '✕ Excluido' : '✕ No me gusta';
+  const nombreEsc  = a.nombre.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   return `
     <div class="alimento-row">
       <div class="flex-grow-1">
@@ -130,7 +153,7 @@ function buildRow(a) {
           ${a.categoria || '—'}
         </span>
       </div>
-      <div class="d-flex gap-3 flex-shrink-0 text-center" style="font-size:var(--text-sm);">
+      <div class="d-flex gap-3 flex-shrink-0 align-items-center text-center" style="font-size:var(--text-sm);">
         <div>
           <div style="font-weight:var(--font-semibold);">${Math.round(a.calorias_100g)}</div>
           <div class="text-muted" style="font-size:10px;">kcal</div>
@@ -147,6 +170,8 @@ function buildRow(a) {
           <div style="font-weight:var(--font-semibold); color:#166534;">${(+a.grasas_100g).toFixed(1)}g</div>
           <div class="text-muted" style="font-size:10px;">grasas</div>
         </div>
+        <button class="${btnClass}" data-nombre="${nombreEsc}"
+                onclick="togglePreferencia(this, '${nombreEsc}')">${btnLabel}</button>
       </div>
     </div>`;
 }
@@ -196,5 +221,41 @@ document.getElementById('categoriaFiltros').addEventListener('click', e => {
   catActual = btn.dataset.cat;
   buscar();
 });
+
+function togglePreferencia(btn, nombre) {
+  const esActivo = btn.classList.contains('activo');
+  const method   = esActivo ? 'DELETE' : 'POST';
+  fetch('/api/nutricion/preferencia', {
+    method:  method,
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ nombre: nombre, tipo: 'no_me_gusta' }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.ok) {
+      const nombreLower = nombre.toLowerCase();
+      if (esActivo) {
+        btn.classList.remove('activo');
+        btn.textContent = '✕ No me gusta';
+        preferenciasSet.delete(nombreLower);
+      } else {
+        btn.classList.add('activo');
+        btn.textContent = '✕ Excluido';
+        preferenciasSet.add(nombreLower);
+      }
+    }
+  })
+  .catch(err => console.error('Error preferencia:', err));
+}
+
+// Cargar preferencias actuales al iniciar
+fetch('/api/nutricion/preferencias')
+  .then(r => r.json())
+  .then(data => {
+    preferenciasSet = new Set(data.map(p => p.nombre.toLowerCase()));
+    // Si ya hay resultados visibles, re-renderizar con estados correctos
+    if (document.querySelectorAll('.alimento-row').length > 0) buscar();
+  })
+  .catch(() => {});
 </script>
 {% endblock %}

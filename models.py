@@ -332,3 +332,34 @@ class RecomendacionDiaria(db.Model):
 
     def __repr__(self):
         return f'<RecomendacionDiaria usuario={self.usuario_id} fecha={self.fecha}>'
+
+
+class PreferenciaAlimento(db.Model):
+    """Ingredientes/alimentos que el usuario no quiere en sus menús."""
+    __tablename__ = 'preferencias_alimentos'
+    __table_args__ = (
+        db.UniqueConstraint('usuario_id', 'nombre_alimento', name='uq_pref_usuario_alimento'),
+    )
+    id              = db.Column(db.Integer, primary_key=True)
+    usuario_id      = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
+    nombre_alimento = db.Column(db.String(200), nullable=False)
+    tipo            = db.Column(db.String(20), default='no_me_gusta')
+    creado          = db.Column(db.DateTime, default=datetime.utcnow)
+    usuario = db.relationship('Usuario')
+
+    def __repr__(self):
+        return f'<PreferenciaAlimento {self.usuario_id} "{self.nombre_alimento}">'
+
+
+class ValoracionComida(db.Model):
+    """Valoración individual (1-5) del usuario por cada comida del menú."""
+    __tablename__ = 'valoraciones_comidas'
+    id            = db.Column(db.Integer, primary_key=True)
+    usuario_id    = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
+    nombre_comida = db.Column(db.String(200), nullable=False)
+    valoracion    = db.Column(db.Integer, nullable=False)   # 1-5
+    creado        = db.Column(db.DateTime, default=datetime.utcnow)
+    usuario = db.relationship('Usuario')
+
+    def __repr__(self):
+        return f'<ValoracionComida {self.usuario_id} "{self.nombre_comida}" {self.valoracion}★>'

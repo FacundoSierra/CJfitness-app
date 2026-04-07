@@ -21,7 +21,7 @@ from models import db
 db.init_app(app)
 
 # Importar modelos después de inicializar db
-from models import Usuario, Ejercicio, Rutina, Bloque, EjercicioAsignado, Plan, Pago, ConfiguracionPagoMensual, SeguimientoEjercicio, PasswordResetToken, FeedbackSesion
+from models import Usuario, Ejercicio, Rutina, Bloque, EjercicioAsignado, Plan, Pago, ConfiguracionPagoMensual, SeguimientoEjercicio, PasswordResetToken, FeedbackSesion, PreferenciaAlimento, ValoracionComida
 
 # Importar payment service
 from payment_service import payment_service

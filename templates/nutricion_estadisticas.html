@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Mis Estadísticas Nutricionales — CJFitness{% endblock %}
+{% block page_title %}Estadísticas Nutricionales{% endblock %}
+
+{% block head_extra %}
+<style>
+  .stat-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-sm);
+  }
+  .star-filled  { color: #f59e0b; }
+  .star-empty   { color: #d1d5db; }
+  .comida-stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--color-border);
+    gap: var(--space-3);
+  }
+  .comida-stat-row:last-child { border-bottom: none; }
+  .media-grande {
+    font-size: var(--text-4xl, 2.5rem);
+    font-weight: var(--font-bold);
+    color: var(--color-primary);
+    line-height: 1;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% if not top_mejores %}
+  <!-- Estado vacío -->
+  <div class="text-center py-10">
+    <i class="bi bi-bar-chart" style="font-size: 3rem; color: var(--color-text-muted); display:block; margin-bottom: var(--space-4);"></i>
+    <h5 class="text-muted">Aún no hay valoraciones</h5>
+    <p class="text-muted small">Valora comidas individuales en tu menú del día para ver estadísticas aquí.</p>
+    <a href="{{ url_for('nutricion_recomendar') }}" class="btn btn-primary mt-3">
+      <i class="bi bi-calendar2-check me-1"></i>Ver mi menú
+    </a>
+  </div>
+{% else %}
+
+  <!-- Medias globales -->
+  <div class="row g-4 mb-6">
+    <div class="col-sm-6">
+      <div class="stat-card text-center">
+        <div class="text-muted small mb-2">Media menús valorados</div>
+        {% if avg_menus %}
+        <div class="media-grande">{{ avg_menus }}</div>
+        <div class="mt-2">
+          {% for i in range(1, 6) %}
+            <span class="{% if i <= avg_menus | round %}star-filled{% else %}star-empty{% endif %}" style="font-size:1.3rem;">★</span>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-muted">Sin datos aún</div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-sm-6">
+      <div class="stat-card text-center">
+        <div class="text-muted small mb-2">Media comidas individuales</div>
+        {% if avg_comidas %}
+        <div class="media-grande">{{ avg_comidas }}</div>
+        <div class="mt-2">
+          {% for i in range(1, 6) %}
+            <span class="{% if i <= avg_comidas | round %}star-filled{% else %}star-empty{% endif %}" style="font-size:1.3rem;">★</span>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-muted">Sin datos aún</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Top comidas -->
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div class="stat-card">
+        <h6 class="mb-4" style="font-weight: var(--font-semibold);">
+          <i class="bi bi-hand-thumbs-up me-2" style="color:#16a34a;"></i>Tus 3 mejores comidas
+        </h6>
+        {% for nombre, media, total in top_mejores %}
+        <div class="comida-stat-row">
+          <span style="font-size:var(--text-sm); font-weight: var(--font-medium);">{{ nombre }}</span>
+          <div class="d-flex align-items-center gap-2 flex-shrink-0">
+            <span class="star-filled">
+              {% for i in range(media | round | int) %}★{% endfor %}
+            </span>
+            <span class="text-muted" style="font-size:var(--text-xs);">{{ "%.1f"|format(media) }} ({{ total }})</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="stat-card">
+        <h6 class="mb-4" style="font-weight: var(--font-semibold);">
+          <i class="bi bi-hand-thumbs-down me-2" style="color:#dc2626;"></i>Las menos valoradas
+        </h6>
+        {% if top_peores %}
+          {% for nombre, media, total in top_peores %}
+          <div class="comida-stat-row">
+            <span style="font-size:var(--text-sm); font-weight: var(--font-medium);">{{ nombre }}</span>
+            <div class="d-flex align-items-center gap-2 flex-shrink-0">
+              <span class="star-filled">
+                {% for i in range(media | round | int) %}★{% endfor %}
+              </span>
+              <span class="text-muted" style="font-size:var(--text-xs);">{{ "%.1f"|format(media) }} ({{ total }})</span>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted small">Sin datos suficientes.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+{% endif %}
+
+<div class="mt-5">
+  <a href="{{ url_for('nutricion_dashboard') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Volver al dashboard
+  </a>
+</div>
+
+{% endblock %}

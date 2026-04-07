@@ -1,0 +1,139 @@
+{% extends "base_admin.html" %}
+{% block title %}Nutrición Clientes | CJFitness Admin{% endblock %}
+{% block page_title %}Nutrición Clientes{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-text">
+    <h1 class="page-title">Seguimiento Nutricional</h1>
+    <p class="page-subtitle">Último menú generado por cada cliente y su estado nutricional.</p>
+  </div>
+</div>
+
+<div class="table-container">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Cliente</th>
+        <th>Objetivo</th>
+        <th>Cal. objetivo</th>
+        <th>Último menú</th>
+        <th>Desayuno</th>
+        <th>Almuerzo</th>
+        <th>Cena</th>
+        <th>Snack</th>
+        <th>Cal. totales</th>
+        <th>Valoración</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in datos %}
+      {% set u   = d.usuario %}
+      {% set p   = d.perfil %}
+      {% set rec = d.rec %}
+      <tr>
+        <!-- Cliente -->
+        <td>
+          <div style="display:flex; align-items:center; gap:var(--space-2);">
+            <div class="avatar avatar-sm">{{ u.nombre[0]|upper if u.nombre else 'U' }}</div>
+            <div>
+              <div style="font-weight:var(--font-medium); font-size:var(--text-sm);">{{ u.nombre }} {{ u.apellidos or '' }}</div>
+              <div style="font-size:var(--text-xs); color:var(--color-text-muted);">{{ u.email }}</div>
+            </div>
+          </div>
+        </td>
+
+        <!-- Objetivo -->
+        <td style="font-size:var(--text-sm);">
+          {% if p %}
+            {% if p.objetivo == 'perder_peso' %}
+              <span style="color:#dc2626;">Perder peso</span>
+            {% elif p.objetivo == 'ganar_musculo' %}
+              <span style="color:#2563eb;">Ganar músculo</span>
+            {% else %}
+              <span style="color:#16a34a;">Mantener</span>
+            {% endif %}
+          {% else %}
+            <span style="color:var(--color-text-muted);">—</span>
+          {% endif %}
+        </td>
+
+        <!-- Calorías objetivo -->
+        <td style="font-size:var(--text-sm); font-weight:var(--font-semibold);">
+          {% if p and p.calorias_objetivo %}
+            {{ p.calorias_objetivo }} <span style="font-weight:normal; color:var(--color-text-muted);">kcal</span>
+          {% else %}
+            <span style="color:var(--color-text-muted);">Sin perfil</span>
+          {% endif %}
+        </td>
+
+        <!-- Fecha último menú -->
+        <td style="font-size:var(--text-sm);">
+          {% if rec %}
+            <span style="{% if d.es_hoy %}color:#16a34a; font-weight:var(--font-semibold);{% else %}color:var(--color-text-secondary);{% endif %}">
+              {{ rec.fecha.strftime('%d/%m/%Y') }}
+            </span>
+            {% if d.es_hoy %}
+              <span style="font-size:var(--text-xs); background:#dcfce7; color:#166534; padding:1px 6px; border-radius:4px; margin-left:4px;">Hoy</span>
+            {% endif %}
+          {% else %}
+            <span style="color:var(--color-text-muted);">Sin menú</span>
+          {% endif %}
+        </td>
+
+        <!-- Comidas -->
+        {% for franja in ['desayuno', 'almuerzo', 'cena', 'snack'] %}
+        <td style="font-size:var(--text-xs); max-width:140px;">
+          {% if rec and rec.menu_json and rec.menu_json.get(franja) %}
+            {% set item = rec.menu_json.get(franja) %}
+            <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:130px;" title="{{ item.nombre }}">
+              {{ item.nombre }}
+            </div>
+            <div style="color:var(--color-text-muted);">{{ item.calorias }} kcal</div>
+          {% else %}
+            <span style="color:var(--color-text-muted);">—</span>
+          {% endif %}
+        </td>
+        {% endfor %}
+
+        <!-- Calorías totales -->
+        <td style="font-size:var(--text-sm); font-weight:var(--font-semibold);">
+          {% if rec %}
+            {% if p and p.calorias_objetivo %}
+              {% set pct = (rec.calorias_totales / p.calorias_objetivo * 100) | int %}
+              {{ rec.calorias_totales }}
+              <div style="font-size:var(--text-xs); color:{% if pct >= 90 and pct <= 110 %}#16a34a{% else %}#d97706{% endif %};">
+                {{ pct }}%
+              </div>
+            {% else %}
+              {{ rec.calorias_totales }}
+            {% endif %}
+          {% else %}
+            <span style="color:var(--color-text-muted);">—</span>
+          {% endif %}
+        </td>
+
+        <!-- Valoración -->
+        <td style="font-size:var(--text-sm);">
+          {% if rec and rec.valoracion_usuario %}
+            <span style="color:#f59e0b;">
+              {% for i in range(rec.valoracion_usuario) %}★{% endfor %}{% for i in range(5 - rec.valoracion_usuario) %}☆{% endfor %}
+            </span>
+          {% else %}
+            <span style="color:var(--color-text-muted);">—</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="10" style="text-align:center; color:var(--color-text-muted); padding:var(--space-8);">
+          No hay clientes registrados.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
