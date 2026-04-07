@@ -705,3 +705,13 @@ textarea.form-control {
   height: 36px;
   border-width: 3px;
 }
+
+/* ── MACRO PILLS ── */
+.macro-pill-p { background: #eff6ff; color: #1d4ed8; }
+.macro-pill-c { background: #fffbeb; color: #b45309; }
+.macro-pill-g { background: #f0fdf4; color: #166534; }
+
+/* ── BADGE DIETA ── */
+.badge-dieta-veg { background: #dcfce7; color: #166534; }
+.badge-dieta-glu { background: #fef9c3; color: #854d0e; }
+.badge-dieta-lac { background: #f0f9ff; color: #0369a1; }

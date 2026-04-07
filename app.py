@@ -21,7 +21,12 @@ from models import db
 db.init_app(app)
 
 # Importar modelos después de inicializar db
-from models import Usuario, Ejercicio, Rutina, Bloque, EjercicioAsignado, Plan, Pago, ConfiguracionPagoMensual, SeguimientoEjercicio, PasswordResetToken, FeedbackSesion, PreferenciaAlimento, ValoracionComida
+from models import (
+    Usuario, Ejercicio, Rutina, Bloque, EjercicioAsignado, Plan, Pago,
+    ConfiguracionPagoMensual, SeguimientoEjercicio, PasswordResetToken, FeedbackSesion,
+    PreferenciaAlimento, ValoracionComida,
+    ComidaCompleta, PerfilNutricional, Alimento, RecomendacionDiaria
+)
 
 # Importar payment service
 from payment_service import payment_service
@@ -60,9 +65,10 @@ with app.app_context():
 
 # ------------------ REGISTRAR MÓDULOS DE RUTAS ------------------
 
-from routes import auth, admin, usuario, api, nutricion
+from routes import auth, admin, admin_nutricion, usuario, api, nutricion
 auth.init_app(app)
 admin.init_app(app)
+admin_nutricion.init_app(app)
 usuario.init_app(app)
 api.init_app(app)
 nutricion.init_app(app)

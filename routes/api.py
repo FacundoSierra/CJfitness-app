@@ -467,7 +467,7 @@ def init_app(app):
             return jsonify({'success': True, 'planes': planes})
         except Exception as e:
             log_error(e, session.get('user_id'))
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({'success': False, 'error': 'Error interno del servidor'}), 500
 
     @app.route('/api/suscripcion/crear', methods=['POST'])
     @login_required
@@ -494,7 +494,7 @@ def init_app(app):
 
         except Exception as e:
             log_error(e, session.get('user_id'))
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({'success': False, 'error': 'Error interno del servidor'}), 500
 
     @app.route('/api/suscripcion/cancelar', methods=['POST'])
     @login_required
@@ -516,7 +516,7 @@ def init_app(app):
 
         except Exception as e:
             log_error(e, session.get('user_id'))
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({'success': False, 'error': 'Error interno del servidor'}), 500
 
     @app.route('/api/usuario/estado_premium')
     @login_required
@@ -527,7 +527,7 @@ def init_app(app):
             return jsonify(estado)
         except Exception as e:
             log_error(e, session.get('user_id'))
-            return jsonify({'premium': False, 'error': str(e)}), 500
+            return jsonify({'premium': False, 'error': 'Error interno del servidor'}), 500
 
     # ------------------ WEBHOOK STRIPE ------------------
 
@@ -550,7 +550,7 @@ def init_app(app):
 
         except Exception as e:
             log_error(e, None)
-            return jsonify({'error': str(e)}), 500
+            return jsonify({'error': 'Error interno del servidor'}), 500
 
     # ------------------ API PAGOS ------------------
 

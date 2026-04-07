@@ -99,40 +99,6 @@ def init_app(app):
         usuarios = Usuario.query.filter(Usuario.rol != 'admin').order_by(Usuario.id.desc()).all()
         return render_template('admin_usuarios.html', usuarios=usuarios, active_page='usuarios')
 
-    # ------------------ ADMIN NUTRICIÓN ------------------
-
-    @app.route('/admin_nutricion')
-    @admin_required
-    @handle_db_error
-    def admin_nutricion():
-        from models import PerfilNutricional, RecomendacionDiaria
-        from datetime import date
-
-        usuarios = Usuario.query.filter(Usuario.rol != 'admin').order_by(Usuario.nombre).all()
-        hoy = date.today()
-
-        datos = []
-        for u in usuarios:
-            perfil = PerfilNutricional.query.filter_by(usuario_id=u.id).first()
-            rec = (
-                RecomendacionDiaria.query
-                .filter_by(usuario_id=u.id)
-                .order_by(RecomendacionDiaria.fecha.desc())
-                .first()
-            )
-            datos.append({
-                'usuario':  u,
-                'perfil':   perfil,
-                'rec':      rec,
-                'es_hoy':   rec.fecha == hoy if rec else False,
-            })
-
-        return render_template('admin_nutricion.html',
-                               datos=datos,
-                               hoy=hoy,
-                               username=session.get('username'),
-                               active_page='nutricion')
-
     # ------------------ ADMIN ENTRENAMIENTOS ------------------
 
     @app.route('/admin_entrenamientos')
@@ -148,9 +114,7 @@ def init_app(app):
     @admin_required
     @handle_db_error
     def asignar_rutinas_usuario(user_id):
-        usuario = Usuario.query.get(user_id)
-        if not usuario:
-            return "Usuario no encontrado", 404
+        usuario = db.session.get_or_404(Usuario, user_id)
 
         dias = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']
 
@@ -211,9 +175,7 @@ def init_app(app):
     @admin_required
     @handle_db_error
     def calendario_entrenamientos_usuario(user_id):
-        usuario = Usuario.query.get(user_id)
-        if not usuario:
-            return "Usuario no encontrado", 404
+        usuario = db.session.get_or_404(Usuario, user_id)
 
         # Obtener el mes solicitado o usar el actual
         mes_param = request.args.get('mes')
@@ -474,11 +436,92 @@ def init_app(app):
 
     @app.route('/admin_estadisticas')
     @admin_required
+    @handle_db_error
     def admin_estadisticas():
-        return render_template('admin_en_construccion.html',
-                               titulo="Estadísticas",
-                               mensaje="Próximamente podrás ver estadísticas detalladas aquí.",
-                               active_page='estadisticas')
+        from datetime import date, timedelta
+
+        hoy   = date.today()
+        hace30 = hoy - timedelta(days=29)
+        hace7  = hoy - timedelta(days=6)
+
+        # ── KPIs globales ──────────────────────────────────────────────────
+        total_sesiones   = SeguimientoEjercicio.query.count()
+        total_completados = SeguimientoEjercicio.query.filter_by(completado=True).count()
+        tasa_global = round(total_completados / total_sesiones * 100) if total_sesiones else 0
+
+        usuarios_activos_mes = db.session.query(
+            func.count(func.distinct(SeguimientoEjercicio.usuario_id))
+        ).filter(SeguimientoEjercicio.fecha_ejecucion >= hoy.replace(day=1)).scalar() or 0
+
+        # ── Actividad por día (últimos 30 días) ────────────────────────────
+        filas_dia = db.session.query(
+            SeguimientoEjercicio.fecha_ejecucion,
+            func.count(SeguimientoEjercicio.id).label('total'),
+            func.sum(db.cast(SeguimientoEjercicio.completado, db.Integer)).label('completados')
+        ).filter(
+            SeguimientoEjercicio.fecha_ejecucion >= hace30
+        ).group_by(SeguimientoEjercicio.fecha_ejecucion).all()
+
+        # Rellenar días sin actividad con 0
+        mapa_dia = {f.fecha_ejecucion: (f.total, f.completados or 0) for f in filas_dia}
+        dias_labels, dias_total, dias_completados = [], [], []
+        for i in range(30):
+            d = hace30 + timedelta(days=i)
+            dias_labels.append(d.strftime('%d/%m'))
+            t, c = mapa_dia.get(d, (0, 0))
+            dias_total.append(t)
+            dias_completados.append(c)
+
+        # ── Top 8 ejercicios más realizados ───────────────────────────────
+        top_ejercicios = db.session.query(
+            func.coalesce(Ejercicio.nombre, EjercicioAsignado.nombre_manual).label('nombre'),
+            func.count(SeguimientoEjercicio.id).label('total')
+        ).join(EjercicioAsignado, SeguimientoEjercicio.ejercicio_asignado_id == EjercicioAsignado.id
+        ).outerjoin(Ejercicio, EjercicioAsignado.ejercicio_id == Ejercicio.id
+        ).group_by(func.coalesce(Ejercicio.nombre, EjercicioAsignado.nombre_manual)
+        ).order_by(func.count(SeguimientoEjercicio.id).desc()
+        ).limit(8).all()
+
+        # ── Distribución por categoría ─────────────────────────────────────
+        por_categoria = db.session.query(
+            EjercicioAsignado.categoria,
+            func.count(SeguimientoEjercicio.id).label('total')
+        ).join(SeguimientoEjercicio, EjercicioAsignado.id == SeguimientoEjercicio.ejercicio_asignado_id
+        ).filter(EjercicioAsignado.categoria.isnot(None)
+        ).group_by(EjercicioAsignado.categoria
+        ).order_by(func.count(SeguimientoEjercicio.id).desc()
+        ).all()
+
+        # ── Ranking de usuarios ────────────────────────────────────────────
+        usuarios_stats = db.session.query(
+            Usuario,
+            func.count(SeguimientoEjercicio.id).label('total'),
+            func.sum(db.cast(SeguimientoEjercicio.completado, db.Integer)).label('completados')
+        ).join(SeguimientoEjercicio, Usuario.id == SeguimientoEjercicio.usuario_id
+        ).filter(Usuario.rol != 'admin'
+        ).group_by(Usuario.id
+        ).order_by(func.count(SeguimientoEjercicio.id).desc()
+        ).all()
+
+        # Calcular el ejercicio más popular para KPI
+        ejercicio_top = top_ejercicios[0].nombre if top_ejercicios else '—'
+
+        return render_template('admin_estadisticas.html',
+                               username=session.get('username'),
+                               active_page='estadisticas',
+                               # KPIs
+                               total_sesiones=total_sesiones,
+                               tasa_global=tasa_global,
+                               usuarios_activos_mes=usuarios_activos_mes,
+                               ejercicio_top=ejercicio_top,
+                               # Gráficas (JSON para Chart.js)
+                               dias_labels=dias_labels,
+                               dias_total=dias_total,
+                               dias_completados=dias_completados,
+                               top_ejercicios=top_ejercicios,
+                               por_categoria=por_categoria,
+                               # Tabla ranking
+                               usuarios_stats=usuarios_stats)
 
     # --------------------- ADMIN BORRAR/EDITAR USUARIO ---------------------------------------------
 

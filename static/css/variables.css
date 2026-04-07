@@ -204,4 +204,16 @@
   --topbar-height:         64px;    /* altura de la barra superior */
   --content-max-width:     1200px;  /* ancho máximo del contenido */
 
+
+  /* ── ALERTAS CONTEXTUALES ─────────────────────────────────────────────────
+   * Colores para alertas de advertencia e informativas del dashboard admin.
+   * ─────────────────────────────────────────────────────────────────────────*/
+
+  --color-warning-light:  #fff8ed;
+  --color-warning-border: #f5c842;
+  --color-warning-icon:   #d4900a;
+  --color-info-light:     #f0f4ff;
+  --color-info-border:    #b0c4f5;
+  --color-info-icon:      #2d72c8;
+
 }
