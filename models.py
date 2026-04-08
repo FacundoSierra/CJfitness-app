@@ -363,3 +363,105 @@ class ValoracionComida(db.Model):
 
     def __repr__(self):
         return f'<ValoracionComida {self.usuario_id} "{self.nombre_comida}" {self.valoracion}★>'
+
+
+# ── MÓDULO TAXONOMÍA DE EJERCICIOS ───────────────────────────────────────────
+# Sistema jerárquico: BloqueTaxonomia → CategoriaTaxonomia → SubcategoriaTaxonomia
+# con características específicas configurables por bloque.
+# Coexiste con el modelo Ejercicio (simple) y Bloque (de rutinas) sin colisionar.
+
+class BloqueTaxonomia(db.Model):
+    """Nivel raíz de la jerarquía: Fuerza, Core, Potencia, Preparación, DSE."""
+    __tablename__ = 'bloques_taxonomia'
+    id      = db.Column(db.Integer, primary_key=True)
+    nombre  = db.Column(db.String(100), unique=True, nullable=False)
+    activo  = db.Column(db.Boolean, default=True)
+    orden   = db.Column(db.Integer, default=0)
+    categorias      = db.relationship('CategoriaTaxonomia', backref='bloque',
+                                       lazy=True, cascade='all, delete-orphan',
+                                       order_by='CategoriaTaxonomia.orden')
+    caracteristicas = db.relationship('CaracteristicaTipo', backref='bloque',
+                                       lazy=True, cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return f'<BloqueTaxonomia "{self.nombre}">'
+
+
+class CategoriaTaxonomia(db.Model):
+    """Segundo nivel: PRINCIPALES, AUXILIARES, Patron_Respiratorio, etc."""
+    __tablename__ = 'categorias_taxonomia'
+    id        = db.Column(db.Integer, primary_key=True)
+    bloque_id = db.Column(db.Integer, db.ForeignKey('bloques_taxonomia.id'), nullable=False)
+    nombre    = db.Column(db.String(100), nullable=False)
+    activo    = db.Column(db.Boolean, default=True)
+    orden     = db.Column(db.Integer, default=0)
+    subcategorias = db.relationship('SubcategoriaTaxonomia', backref='categoria',
+                                     lazy=True, cascade='all, delete-orphan',
+                                     order_by='SubcategoriaTaxonomia.orden')
+
+    def __repr__(self):
+        return f'<CategoriaTaxonomia "{self.nombre}">'
+
+
+class SubcategoriaTaxonomia(db.Model):
+    """Tercer nivel: 3FE, Bisagra de cadera, PRV, Anti-extensión, etc."""
+    __tablename__ = 'subcategorias_taxonomia'
+    id           = db.Column(db.Integer, primary_key=True)
+    categoria_id = db.Column(db.Integer, db.ForeignKey('categorias_taxonomia.id'), nullable=False)
+    nombre       = db.Column(db.String(100), nullable=False)
+    activo       = db.Column(db.Boolean, default=True)
+    orden        = db.Column(db.Integer, default=0)
+
+    def __repr__(self):
+        return f'<SubcategoriaTaxonomia "{self.nombre}">'
+
+
+class CaracteristicaTipo(db.Model):
+    """Tipo de característica específica del bloque: Base, Agarre, Posturas…"""
+    __tablename__ = 'caracteristicas_tipo'
+    id        = db.Column(db.Integer, primary_key=True)
+    bloque_id = db.Column(db.Integer, db.ForeignKey('bloques_taxonomia.id'), nullable=False)
+    nombre    = db.Column(db.String(100), nullable=False)
+    activo    = db.Column(db.Boolean, default=True)
+    valores   = db.relationship('CaracteristicaValor', backref='tipo',
+                                 lazy=True, cascade='all, delete-orphan',
+                                 order_by='CaracteristicaValor.orden')
+
+    def __repr__(self):
+        return f'<CaracteristicaTipo "{self.nombre}">'
+
+
+class CaracteristicaValor(db.Model):
+    """Valor concreto de una característica: C1, C2, pronado, supino…"""
+    __tablename__ = 'caracteristicas_valores'
+    id      = db.Column(db.Integer, primary_key=True)
+    tipo_id = db.Column(db.Integer, db.ForeignKey('caracteristicas_tipo.id'), nullable=False)
+    nombre  = db.Column(db.String(100), nullable=False)
+    activo  = db.Column(db.Boolean, default=True)
+    orden   = db.Column(db.Integer, default=0)
+
+    def __repr__(self):
+        return f'<CaracteristicaValor "{self.nombre}">'
+
+
+class EjercicioCompleto(db.Model):
+    """Ejercicio con taxonomía completa. Coexiste con el modelo Ejercicio original."""
+    __tablename__ = 'ejercicios_completos'
+    id              = db.Column(db.Integer, primary_key=True)
+    nombre          = db.Column(db.String(200), nullable=False)
+    bloque_id       = db.Column(db.Integer, db.ForeignKey('bloques_taxonomia.id'), nullable=False)
+    categoria_id    = db.Column(db.Integer, db.ForeignKey('categorias_taxonomia.id'), nullable=True)
+    subcategoria_id = db.Column(db.Integer, db.ForeignKey('subcategorias_taxonomia.id'), nullable=True)
+    # {"Base": "dos piernas", "Agarre": "pronado", "Posturas": "C1"}
+    caracteristicas_json  = db.Column(db.JSON, nullable=True)
+    material              = db.Column(db.String(200), nullable=True)
+    otras_caracteristicas = db.Column(db.Text, nullable=True)
+    activo         = db.Column(db.Boolean, default=True)
+    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
+
+    bloque       = db.relationship('BloqueTaxonomia')
+    categoria    = db.relationship('CategoriaTaxonomia')
+    subcategoria = db.relationship('SubcategoriaTaxonomia')
+
+    def __repr__(self):
+        return f'<EjercicioCompleto "{self.nombre}">'

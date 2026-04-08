@@ -1,0 +1,412 @@
+{% extends "base_admin.html" %}
+{% block title %}{% if ejercicio %}Editar{% else %}Nuevo{% endif %} Ejercicio | CJFitness Admin{% endblock %}
+{% block page_title %}{% if ejercicio %}Editar{% else %}Nuevo{% endif %} Ejercicio{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-text">
+    <h1 class="page-title">{% if ejercicio %}Editar ejercicio{% else %}Nuevo ejercicio{% endif %}</h1>
+    <p class="page-subtitle">Completa la jerarquía del ejercicio paso a paso.</p>
+  </div>
+  <a href="{{ url_for('admin_ejercicios2') }}" class="btn btn-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i> Volver
+  </a>
+</div>
+
+<div class="card" style="max-width:760px;">
+  <div class="card-header">
+    <h3 class="card-title"><i class="bi bi-dumbbell me-2 text-primary"></i>Datos del ejercicio</h3>
+  </div>
+  <div class="card-body" style="padding: var(--space-6);">
+    <form method="POST"
+          action="{% if ejercicio %}{{ url_for('ejercicio_editar_post', ej_id=ejercicio.id) }}{% else %}{{ url_for('ejercicio_nuevo_post') }}{% endif %}"
+          id="formEjercicio">
+
+      <!-- PASO 1: Bloque -->
+      <div class="form-group" style="margin-bottom:var(--space-5);">
+        <label class="form-label" for="bloque_id">
+          <span style="background:var(--color-primary); color:#fff; border-radius:999px; padding:1px 8px; font-size:var(--text-xs); margin-right:6px;">1</span>
+          Bloque <span style="color:var(--color-danger);">*</span>
+        </label>
+        <select name="bloque_id" id="bloque_id" class="form-select" required>
+          <option value="">— Selecciona un bloque —</option>
+          {% for b in bloques %}
+          <option value="{{ b.id }}" {% if ejercicio and ejercicio.bloque_id == b.id %}selected{% endif %}>
+            {{ b.nombre }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- PASO 2: Categoría -->
+      <div class="form-group" style="margin-bottom:var(--space-5);">
+        <label class="form-label" for="categoria_id">
+          <span style="background:var(--color-primary); color:#fff; border-radius:999px; padding:1px 8px; font-size:var(--text-xs); margin-right:6px;">2</span>
+          Categoría
+        </label>
+        <select name="categoria_id" id="categoria_id" class="form-select" disabled>
+          <option value="">— Primero elige un bloque —</option>
+        </select>
+        <div id="inline-add-categoria" class="inline-add-form" style="display:none;"></div>
+      </div>
+
+      <!-- PASO 3: Subcategoría -->
+      <div class="form-group" style="margin-bottom:var(--space-5);">
+        <label class="form-label" for="subcategoria_id">
+          <span style="background:var(--color-primary); color:#fff; border-radius:999px; padding:1px 8px; font-size:var(--text-xs); margin-right:6px;">3</span>
+          Subcategoría
+        </label>
+        <select name="subcategoria_id" id="subcategoria_id" class="form-select" disabled>
+          <option value="">— Primero elige una categoría —</option>
+        </select>
+        <div id="inline-add-subcategoria" class="inline-add-form" style="display:none;"></div>
+      </div>
+
+      <!-- PASO 4: Características específicas (se inyecta por JS) -->
+      <div id="seccion-caracteristicas" style="display:none;">
+        <hr style="border-color:var(--color-border); margin:var(--space-4) 0;">
+        <p class="form-label" style="color:var(--color-text-secondary); margin-bottom:var(--space-3);">
+          <span style="background:var(--color-primary); color:#fff; border-radius:999px; padding:1px 8px; font-size:var(--text-xs); margin-right:6px;">4</span>
+          Características específicas
+        </p>
+        <div id="contenedor-caracteristicas"></div>
+        <hr style="border-color:var(--color-border); margin:var(--space-4) 0;">
+      </div>
+
+      <!-- PASO 5: Material -->
+      <div class="form-group" style="margin-bottom:var(--space-5);">
+        <label class="form-label" for="material">
+          <span style="background:var(--color-primary); color:#fff; border-radius:999px; padding:1px 8px; font-size:var(--text-xs); margin-right:6px;">5</span>
+          Material
+        </label>
+        <input type="text" name="material" id="material" class="form-control"
+               list="lista-materiales" autocomplete="off"
+               placeholder="Escribe o elige el material…"
+               value="{{ ejercicio.material or '' if ejercicio else '' }}">
+        <datalist id="lista-materiales">
+          <option value="Barra">
+          <option value="Mancuernas">
+          <option value="Máquina">
+          <option value="Polea">
+          <option value="Bandas">
+          <option value="Peso corporal">
+          <option value="TRX">
+          <option value="Kettlebell">
+          <option value="Disco">
+          <option value="Cajón">
+        </datalist>
+      </div>
+
+      <!-- PASO 6: Otras características -->
+      <div class="form-group" style="margin-bottom:var(--space-5);">
+        <label class="form-label" for="otras_caracteristicas">
+          <span style="background:var(--color-primary); color:#fff; border-radius:999px; padding:1px 8px; font-size:var(--text-xs); margin-right:6px;">6</span>
+          Otras características
+        </label>
+        <textarea name="otras_caracteristicas" id="otras_caracteristicas" class="form-control"
+                  rows="3" placeholder="Añade cualquier característica adicional del ejercicio…">{{ ejercicio.otras_caracteristicas or '' if ejercicio else '' }}</textarea>
+      </div>
+
+      <!-- PASO 7: Nombre -->
+      <div class="form-group" style="margin-bottom:var(--space-6);">
+        <label class="form-label" for="nombre">
+          <span style="background:var(--color-primary); color:#fff; border-radius:999px; padding:1px 8px; font-size:var(--text-xs); margin-right:6px;">7</span>
+          Nombre del ejercicio <span style="color:var(--color-danger);">*</span>
+        </label>
+        <input type="text" name="nombre" id="nombre" class="form-control" required
+               placeholder="Escribe el nombre del ejercicio…"
+               value="{{ ejercicio.nombre if ejercicio else '' }}">
+      </div>
+
+      <div style="display:flex; gap:var(--space-3);">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-check-lg me-1"></i>
+          {% if ejercicio %}Guardar cambios{% else %}Crear ejercicio{% endif %}
+        </button>
+        <a href="{{ url_for('admin_ejercicios2') }}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts_extra %}
+<style>
+.inline-add-form {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.inline-add-form input {
+  flex: 1;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+.inline-add-form input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+}
+.caracteristica-group {
+  margin-bottom: var(--space-4);
+}
+</style>
+
+<script>
+// ── Estado de edición (valores previos del ejercicio si existe) ─────────────
+const EJERCICIO_PREVIO = {
+  bloque_id:       {{ ejercicio.bloque_id      if ejercicio else 'null' }},
+  categoria_id:    {{ ejercicio.categoria_id   if ejercicio else 'null' }},
+  subcategoria_id: {{ ejercicio.subcategoria_id if ejercicio else 'null' }},
+  caracteristicas: {{ ejercicio.caracteristicas_json | tojson if ejercicio and ejercicio.caracteristicas_json else '{}' }},
+};
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function poblarSelect(selectId, items, placeholder, extraOpcion) {
+  const sel = document.getElementById(selectId);
+  sel.innerHTML = `<option value="">${placeholder}</option>`;
+  items.forEach(item => {
+    const opt = document.createElement('option');
+    opt.value   = item.id;
+    opt.textContent = item.nombre;
+    sel.appendChild(opt);
+  });
+  if (extraOpcion) {
+    const opt = document.createElement('option');
+    opt.value = '__nuevo__';
+    opt.textContent = extraOpcion;
+    sel.appendChild(opt);
+  }
+  sel.disabled = items.length === 0 && !extraOpcion;
+}
+
+function mostrarInlineAdd(containerId, label, onGuardar) {
+  const div = document.getElementById(containerId);
+  div.innerHTML = `
+    <span style="font-size:var(--text-xs); color:var(--color-text-muted);">${label}:</span>
+    <input type="text" id="${containerId}-input" placeholder="Nombre…" />
+    <button type="button" class="btn btn-primary btn-sm" onclick="guardarInline('${containerId}', onGuardar_${containerId})">Guardar</button>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="cancelarInline('${containerId}', '${containerId.replace('inline-add-', '')}')">Cancelar</button>
+  `;
+  // Guardar callback como variable global temporal
+  window[`onGuardar_${containerId}`] = onGuardar;
+  div.style.display = 'flex';
+  document.getElementById(`${containerId}-input`).focus();
+}
+
+function cancelarInline(containerId, selectId) {
+  document.getElementById(containerId).style.display = 'none';
+  const sel = document.getElementById(selectId);
+  if (sel) sel.value = '';
+}
+
+async function guardarInline(containerId, callback) {
+  const input  = document.getElementById(`${containerId}-input`);
+  const nombre = input.value.trim();
+  if (!nombre) { input.focus(); return; }
+  input.disabled = true;
+  try {
+    await callback(nombre);
+    document.getElementById(containerId).style.display = 'none';
+  } catch (e) {
+    input.disabled = false;
+    alert('Error al guardar: ' + e.message);
+  }
+}
+
+async function postJSON(url, data) {
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const json = await r.json();
+  if (!json.success) throw new Error(json.error || 'Error desconocido');
+  return json;
+}
+
+function addOptionAndSelect(selectId, id, nombre) {
+  const sel = document.getElementById(selectId);
+  // Quitar la opción __nuevo__ temporalmente, insertar antes
+  const newuOpt = sel.querySelector('[value="__nuevo__"]');
+  const opt = document.createElement('option');
+  opt.value       = id;
+  opt.textContent = nombre;
+  opt.selected    = true;
+  if (newuOpt) sel.insertBefore(opt, newuOpt);
+  else sel.appendChild(opt);
+  sel.disabled = false;
+  sel.dispatchEvent(new Event('change'));
+}
+
+// ── Paso 1 → 2: bloque cambia, carga categorías ──────────────────────────
+
+document.getElementById('bloque_id').addEventListener('change', async function() {
+  const bloqueId = this.value;
+  const selCat   = document.getElementById('categoria_id');
+  const selSub   = document.getElementById('subcategoria_id');
+
+  // Reset downstream
+  poblarSelect('subcategoria_id', [], '— Primero elige una categoría —', null);
+  selSub.disabled = true;
+  document.getElementById('inline-add-subcategoria').style.display = 'none';
+  document.getElementById('seccion-caracteristicas').style.display = 'none';
+  document.getElementById('contenedor-caracteristicas').innerHTML = '';
+
+  if (!bloqueId) {
+    poblarSelect('categoria_id', [], '— Primero elige un bloque —', null);
+    selCat.disabled = true;
+    return;
+  }
+
+  const [cats, carats] = await Promise.all([
+    fetch(`/api/ejercicios/categorias?bloque_id=${bloqueId}`).then(r => r.json()),
+    fetch(`/api/ejercicios/caracteristicas?bloque_id=${bloqueId}`).then(r => r.json()),
+  ]);
+
+  poblarSelect('categoria_id', cats,
+    cats.length ? '— Selecciona una categoría —' : '— Sin categorías (puedes añadir una) —',
+    '+ Añadir nueva categoría');
+  selCat.disabled = false;
+
+  // Renderizar características
+  renderCaracteristicas(carats, parseInt(bloqueId));
+
+  // Si edición, restaurar selección previa
+  if (EJERCICIO_PREVIO.categoria_id) {
+    selCat.value = EJERCICIO_PREVIO.categoria_id;
+    selCat.dispatchEvent(new Event('change'));
+  }
+});
+
+// ── Paso 2 → 3: categoría cambia, carga subcategorías ────────────────────
+
+document.getElementById('categoria_id').addEventListener('change', async function() {
+  const catId = this.value;
+  document.getElementById('inline-add-subcategoria').style.display = 'none';
+
+  if (catId === '__nuevo__') {
+    mostrarInlineAdd('inline-add-categoria', 'Nueva categoría', async (nombre) => {
+      const bloqueId = document.getElementById('bloque_id').value;
+      const data = await postJSON('/api/ejercicios/categoria/nueva', { bloque_id: parseInt(bloqueId), nombre });
+      addOptionAndSelect('categoria_id', data.id, data.nombre);
+    });
+    return;
+  }
+
+  document.getElementById('inline-add-categoria').style.display = 'none';
+
+  if (!catId) {
+    poblarSelect('subcategoria_id', [], '— Primero elige una categoría —', null);
+    document.getElementById('subcategoria_id').disabled = true;
+    return;
+  }
+
+  const subs = await fetch(`/api/ejercicios/subcategorias?categoria_id=${catId}`).then(r => r.json());
+  poblarSelect('subcategoria_id', subs,
+    subs.length ? '— Selecciona una subcategoría —' : '— Sin subcategorías (puedes añadir una) —',
+    '+ Añadir nueva subcategoría');
+  document.getElementById('subcategoria_id').disabled = false;
+
+  if (EJERCICIO_PREVIO.subcategoria_id) {
+    document.getElementById('subcategoria_id').value = EJERCICIO_PREVIO.subcategoria_id;
+    EJERCICIO_PREVIO.subcategoria_id = null; // solo restaurar una vez
+  }
+});
+
+// ── Paso 3: subcategoría — solo gestiona inline add ──────────────────────
+
+document.getElementById('subcategoria_id').addEventListener('change', function() {
+  if (this.value === '__nuevo__') {
+    mostrarInlineAdd('inline-add-subcategoria', 'Nueva subcategoría', async (nombre) => {
+      const catId = document.getElementById('categoria_id').value;
+      const data  = await postJSON('/api/ejercicios/subcategoria/nueva', { categoria_id: parseInt(catId), nombre });
+      addOptionAndSelect('subcategoria_id', data.id, data.nombre);
+    });
+  } else {
+    document.getElementById('inline-add-subcategoria').style.display = 'none';
+  }
+});
+
+// ── Paso 4: renderizar características ───────────────────────────────────
+
+function renderCaracteristicas(tipos, bloqueId) {
+  const contenedor = document.getElementById('contenedor-caracteristicas');
+  const seccion    = document.getElementById('seccion-caracteristicas');
+  contenedor.innerHTML = '';
+
+  if (!tipos || tipos.length === 0) {
+    seccion.style.display = 'none';
+    return;
+  }
+  seccion.style.display = 'block';
+
+  tipos.forEach(tipo => {
+    const prevVal = EJERCICIO_PREVIO.caracteristicas[tipo.nombre] || '';
+    const group   = document.createElement('div');
+    group.className = 'form-group caracteristica-group';
+
+    const selectId   = `caracteristica_select_${tipo.id}`;
+    const addId      = `inline-add-caract-${tipo.id}`;
+    const inputName  = `caracteristica_${tipo.nombre}`;
+
+    group.innerHTML = `
+      <label class="form-label">${tipo.nombre}</label>
+      <select id="${selectId}" class="form-select" data-tipo-id="${tipo.id}" data-tipo-nombre="${tipo.nombre}">
+        <option value="">— Sin seleccionar —</option>
+        ${tipo.valores.map(v =>
+          `<option value="${v.nombre}" ${v.nombre === prevVal ? 'selected' : ''}>${v.nombre}</option>`
+        ).join('')}
+        <option value="__nuevo__">+ Añadir nuevo valor</option>
+      </select>
+      <input type="hidden" name="${inputName}" id="hidden_${selectId}" value="${prevVal}">
+      <div id="${addId}" class="inline-add-form" style="display:none;"></div>
+    `;
+    contenedor.appendChild(group);
+
+    // Sincronizar select → hidden input
+    const sel = document.getElementById(selectId);
+    sel.addEventListener('change', function() {
+      if (this.value === '__nuevo__') {
+        mostrarInlineAdd(addId, `Nuevo valor para "${tipo.nombre}"`, async (nombre) => {
+          const data = await postJSON('/api/ejercicios/caracteristica/valor/nuevo',
+            { tipo_id: tipo.id, nombre });
+          // Añadir al select
+          const opt   = document.createElement('option');
+          opt.value   = data.nombre;
+          opt.textContent = data.nombre;
+          const newuOpt = sel.querySelector('[value="__nuevo__"]');
+          sel.insertBefore(opt, newuOpt);
+          sel.value = data.nombre;
+          document.getElementById(`hidden_${selectId}`).value = data.nombre;
+          document.getElementById(addId).style.display = 'none';
+        });
+      } else {
+        document.getElementById(addId).style.display = 'none';
+        document.getElementById(`hidden_${selectId}`).value = this.value;
+      }
+    });
+  });
+}
+
+// ── Inicializar en modo edición ───────────────────────────────────────────
+
+window.addEventListener('DOMContentLoaded', () => {
+  if (EJERCICIO_PREVIO.bloque_id) {
+    const sel = document.getElementById('bloque_id');
+    sel.value = EJERCICIO_PREVIO.bloque_id;
+    sel.dispatchEvent(new Event('change'));
+  }
+});
+</script>
+{% endblock %}

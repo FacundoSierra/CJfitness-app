@@ -25,7 +25,9 @@ from models import (
     Usuario, Ejercicio, Rutina, Bloque, EjercicioAsignado, Plan, Pago,
     ConfiguracionPagoMensual, SeguimientoEjercicio, PasswordResetToken, FeedbackSesion,
     PreferenciaAlimento, ValoracionComida,
-    ComidaCompleta, PerfilNutricional, Alimento, RecomendacionDiaria
+    ComidaCompleta, PerfilNutricional, Alimento, RecomendacionDiaria,
+    BloqueTaxonomia, CategoriaTaxonomia, SubcategoriaTaxonomia,
+    CaracteristicaTipo, CaracteristicaValor, EjercicioCompleto
 )
 
 # Importar payment service
@@ -65,10 +67,11 @@ with app.app_context():
 
 # ------------------ REGISTRAR MÓDULOS DE RUTAS ------------------
 
-from routes import auth, admin, admin_nutricion, usuario, api, nutricion
+from routes import auth, admin, admin_nutricion, admin_ejercicios, usuario, api, nutricion
 auth.init_app(app)
 admin.init_app(app)
 admin_nutricion.init_app(app)
+admin_ejercicios.init_app(app)
 usuario.init_app(app)
 api.init_app(app)
 nutricion.init_app(app)

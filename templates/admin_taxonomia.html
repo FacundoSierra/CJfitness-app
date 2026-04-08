@@ -1,0 +1,440 @@
+{% extends "base_admin.html" %}
+{% block title %}Taxonomía de Ejercicios | CJFitness Admin{% endblock %}
+{% block page_title %}Taxonomía{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-text">
+    <h1 class="page-title">Taxonomía de ejercicios</h1>
+    <p class="page-subtitle">Gestiona la jerarquía: bloques, categorías, subcategorías y características.</p>
+  </div>
+  <button type="button" class="btn btn-primary btn-sm"
+          data-bs-toggle="modal" data-bs-target="#modalNuevoBloque">
+    <i class="bi bi-plus-lg"></i> Nuevo bloque
+  </button>
+</div>
+
+{% for bloque in bloques %}
+<div class="card" style="margin-bottom:var(--space-5);">
+
+  <!-- Cabecera del bloque -->
+  <div class="card-header" style="background:var(--color-sidebar); color:#fff; border-radius:var(--radius-lg) var(--radius-lg) 0 0;">
+    <div style="display:flex; align-items:center; gap:var(--space-3);">
+      <i class="bi bi-box-seam-fill" style="font-size:1.1rem;"></i>
+      <h3 style="margin:0; font-size:var(--text-base); font-weight:var(--font-semibold); color:#fff;">{{ bloque.nombre }}</h3>
+      {% if not bloque.activo %}
+        <span style="font-size:var(--text-xs); background:#ef4444; color:#fff; padding:1px 8px; border-radius:999px;">Inactivo</span>
+      {% endif %}
+    </div>
+    <div style="display:flex; gap:var(--space-2);">
+      <button type="button" class="btn btn-sm"
+              style="background:rgba(255,255,255,0.15); color:#fff; border:none;"
+              data-bs-toggle="modal" data-bs-target="#modalEditarBloque"
+              data-bloque-id="{{ bloque.id }}" data-bloque-nombre="{{ bloque.nombre }}">
+        <i class="bi bi-pencil"></i>
+      </button>
+      <button type="button" class="btn btn-sm"
+              style="background:rgba(255,255,255,0.15); color:#fff; border:none;"
+              data-bs-toggle="modal" data-bs-target="#modalNuevaCategoria"
+              data-bloque-id="{{ bloque.id }}" data-bloque-nombre="{{ bloque.nombre }}">
+        <i class="bi bi-folder-plus"></i> Añadir categoría
+      </button>
+      <button type="button" class="btn btn-sm"
+              style="background:rgba(255,255,255,0.15); color:#fff; border:none;"
+              data-bs-toggle="modal" data-bs-target="#modalNuevoTipo"
+              data-bloque-id="{{ bloque.id }}" data-bloque-nombre="{{ bloque.nombre }}">
+        <i class="bi bi-sliders"></i> Añadir característica
+      </button>
+    </div>
+  </div>
+
+  <div class="card-body" style="padding:var(--space-4) var(--space-6);">
+
+    <!-- Categorías y subcategorías -->
+    {% if bloque.categorias %}
+    <div style="margin-bottom:var(--space-4);">
+      {% for cat in bloque.categorias %}
+      {% if cat.activo %}
+      <div style="margin-bottom:var(--space-3); border:1px solid var(--color-border); border-radius:var(--radius-md); overflow:hidden;">
+
+        <!-- Fila de categoría -->
+        <div style="display:flex; align-items:center; gap:var(--space-3); padding:var(--space-3) var(--space-4); background:var(--color-bg-alt);">
+          <i class="bi bi-folder-fill" style="color:var(--color-accent);"></i>
+          <span style="font-weight:var(--font-semibold); font-size:var(--text-sm); flex:1;">{{ cat.nombre }}</span>
+          <button type="button" class="btn btn-secondary btn-sm"
+                  data-bs-toggle="modal" data-bs-target="#modalEditarCategoria"
+                  data-cat-id="{{ cat.id }}" data-cat-nombre="{{ cat.nombre }}">
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm"
+                  data-bs-toggle="modal" data-bs-target="#modalNuevaSubcategoria"
+                  data-cat-id="{{ cat.id }}" data-cat-nombre="{{ cat.nombre }}">
+            <i class="bi bi-plus"></i> Subcategoría
+          </button>
+        </div>
+
+        <!-- Subcategorías -->
+        {% if cat.subcategorias %}
+        <div style="padding:var(--space-2) var(--space-4) var(--space-3);">
+          <div style="display:flex; flex-wrap:wrap; gap:var(--space-2);">
+            {% for sub in cat.subcategorias %}
+            {% if sub.activo %}
+            <div style="display:flex; align-items:center; gap:4px; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:3px 10px; font-size:var(--text-xs);">
+              <i class="bi bi-dash" style="color:var(--color-text-muted);"></i>
+              <span>{{ sub.nombre }}</span>
+              <button type="button"
+                      style="background:none; border:none; color:var(--color-text-muted); cursor:pointer; padding:0 2px; font-size:0.7rem; line-height:1;"
+                      data-bs-toggle="modal" data-bs-target="#modalEditarSubcategoria"
+                      data-sub-id="{{ sub.id }}" data-sub-nombre="{{ sub.nombre }}"
+                      title="Editar">✏️</button>
+            </div>
+            {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+        {% else %}
+        <div style="padding:var(--space-2) var(--space-4); font-size:var(--text-xs); color:var(--color-text-muted);">
+          Sin subcategorías aún.
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="font-size:var(--text-sm); color:var(--color-text-muted); margin-bottom:var(--space-4);">
+      Sin categorías todavía. Usa el botón "Añadir categoría" para empezar.
+    </p>
+    {% endif %}
+
+    <!-- Características específicas del bloque -->
+    {% if bloque.caracteristicas %}
+    <div style="border-top:1px solid var(--color-border); padding-top:var(--space-3);">
+      <div style="display:flex; align-items:center; gap:var(--space-2); margin-bottom:var(--space-2);">
+        <i class="bi bi-sliders" style="color:var(--color-primary);"></i>
+        <span style="font-size:var(--text-sm); font-weight:var(--font-semibold);">Características</span>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:var(--space-3);">
+        {% for tipo in bloque.caracteristicas %}
+        {% if tipo.activo %}
+        <div style="background:var(--color-primary-light); border:1px solid #bfdbfe; border-radius:var(--radius-md); padding:var(--space-3) var(--space-4); min-width:160px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-2);">
+            <span style="font-size:var(--text-xs); font-weight:var(--font-semibold); color:var(--color-primary-dark);">{{ tipo.nombre }}</span>
+            <button type="button" class="btn btn-sm"
+                    style="background:none; border:none; color:var(--color-primary); padding:0 4px; font-size:0.75rem;"
+                    data-bs-toggle="modal" data-bs-target="#modalNuevoValor"
+                    data-tipo-id="{{ tipo.id }}" data-tipo-nombre="{{ tipo.nombre }}">
+              + Valor
+            </button>
+          </div>
+          {% if tipo.valores %}
+          <div style="display:flex; flex-wrap:wrap; gap:4px;">
+            {% for val in tipo.valores %}
+            {% if val.activo %}
+            <span style="background:#fff; border:1px solid #bfdbfe; border-radius:999px; font-size:var(--text-xs); padding:1px 8px; display:flex; align-items:center; gap:4px;">
+              {{ val.nombre }}
+              <button type="button"
+                      style="background:none; border:none; color:var(--color-text-muted); cursor:pointer; padding:0; font-size:0.65rem;"
+                      data-bs-toggle="modal" data-bs-target="#modalEditarValor"
+                      data-val-id="{{ val.id }}" data-val-nombre="{{ val.nombre }}"
+                      title="Editar">✏️</button>
+            </span>
+            {% endif %}
+            {% endfor %}
+          </div>
+          {% else %}
+          <span style="font-size:var(--text-xs); color:var(--color-text-muted);">Sin valores aún.</span>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+  </div><!-- /card-body -->
+</div><!-- /card bloque -->
+{% else %}
+<div class="card">
+  <div class="card-body" style="text-align:center; padding:var(--space-10);">
+    <i class="bi bi-diagram-3" style="font-size:3rem; color:var(--color-text-muted);"></i>
+    <p style="margin-top:var(--space-3); color:var(--color-text-muted);">
+      No hay bloques todavía. Crea el primero o ejecuta el script de carga inicial.
+    </p>
+  </div>
+</div>
+{% endfor %}
+
+
+<!-- ── MODALES ─────────────────────────────────────────────────────────── -->
+
+<!-- Nuevo bloque -->
+<div class="modal fade" id="modalNuevoBloque" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('tax_nuevo_bloque') }}">
+        <div class="modal-header"><h5 class="modal-title">Nuevo bloque</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Nombre</label>
+            <input type="text" name="nombre" class="form-control" required autofocus placeholder="Ej: Movilidad">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Crear</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Editar bloque -->
+<div class="modal fade" id="modalEditarBloque" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" id="formEditarBloque">
+        <div class="modal-header"><h5 class="modal-title">Editar bloque</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Nombre</label>
+            <input type="text" name="nombre" id="editBloqueNombre" class="form-control" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Nueva categoría -->
+<div class="modal fade" id="modalNuevaCategoria" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('tax_nueva_categoria') }}">
+        <input type="hidden" name="bloque_id" id="nuevaCatBloqueId">
+        <div class="modal-header">
+          <h5 class="modal-title">Nueva categoría en <span id="nuevaCatBloqueNombre"></span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Nombre</label>
+            <input type="text" name="nombre" class="form-control" required autofocus placeholder="Ej: PRINCIPALES">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Crear</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Editar categoría -->
+<div class="modal fade" id="modalEditarCategoria" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" id="formEditarCategoria">
+        <div class="modal-header"><h5 class="modal-title">Editar categoría</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Nombre</label>
+            <input type="text" name="nombre" id="editCatNombre" class="form-control" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Nueva subcategoría -->
+<div class="modal fade" id="modalNuevaSubcategoria" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('tax_nueva_subcategoria') }}">
+        <input type="hidden" name="categoria_id" id="nuevoSubCatId">
+        <div class="modal-header">
+          <h5 class="modal-title">Nueva subcategoría en <span id="nuevoSubCatNombre"></span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Nombre</label>
+            <input type="text" name="nombre" class="form-control" required autofocus placeholder="Ej: 3FE">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Crear</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Editar subcategoría -->
+<div class="modal fade" id="modalEditarSubcategoria" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" id="formEditarSubcategoria">
+        <div class="modal-header"><h5 class="modal-title">Editar subcategoría</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Nombre</label>
+            <input type="text" name="nombre" id="editSubNombre" class="form-control" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Nuevo tipo de característica -->
+<div class="modal fade" id="modalNuevoTipo" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('tax_nuevo_tipo') }}">
+        <input type="hidden" name="bloque_id" id="nuevoTipoBloqueId">
+        <div class="modal-header">
+          <h5 class="modal-title">Nueva característica en <span id="nuevoTipoBloqueNombre"></span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Nombre del tipo</label>
+            <input type="text" name="nombre" class="form-control" required autofocus placeholder="Ej: Base, Agarre, Posturas…">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Crear</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Nuevo valor de característica -->
+<div class="modal fade" id="modalNuevoValor" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('tax_nuevo_valor') }}">
+        <input type="hidden" name="tipo_id" id="nuevoValorTipoId">
+        <div class="modal-header">
+          <h5 class="modal-title">Nuevo valor para <span id="nuevoValorTipoNombre"></span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Valor</label>
+            <input type="text" name="nombre" class="form-control" required autofocus placeholder="Ej: C1, pronado, una pierna…">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Añadir</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Editar valor -->
+<div class="modal fade" id="modalEditarValor" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" id="formEditarValor">
+        <div class="modal-header"><h5 class="modal-title">Editar valor</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Nombre</label>
+            <input type="text" name="nombre" id="editValorNombre" class="form-control" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+// ── Poblar modales con data-* del botón que los abre ─────────────────────
+
+document.getElementById('modalEditarBloque').addEventListener('show.bs.modal', e => {
+  const btn = e.relatedTarget;
+  document.getElementById('editBloqueNombre').value = btn.dataset.bloqueNombre;
+  document.getElementById('formEditarBloque').action =
+    `/admin/taxonomia/bloque/${btn.dataset.bloqueId}/editar`;
+});
+
+document.getElementById('modalNuevaCategoria').addEventListener('show.bs.modal', e => {
+  const btn = e.relatedTarget;
+  document.getElementById('nuevaCatBloqueId').value    = btn.dataset.bloqueId;
+  document.getElementById('nuevaCatBloqueNombre').textContent = btn.dataset.bloqueNombre;
+});
+
+document.getElementById('modalEditarCategoria').addEventListener('show.bs.modal', e => {
+  const btn = e.relatedTarget;
+  document.getElementById('editCatNombre').value = btn.dataset.catNombre;
+  document.getElementById('formEditarCategoria').action =
+    `/admin/taxonomia/categoria/${btn.dataset.catId}/editar`;
+});
+
+document.getElementById('modalNuevaSubcategoria').addEventListener('show.bs.modal', e => {
+  const btn = e.relatedTarget;
+  document.getElementById('nuevoSubCatId').value       = btn.dataset.catId;
+  document.getElementById('nuevoSubCatNombre').textContent = btn.dataset.catNombre;
+});
+
+document.getElementById('modalEditarSubcategoria').addEventListener('show.bs.modal', e => {
+  const btn = e.relatedTarget;
+  document.getElementById('editSubNombre').value = btn.dataset.subNombre;
+  document.getElementById('formEditarSubcategoria').action =
+    `/admin/taxonomia/subcategoria/${btn.dataset.subId}/editar`;
+});
+
+document.getElementById('modalNuevoTipo').addEventListener('show.bs.modal', e => {
+  const btn = e.relatedTarget;
+  document.getElementById('nuevoTipoBloqueId').value       = btn.dataset.bloqueId;
+  document.getElementById('nuevoTipoBloqueNombre').textContent = btn.dataset.bloqueNombre;
+});
+
+document.getElementById('modalNuevoValor').addEventListener('show.bs.modal', e => {
+  const btn = e.relatedTarget;
+  document.getElementById('nuevoValorTipoId').value       = btn.dataset.tipoId;
+  document.getElementById('nuevoValorTipoNombre').textContent = btn.dataset.tipoNombre;
+});
+
+document.getElementById('modalEditarValor').addEventListener('show.bs.modal', e => {
+  const btn = e.relatedTarget;
+  document.getElementById('editValorNombre').value = btn.dataset.valNombre;
+  document.getElementById('formEditarValor').action =
+    `/admin/taxonomia/caracteristica/valor/${btn.dataset.valId}/editar`;
+});
+</script>
+{% endblock %}

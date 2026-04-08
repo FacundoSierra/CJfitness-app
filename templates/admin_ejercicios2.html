@@ -1,0 +1,158 @@
+{% extends "base_admin.html" %}
+{% block title %}Biblioteca de Ejercicios | CJFitness Admin{% endblock %}
+{% block page_title %}Biblioteca{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-text">
+    <h1 class="page-title">Biblioteca de ejercicios</h1>
+    <p class="page-subtitle">Ejercicios con taxonomía completa.</p>
+  </div>
+  <div style="display:flex; gap:var(--space-2);">
+    <a href="{{ url_for('admin_taxonomia') }}" class="btn btn-secondary btn-sm">
+      <i class="bi bi-diagram-3"></i> Taxonomía
+    </a>
+    <a href="{{ url_for('ejercicio_nuevo_form') }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-lg"></i> Nuevo ejercicio
+    </a>
+  </div>
+</div>
+
+<!-- Filtros -->
+<div class="card" style="margin-bottom:var(--space-5);">
+  <div class="card-body" style="padding:var(--space-4) var(--space-6);">
+    <form method="GET" action="{{ url_for('admin_ejercicios2') }}" id="formFiltros"
+          style="display:flex; gap:var(--space-3); flex-wrap:wrap; align-items:flex-end;">
+
+      <div class="form-group" style="flex:1; min-width:180px; margin-bottom:0;">
+        <label class="form-label">Bloque</label>
+        <select name="bloque_id" id="filtroBloque" class="form-select">
+          <option value="">Todos los bloques</option>
+          {% for b in bloques %}
+          <option value="{{ b.id }}" {% if bloque_id == b.id %}selected{% endif %}>{{ b.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group" style="flex:1; min-width:180px; margin-bottom:0;">
+        <label class="form-label">Categoría</label>
+        <select name="categoria_id" id="filtroCat" class="form-select" {% if not bloque_id %}disabled{% endif %}>
+          <option value="">Todas las categorías</option>
+          {% for c in categorias %}
+          <option value="{{ c.id }}" {% if categoria_id == c.id %}selected{% endif %}>{{ c.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group" style="flex:2; min-width:200px; margin-bottom:0;">
+        <label class="form-label">Buscar por nombre</label>
+        <div class="search-wrapper">
+          <i class="bi bi-search search-icon"></i>
+          <input type="text" name="q" class="search-input" value="{{ q }}"
+                 placeholder="Nombre del ejercicio…">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="align-self:flex-end;">
+        <i class="bi bi-funnel"></i> Filtrar
+      </button>
+      {% if bloque_id or categoria_id or q %}
+      <a href="{{ url_for('admin_ejercicios2') }}" class="btn btn-secondary" style="align-self:flex-end;">
+        <i class="bi bi-x"></i> Limpiar
+      </a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<!-- Tabla -->
+<div class="table-container">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Bloque</th>
+        <th>Categoría</th>
+        <th>Subcategoría</th>
+        <th>Material</th>
+        <th>Estado</th>
+        <th style="text-align:right;">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ej in ejercicios %}
+      <tr {% if not ej.activo %}style="opacity:0.5;"{% endif %}>
+        <td>
+          <div style="font-weight:var(--font-medium); font-size:var(--text-sm);">{{ ej.nombre }}</div>
+          {% if ej.caracteristicas_json %}
+          <div style="font-size:var(--text-xs); color:var(--color-text-muted); margin-top:2px;">
+            {% for k, v in ej.caracteristicas_json.items() %}
+              <span style="background:var(--color-bg-alt); border-radius:999px; padding:1px 6px; margin-right:3px;">{{ k }}: {{ v }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </td>
+        <td style="font-size:var(--text-sm);">{{ ej.bloque.nombre if ej.bloque else '—' }}</td>
+        <td style="font-size:var(--text-sm);">{{ ej.categoria.nombre if ej.categoria else '—' }}</td>
+        <td style="font-size:var(--text-sm);">{{ ej.subcategoria.nombre if ej.subcategoria else '—' }}</td>
+        <td style="font-size:var(--text-sm);">{{ ej.material or '—' }}</td>
+        <td>
+          {% if ej.activo %}
+          <span class="badge badge-success">Activo</span>
+          {% else %}
+          <span class="badge badge-warning">Inactivo</span>
+          {% endif %}
+        </td>
+        <td>
+          <div class="table-actions">
+            <a href="{{ url_for('ejercicio_editar_form', ej_id=ej.id) }}"
+               class="btn btn-secondary btn-sm">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <form method="POST" action="{{ url_for('ejercicio_desactivar', ej_id=ej.id) }}"
+                  style="display:inline;">
+              <button type="submit" class="btn btn-sm {% if ej.activo %}btn-outline{% else %}btn-success{% endif %}"
+                      title="{% if ej.activo %}Desactivar{% else %}Activar{% endif %}">
+                <i class="bi bi-{% if ej.activo %}eye-slash{% else %}eye{% endif %}"></i>
+              </button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="7" class="table-empty">
+          <i class="bi bi-dumbbell"></i>
+          {% if q or bloque_id or categoria_id %}
+            Sin resultados con los filtros aplicados.
+          {% else %}
+            Sin ejercicios todavía.
+            <a href="{{ url_for('ejercicio_nuevo_form') }}">Crear el primero</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+document.getElementById('filtroBloque').addEventListener('change', async function() {
+  const bloqueId = this.value;
+  const selCat   = document.getElementById('filtroCat');
+  if (!bloqueId) {
+    selCat.innerHTML = '<option value="">Todas las categorías</option>';
+    selCat.disabled  = true;
+    return;
+  }
+  const cats = await fetch(`/api/ejercicios/categorias?bloque_id=${bloqueId}`).then(r => r.json());
+  selCat.innerHTML = '<option value="">Todas las categorías</option>' +
+    cats.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+  selCat.disabled = false;
+});
+</script>
+{% endblock %}
