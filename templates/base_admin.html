@@ -97,12 +97,6 @@
           Progresos
         </a>
 
-        <a href="{{ url_for('admin_ejercicios') }}"
-           class="sidebar-link {% if request.endpoint == 'admin_ejercicios' %}active{% endif %}">
-          <i class="bi bi-bicycle"></i>
-          Ejercicios
-        </a>
-
         <a href="{{ url_for('admin_nutricion') }}"
            class="sidebar-link {% if request.endpoint == 'admin_nutricion' %}active{% endif %}">
           <i class="bi bi-egg-fried"></i>
@@ -112,9 +106,15 @@
         <span class="sidebar-section-label">Ejercicios</span>
 
         <a href="{{ url_for('admin_ejercicios2') }}"
-           class="sidebar-link {% if request.endpoint in ('admin_ejercicios2', 'ejercicio_nuevo_form', 'ejercicio_editar_form') %}active{% endif %}">
+           class="sidebar-link {% if request.endpoint == 'admin_ejercicios2' %}active{% endif %}">
           <i class="bi bi-dumbbell"></i>
           Biblioteca
+        </a>
+
+        <a href="{{ url_for('ejercicio_nuevo_form') }}"
+           class="sidebar-link {% if request.endpoint in ('ejercicio_nuevo_form', 'ejercicio_editar_form') %}active{% endif %}">
+          <i class="bi bi-plus-circle"></i>
+          Añadir ejercicio
         </a>
 
         <a href="{{ url_for('admin_taxonomia') }}"

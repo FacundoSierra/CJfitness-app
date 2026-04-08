@@ -5,7 +5,7 @@ from collections import defaultdict
 
 
 def init_app(app):
-    from models import db, Usuario, Ejercicio, Rutina, Bloque, EjercicioAsignado, Pago, SeguimientoEjercicio, FeedbackSesion
+    from models import db, Usuario, Ejercicio, Rutina, Bloque, EjercicioAsignado, Pago, SeguimientoEjercicio, FeedbackSesion, EjercicioCompleto
     from utils import log_activity, log_error, handle_db_error, admin_required, login_required
     from payment_service import payment_service
 
@@ -193,13 +193,13 @@ def init_app(app):
 
     @app.route('/api_ejercicios')
     def api_ejercicios():
-        ejercicios = Ejercicio.query.all()
+        ejercicios = EjercicioCompleto.query.filter_by(activo=True).all()
         data = {}
         for e in ejercicios:
-            categoria = e.categoria or "Sin categoría"
-            subcategoria = e.subcategoria or "Sin subcategoría"
+            bloque = e.bloque.nombre if e.bloque else "Sin bloque"
+            categoria = e.categoria.nombre if e.categoria else "Sin categoría"
             nombre = e.nombre
-            data.setdefault(categoria, {}).setdefault(subcategoria, []).append(nombre)
+            data.setdefault(bloque, {}).setdefault(categoria, []).append(nombre)
         return jsonify(data)
 
     # ------------------ API ESTADÍSTICAS REALES ------------------

@@ -1,9 +1,12 @@
-let ejerciciosPorCategoria = {};
+let ejerciciosPorBloque = {};
 
 async function fetchEjercicios() {
-  const res = await fetch("/api_ejercicios");
-  const data = await res.json();
-  ejerciciosPorCategoria = data;
+  try {
+    const res  = await fetch("/api_ejercicios");
+    ejerciciosPorBloque = await res.json();
+  } catch (e) {
+    console.warn("No se pudo cargar la biblioteca de ejercicios", e);
+  }
 }
 
 function abrirModalAsignacion(fecha) {
@@ -47,6 +50,9 @@ function buildRpeOptions(selected, placeholder) {
 function agregarBloque() {
   const index = document.querySelectorAll(".bloque-container").length + 1;
 
+  const bloqueOpts = Object.keys(ejerciciosPorBloque)
+    .map(b => `<option value="${b}">${b}</option>`).join('');
+
   const bloqueHTML = `
     <div class="bloque-container" style="border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-4); margin-bottom:var(--space-3);">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-3);">
@@ -55,15 +61,10 @@ function agregarBloque() {
       </div>
 
       <div style="margin-bottom:var(--space-3);">
-        <label class="form-label" style="font-weight:600; font-size:var(--text-sm);">Categoría del Bloque:</label>
+        <label class="form-label" style="font-weight:600; font-size:var(--text-sm);">Tipo de Bloque:</label>
         <select class="form-select" name="categoria_bloque_${index}" required style="max-width:220px;">
-          <option value="">Selecciona categoría</option>
-          <option value="Calentamiento">Calentamiento</option>
-          <option value="Fuerza">Fuerza</option>
-          <option value="Cardio">Cardio</option>
-          <option value="Flexibilidad">Flexibilidad</option>
-          <option value="Recuperación">Recuperación</option>
-          <option value="General">General</option>
+          <option value="">Selecciona tipo</option>
+          ${bloqueOpts || '<option value="General">General</option>'}
         </select>
       </div>
 
@@ -80,11 +81,11 @@ function agregarBloque() {
 // ── EJERCICIO ROW ─────────────────────────────────────────────────────────────
 
 function agregarEjercicio(btn, bloqueIndex) {
-  const bloque = btn.closest('.bloque-container');
+  const bloque    = btn.closest('.bloque-container');
   const ejercicios = bloque.querySelector(".ejercicios");
 
-  const catOpts = Object.keys(ejerciciosPorCategoria)
-    .map(cat => `<option value="${cat}">${cat}</option>`).join('');
+  const bloqueOpts = Object.keys(ejerciciosPorBloque)
+    .map(b => `<option value="${b}">${b}</option>`).join('');
 
   const html = `
     <div class="ejercicio-entry" style="border:1px solid var(--color-border-dark); border-radius:var(--radius-md); padding:var(--space-4); margin-bottom:var(--space-3); background:var(--color-bg-alt);">
@@ -92,16 +93,16 @@ function agregarEjercicio(btn, bloqueIndex) {
       <!-- Fila 1: Ejercicio -->
       <div style="display:grid; grid-template-columns:1fr 1fr 2fr auto; gap:var(--space-3); margin-bottom:var(--space-3); align-items:end;">
         <div>
-          <label style="font-size:var(--text-xs); font-weight:600; color:var(--color-text-secondary); margin-bottom:4px; display:block;">Categoría</label>
-          <select class="form-select categoria-select-ej" name="categoria_ej_${bloqueIndex}[]"
-                  onchange="actualizarSubcategoriasEjercicio(this)">
+          <label style="font-size:var(--text-xs); font-weight:600; color:var(--color-text-secondary); margin-bottom:4px; display:block;">Bloque</label>
+          <select class="form-select bloque-select-ej" name="bloque_ej_${bloqueIndex}[]"
+                  onchange="actualizarCategoriasEjercicio(this)">
             <option value="">Seleccionar...</option>
-            ${catOpts}
+            ${bloqueOpts}
           </select>
         </div>
         <div>
-          <label style="font-size:var(--text-xs); font-weight:600; color:var(--color-text-secondary); margin-bottom:4px; display:block;">Subcategoría</label>
-          <select class="form-select subcategoria-select-ej" name="subcategoria_ej_${bloqueIndex}[]"
+          <label style="font-size:var(--text-xs); font-weight:600; color:var(--color-text-secondary); margin-bottom:4px; display:block;">Categoría</label>
+          <select class="form-select categoria-select-ej" name="categoria_ej_${bloqueIndex}[]"
                   onchange="actualizarEjerciciosEjercicio(this)">
             <option value="">Seleccionar...</option>
           </select>
@@ -180,35 +181,36 @@ function agregarEjercicio(btn, bloqueIndex) {
 
 // ── CASCADING SELECTS ─────────────────────────────────────────────────────────
 
-function actualizarSubcategoriasEjercicio(select) {
-  const categoria = select.value;
-  const entry = select.closest('.ejercicio-entry');
-  const subSelect = entry.querySelector('.subcategoria-select-ej');
-  subSelect.innerHTML = '<option value="">Subcategoría</option>';
+function actualizarCategoriasEjercicio(select) {
+  const bloque  = select.value;
+  const entry   = select.closest('.ejercicio-entry');
+  const catSel  = entry.querySelector('.categoria-select-ej');
+  const ejSel   = entry.querySelector('.ejercicio-select');
 
-  if (categoria && ejerciciosPorCategoria[categoria]) {
-    Object.keys(ejerciciosPorCategoria[categoria]).forEach(sub => {
-      subSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
+  catSel.innerHTML = '<option value="">Categoría</option>';
+  ejSel.innerHTML  = '<option value="">Ejercicio</option>';
+
+  if (bloque && ejerciciosPorBloque[bloque]) {
+    Object.keys(ejerciciosPorBloque[bloque]).forEach(cat => {
+      catSel.innerHTML += `<option value="${cat}">${cat}</option>`;
     });
   }
-  actualizarEjerciciosEjercicio(subSelect);
 }
 
 function actualizarEjerciciosEjercicio(select) {
-  const entry = select.closest('.ejercicio-entry');
-  const categoria = entry.querySelector('.categoria-select-ej').value;
-  const subcategoria = select.value;
-  const ejSelect = entry.querySelector('.ejercicio-select');
-  ejSelect.innerHTML = '<option value="">Ejercicio</option>';
+  const entry    = select.closest('.ejercicio-entry');
+  const bloque   = entry.querySelector('.bloque-select-ej').value;
+  const categoria = select.value;
+  const ejSel    = entry.querySelector('.ejercicio-select');
+  ejSel.innerHTML = '<option value="">Ejercicio</option>';
 
   if (
-    categoria &&
-    subcategoria &&
-    ejerciciosPorCategoria[categoria] &&
-    ejerciciosPorCategoria[categoria][subcategoria]
+    bloque && categoria &&
+    ejerciciosPorBloque[bloque] &&
+    ejerciciosPorBloque[bloque][categoria]
   ) {
-    ejerciciosPorCategoria[categoria][subcategoria].forEach(ej => {
-      ejSelect.innerHTML += `<option value="${ej}">${ej}</option>`;
+    ejerciciosPorBloque[bloque][categoria].forEach(ej => {
+      ejSel.innerHTML += `<option value="${ej}">${ej}</option>`;
     });
   }
 }

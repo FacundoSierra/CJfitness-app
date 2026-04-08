@@ -45,7 +45,7 @@ def init_app(app):
     @app.route('/admin/taxonomia/bloque/<int:bloque_id>/editar', methods=['POST'])
     @admin_required
     def tax_editar_bloque(bloque_id):
-        bloque = db.session.get_or_404(BloqueTaxonomia, bloque_id)
+        bloque = db.get_or_404(BloqueTaxonomia, bloque_id)
         nombre = request.form.get('nombre', '').strip()
         if not nombre:
             flash('El nombre no puede estar vacío.', 'danger')
@@ -82,7 +82,7 @@ def init_app(app):
     @app.route('/admin/taxonomia/categoria/<int:cat_id>/editar', methods=['POST'])
     @admin_required
     def tax_editar_categoria(cat_id):
-        cat    = db.session.get_or_404(CategoriaTaxonomia, cat_id)
+        cat    = db.get_or_404(CategoriaTaxonomia, cat_id)
         nombre = request.form.get('nombre', '').strip()
         if not nombre:
             flash('El nombre no puede estar vacío.', 'danger')
@@ -119,7 +119,7 @@ def init_app(app):
     @app.route('/admin/taxonomia/subcategoria/<int:sub_id>/editar', methods=['POST'])
     @admin_required
     def tax_editar_subcategoria(sub_id):
-        sub    = db.session.get_or_404(SubcategoriaTaxonomia, sub_id)
+        sub    = db.get_or_404(SubcategoriaTaxonomia, sub_id)
         nombre = request.form.get('nombre', '').strip()
         if not nombre:
             flash('El nombre no puede estar vacío.', 'danger')
@@ -174,7 +174,7 @@ def init_app(app):
     @app.route('/admin/taxonomia/caracteristica/valor/<int:val_id>/editar', methods=['POST'])
     @admin_required
     def tax_editar_valor(val_id):
-        val    = db.session.get_or_404(CaracteristicaValor, val_id)
+        val    = db.get_or_404(CaracteristicaValor, val_id)
         nombre = request.form.get('nombre', '').strip()
         if not nombre:
             flash('El nombre no puede estar vacío.', 'danger')
@@ -274,7 +274,7 @@ def init_app(app):
     @admin_required
     @handle_db_error
     def ejercicio_editar_form(ej_id):
-        ejercicio = db.session.get_or_404(EjercicioCompleto, ej_id)
+        ejercicio = db.get_or_404(EjercicioCompleto, ej_id)
         bloques   = BloqueTaxonomia.query.filter_by(activo=True).order_by(BloqueTaxonomia.orden).all()
         return render_template('admin_ejercicio_nuevo.html',
                                bloques=bloques,
@@ -286,7 +286,7 @@ def init_app(app):
     @admin_required
     @handle_db_error
     def ejercicio_editar_post(ej_id):
-        ejercicio = db.session.get_or_404(EjercicioCompleto, ej_id)
+        ejercicio = db.get_or_404(EjercicioCompleto, ej_id)
         nombre    = request.form.get('nombre', '').strip()
         bloque_id = request.form.get('bloque_id', type=int)
 
@@ -314,7 +314,7 @@ def init_app(app):
     @app.route('/admin/ejercicios2/<int:ej_id>/desactivar', methods=['POST'])
     @admin_required
     def ejercicio_desactivar(ej_id):
-        ejercicio = db.session.get_or_404(EjercicioCompleto, ej_id)
+        ejercicio = db.get_or_404(EjercicioCompleto, ej_id)
         try:
             ejercicio.activo = not ejercicio.activo
             db.session.commit()
