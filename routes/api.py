@@ -196,10 +196,15 @@ def init_app(app):
         ejercicios = EjercicioCompleto.query.filter_by(activo=True).all()
         data = {}
         for e in ejercicios:
-            bloque = e.bloque.nombre if e.bloque else "Sin bloque"
+            bloque    = e.bloque.nombre if e.bloque else "Sin bloque"
             categoria = e.categoria.nombre if e.categoria else "Sin categoría"
-            nombre = e.nombre
-            data.setdefault(bloque, {}).setdefault(categoria, []).append(nombre)
+            # Incluir material para distinguir variantes del mismo ejercicio
+            label = f"{e.nombre} — {e.material}" if e.material else e.nombre
+            data.setdefault(bloque, {}).setdefault(categoria, []).append({
+                'nombre': e.nombre,
+                'material': e.material or '',
+                'label': label
+            })
         return jsonify(data)
 
     # ------------------ API ESTADÍSTICAS REALES ------------------

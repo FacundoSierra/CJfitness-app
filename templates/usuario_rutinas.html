@@ -118,16 +118,19 @@
 
 {% macro ejercicio_item(ejercicio, fecha_str) %}
 {% set sdata = ejercicio.series_data_parsed %}
+{% set ej_nombre = (ejercicio.ejercicio.nombre if ejercicio.ejercicio else ejercicio.nombre_manual) or '' %}
+{% set material = material_lookup.get(ej_nombre.lower()) if material_lookup is defined else None %}
 <div class="exercise-item"
      data-plan-series="{{ ejercicio.series_display }}"
      data-plan-rpe="{{ (sdata.rpe if sdata and not sdata.variar else ejercicio.rpe) or '' }}"
      data-plan-carga="{{ (sdata.carga if sdata and not sdata.variar else ejercicio.carga) or '' }}">
     <div class="exercise-name">
-        {{ ejercicio.ejercicio.nombre if ejercicio.ejercicio else ejercicio.nombre_manual }}
+        {{ ej_nombre }}
     </div>
     <div style="display:flex; flex-wrap:wrap; gap:var(--space-1); margin-bottom:var(--space-2);">
         {% if ejercicio.categoria %}<span class="badge badge-info">{{ ejercicio.categoria }}</span>{% endif %}
         {% if ejercicio.subcategoria %}<span class="badge badge-success">{{ ejercicio.subcategoria }}</span>{% endif %}
+        {% if material %}<span class="badge" style="background:var(--color-bg); color:var(--color-text-muted); border:1px solid var(--color-border);"><i class="bi bi-box me-1" style="font-size:10px;"></i>{{ material }}</span>{% endif %}
     </div>
     <div class="exercise-details">
         {% if sdata %}

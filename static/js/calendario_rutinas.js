@@ -62,7 +62,8 @@ function agregarBloque() {
 
       <div style="margin-bottom:var(--space-3);">
         <label class="form-label" style="font-weight:600; font-size:var(--text-sm);">Tipo de Bloque:</label>
-        <select class="form-select" name="categoria_bloque_${index}" required style="max-width:220px;">
+        <select class="form-select bloque-tipo-select" name="categoria_bloque_${index}" required style="max-width:220px;"
+                onchange="sincronizarBloqueEjercicios(this)">
           <option value="">Selecciona tipo</option>
           ${bloqueOpts || '<option value="General">General</option>'}
         </select>
@@ -80,12 +81,35 @@ function agregarBloque() {
 
 // ── EJERCICIO ROW ─────────────────────────────────────────────────────────────
 
+/**
+ * Cuando el admin cambia el "Tipo de Bloque" del contenedor padre,
+ * actualiza el select de bloque de todos los ejercicios ya añadidos
+ * y re-dispara la cascada de categorías.
+ */
+function sincronizarBloqueEjercicios(tipoSelect) {
+  const container = tipoSelect.closest('.bloque-container');
+  const nuevoBloque = tipoSelect.value;
+  container.querySelectorAll('.bloque-select-ej').forEach(sel => {
+    sel.value = nuevoBloque;
+    actualizarCategoriasEjercicio(sel);
+  });
+}
+
 function agregarEjercicio(btn, bloqueIndex) {
-  const bloque    = btn.closest('.bloque-container');
-  const ejercicios = bloque.querySelector(".ejercicios");
+  const bloqueContainer = btn.closest('.bloque-container');
+  const ejercicios = bloqueContainer.querySelector(".ejercicios");
+
+  // Leer el tipo de bloque seleccionado en el contenedor padre
+  const bloqueSeleccionado = bloqueContainer.querySelector(`[name="categoria_bloque_${bloqueIndex}"]`)?.value || '';
 
   const bloqueOpts = Object.keys(ejerciciosPorBloque)
-    .map(b => `<option value="${b}">${b}</option>`).join('');
+    .map(b => `<option value="${b}" ${b === bloqueSeleccionado ? 'selected' : ''}>${b}</option>`).join('');
+
+  // Pre-cargar categorías del bloque seleccionado
+  const cats = (bloqueSeleccionado && ejerciciosPorBloque[bloqueSeleccionado])
+    ? Object.keys(ejerciciosPorBloque[bloqueSeleccionado])
+        .map(c => `<option value="${c}">${c}</option>`).join('')
+    : '';
 
   const html = `
     <div class="ejercicio-entry" style="border:1px solid var(--color-border-dark); border-radius:var(--radius-md); padding:var(--space-4); margin-bottom:var(--space-3); background:var(--color-bg-alt);">
@@ -105,6 +129,7 @@ function agregarEjercicio(btn, bloqueIndex) {
           <select class="form-select categoria-select-ej" name="categoria_ej_${bloqueIndex}[]"
                   onchange="actualizarEjerciciosEjercicio(this)">
             <option value="">Seleccionar...</option>
+            ${cats}
           </select>
         </div>
         <div>
@@ -210,7 +235,10 @@ function actualizarEjerciciosEjercicio(select) {
     ejerciciosPorBloque[bloque][categoria]
   ) {
     ejerciciosPorBloque[bloque][categoria].forEach(ej => {
-      ejSel.innerHTML += `<option value="${ej}">${ej}</option>`;
+      // ej es ahora {nombre, material, label}
+      const label = ej.label || ej;
+      const value = ej.label || ej;
+      ejSel.innerHTML += `<option value="${value}">${label}</option>`;
     });
   }
 }

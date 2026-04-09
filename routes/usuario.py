@@ -48,8 +48,13 @@ def init_app(app):
 
         datos_vista = None
 
+        # Pre-cargar material de ejercicios desde taxonomía nueva (lookup por nombre)
+        material_lookup = {
+            e.nombre.lower(): e.material
+            for e in EjercicioCompleto.query.filter(EjercicioCompleto.material != None).all()
+        }
+
         if vista == 'diaria':
-            # Vista diaria - mostrar rutina de un día específico
             rutina = Rutina.query.filter_by(usuario_id=usuario_id, fecha=base).first()
             logger.info(f"[mis_rutinas] diaria base={base} usuario={usuario_id} rutina={'sí' if rutina else 'no'}")
             datos_vista = {
@@ -59,7 +64,6 @@ def init_app(app):
             }
 
         elif vista == 'semanal':
-            # Vista semanal - mostrar rutinas de la semana (consulta por rango y agrupación)
             inicio_semana = base - timedelta(days=base.weekday())
             fin_semana = inicio_semana + timedelta(days=6)
 
@@ -71,32 +75,12 @@ def init_app(app):
                 .order_by(Rutina.fecha.asc())
                 .all()
             )
-            logger.info(f"[mis_rutinas] semanal usuario={usuario_id} rango={inicio_semana}..{fin_semana} count={len(rutinas_semana)} fechas={[r.fecha for r in rutinas_semana]}")
+            logger.info(f"[mis_rutinas] semanal usuario={usuario_id} rango={inicio_semana}..{fin_semana} count={len(rutinas_semana)}")
 
             dias = {}
             for r in rutinas_semana:
-                bloques = []
-                for bloque in r.bloques:
-                    ejercicios = []
-                    for e in bloque.ejercicios:
-                        ejercicios.append({
-                            'id': e.id,
-                            'ejercicio': e.ejercicio,
-                            'nombre_manual': e.nombre_manual,
-                            'series_reps': e.series_reps,
-                            'rpe': e.rpe,
-                            'carga': e.carga,
-                            'categoria': e.categoria,
-                            'subcategoria': e.subcategoria
-                        })
-                    bloques.append({
-                        'nombre_bloque': bloque.nombre_bloque,
-                        'categoria': bloque.categoria,
-                        'ejercicios': ejercicios
-                    })
-                dias[r.fecha] = bloques
+                dias[r.fecha] = r.bloques  # pasar objetos modelo directamente
 
-            # Placeholder: asegurar los 7 días en orden lunes→domingo
             for i in range(7):
                 dia = inicio_semana + timedelta(days=i)
                 if dia not in dias:
@@ -109,14 +93,12 @@ def init_app(app):
                 'dias': dias
             }
 
-        else:  # vista == 'mensual'
-            # Vista mensual - mostrar rutinas del mes por semanas (robusta para diciembre)
+        else:  # mensual
             año, mes = base.year, base.month
             inicio_mes = datetime(año, mes, 1).date()
             _, dias_mes = monthrange(año, mes)
             fin_mes = inicio_mes + timedelta(days=dias_mes - 1)
 
-            # Recolectar todas las rutinas del mes
             todas = (
                 Rutina.query
                 .filter(Rutina.usuario_id == usuario_id)
@@ -129,40 +111,25 @@ def init_app(app):
             semanas_map = {}
             for r in todas:
                 lunes = r.fecha - timedelta(days=r.fecha.weekday())
-                bloques = []
-                for bloque in r.bloques:
-                    ejercicios = []
-                    for e in bloque.ejercicios:
-                        ejercicios.append({
-                            'id': e.id,
-                            'ejercicio': e.ejercicio,
-                            'nombre_manual': e.nombre_manual,
-                            'series_reps': e.series_reps,
-                            'rpe': e.rpe,
-                            'carga': e.carga,
-                            'categoria': e.categoria,
-                            'subcategoria': e.subcategoria
-                        })
-                    bloques.append({
-                        'nombre_bloque': bloque.nombre_bloque,
-                        'categoria': bloque.categoria,
-                        'ejercicios': ejercicios
-                    })
-                semanas_map.setdefault(lunes, []).append({ 'fecha': r.fecha, 'bloques': bloques })
+                semanas_map.setdefault(lunes, []).append({
+                    'fecha': r.fecha,
+                    'bloques': r.bloques  # pasar objetos modelo directamente
+                })
 
             semanas = []
-            for lunes, rutinas_semana in sorted(semanas_map.items()):
+            for lunes, rutinas_sem in sorted(semanas_map.items()):
                 domingo = lunes + timedelta(days=6)
-                semanas.append({ 'inicio': lunes, 'fin': domingo, 'rutinas': rutinas_semana })
+                semanas.append({'inicio': lunes, 'fin': domingo, 'rutinas': rutinas_sem})
 
-            datos_vista = { 'tipo': 'mensual', 'semanas': semanas }
+            datos_vista = {'tipo': 'mensual', 'semanas': semanas}
 
         return render_template(
             'usuario_rutinas.html',
             usuario=usuario,
             datos_vista=datos_vista,
             vista_actual=vista,
-            fecha_actual=base
+            fecha_actual=base,
+            material_lookup=material_lookup
         )
 
     @app.route('/exercises')
