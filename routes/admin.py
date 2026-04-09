@@ -197,8 +197,14 @@ def init_app(app):
 
         # Día de la semana en que inicia (0 = lunes)
         inicio_semana = primer_dia_mes.weekday()
-        total_celdas = inicio_semana + ultimo_dia
-        total_filas = (total_celdas + 6) // 7  # redondear filas necesarias
+        total_filas = (inicio_semana + ultimo_dia + 6) // 7
+
+        # Pre-cargar todas las rutinas del mes en UNA sola query
+        ultimo_dia_mes = primer_dia_mes.replace(day=ultimo_dia).date()
+        rutinas_mes = Rutina.query.filter_by(usuario_id=user_id)\
+            .filter(Rutina.fecha >= primer_dia_mes.date())\
+            .filter(Rutina.fecha <= ultimo_dia_mes).all()
+        rutinas_dict = {r.fecha: r for r in rutinas_mes}
 
         # Generar todas las fechas del calendario
         dias_calendario = []
@@ -208,11 +214,10 @@ def init_app(app):
             semana = []
             for _ in range(7):
                 fecha = dia_actual.date()
-                rutina = Rutina.query.filter_by(usuario_id=user_id, fecha=fecha).first()
                 semana.append({
                     "fecha": fecha,
                     "es_del_mes": fecha.month == mes,
-                    "rutina": rutina
+                    "rutina": rutinas_dict.get(fecha)
                 })
                 dia_actual += timedelta(days=1)
             dias_calendario.append(semana)
@@ -541,10 +546,16 @@ def init_app(app):
     def editar_usuario(user_id):
         user = Usuario.query.get_or_404(user_id)
         if request.method == 'POST':
-            user.nombre = request.form['nombre']
-            user.apellidos = request.form['apellidos']
-            user.email = request.form['email']
-            user.telefono = request.form['telefono']
+            nombre = request.form.get('nombre', '').strip()
+            apellidos = request.form.get('apellidos', '').strip()
+            email = request.form.get('email', '').strip()
+            if not nombre or not apellidos or not email:
+                flash("Nombre, apellidos y email son obligatorios.", "danger")
+                return redirect(url_for('editar_usuario', user_id=user_id))
+            user.nombre = nombre
+            user.apellidos = apellidos
+            user.email = email
+            user.telefono = request.form.get('telefono', '').strip()
             try:
                 db.session.commit()
                 flash("Usuario actualizado correctamente.", "success")
@@ -561,9 +572,9 @@ def init_app(app):
     @handle_db_error
     def admin_pagos_nuevo():
         try:
-            usuario_id = request.form['usuario_id']
-            cantidad = request.form['cantidad']
-            metodo_pago = request.form['metodo_pago']
+            usuario_id = request.form.get('usuario_id', '').strip()
+            cantidad = request.form.get('cantidad', '').strip()
+            metodo_pago = request.form.get('metodo_pago', '').strip()
             forma_pago = request.form.get('forma_pago', '')
             observaciones = request.form.get('observaciones', '')
 
@@ -1065,20 +1076,31 @@ def init_app(app):
     @admin_required
     @handle_db_error
     def admin_progresos():
-        """Listado de usuarios con acciones de progreso (estilo tarjetas)."""
+        """Listado de usuarios con stats de progreso."""
         try:
             usuarios = Usuario.query.filter(Usuario.rol != 'admin').order_by(Usuario.nombre).all()
-            # Conteo de seguimientos por usuario
+            # Total registros por usuario
             conteos = dict(
                 db.session.query(SeguimientoEjercicio.usuario_id, func.count(SeguimientoEjercicio.id))
                 .group_by(SeguimientoEjercicio.usuario_id)
                 .all()
             )
-            return render_template('admin_progresos_usuarios.html', usuarios=usuarios, conteos=conteos, active_page='progresos')
+            # Registros completados por usuario
+            completados = dict(
+                db.session.query(SeguimientoEjercicio.usuario_id, func.count(SeguimientoEjercicio.id))
+                .filter(SeguimientoEjercicio.completado == True)
+                .group_by(SeguimientoEjercicio.usuario_id)
+                .all()
+            )
+            return render_template('admin_progresos_usuarios.html',
+                                   usuarios=usuarios, conteos=conteos, completados=completados,
+                                   active_page='progresos')
         except Exception as e:
             logger.error(f"Error listando usuarios de progresos: {e}")
             flash('Error listando usuarios', 'danger')
-            return render_template('admin_progresos_usuarios.html', usuarios=[], conteos={}, active_page='progresos')
+            return render_template('admin_progresos_usuarios.html',
+                                   usuarios=[], conteos={}, completados={},
+                                   active_page='progresos')
 
     @app.route('/admin/progresos/<int:user_id>')
     @admin_required
@@ -1150,7 +1172,7 @@ def init_app(app):
                 semanas_ordenadas.append({ 'inicio': lunes, 'fin': domingo, 'dias': dias_sem })
             datos_vista = { 'tipo': 'mensual', 'semanas': semanas_ordenadas }
 
-        return render_template('admin_progresos_usuario.html', usuario=usuario, datos_vista=datos_vista, vista_actual=vista, fecha_actual=base, active_page='progresos')
+        return render_template('admin_progresos_usuario.html', usuario=usuario, datos_vista=datos_vista, vista_actual=vista, fecha_actual=base, timedelta=timedelta, active_page='progresos')
 
     @app.route('/admin/progresos/<int:seg_id>/eliminar', methods=['POST'])
     @admin_required

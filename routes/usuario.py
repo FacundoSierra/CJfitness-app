@@ -17,7 +17,12 @@ def init_app(app):
     def dashboard():
         user = Usuario.query.get(session['user_id'])
         if user:
-            return render_template('usuario_dashboard.html', username=user.nombre)
+            from datetime import date as _date
+            tiene_rutina = Rutina.query.filter_by(usuario_id=user.id)\
+                .filter(Rutina.fecha >= _date.today()).first() is not None
+            return render_template('usuario_dashboard.html',
+                                   username=user.nombre,
+                                   tiene_rutina=tiene_rutina)
         return redirect(url_for('login'))
 
     @app.route('/usuario_rutinas')

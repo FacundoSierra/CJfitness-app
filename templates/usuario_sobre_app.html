@@ -1,99 +1,286 @@
 {% extends "base.html" %}
-{% block title %}Sobre la App{% endblock %}
-{% block page_title %}Sobre la App{% endblock %}
+{% block title %}Guía de la App{% endblock %}
+{% block page_title %}Guía de la App{% endblock %}
+
+{% block head_extra %}
+<style>
+  .guia-section {
+    margin-bottom: var(--space-6);
+  }
+  .guia-section .card-header {
+    background: linear-gradient(135deg, var(--color-sidebar) 0%, #1e3a5f 100%);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding: var(--space-4) var(--space-6);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .guia-section .card-header h2 {
+    color: white;
+    font-size: var(--text-base);
+    font-weight: 700;
+    margin: 0;
+  }
+  .guia-section .card-header .guia-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    background: rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: white;
+    flex-shrink: 0;
+  }
+  .guia-section .card-body {
+    padding: var(--space-6);
+  }
+  .paso {
+    display: flex;
+    gap: var(--space-4);
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .paso:last-child { border-bottom: none; }
+  .paso-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    font-weight: 700;
+    font-size: var(--text-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .paso-texto strong {
+    display: block;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    margin-bottom: 2px;
+    color: var(--color-text);
+  }
+  .paso-texto p {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    margin: 0;
+    line-height: 1.5;
+  }
+  .tip-box {
+    display: flex;
+    gap: var(--space-3);
+    background: var(--color-info-light);
+    border: 1px solid var(--color-info-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+    margin-top: var(--space-4);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+  }
+  .tip-box i { color: var(--color-info-icon); flex-shrink: 0; margin-top: 2px; }
+</style>
+{% endblock %}
 
 {% block content %}
-<!-- Descripción -->
-<div class="card" style="margin-bottom: var(--space-6);">
-    <h2 class="section-title" style="margin-bottom: var(--space-4);">¿Qué es FitnessApp?</h2>
-    <p style="font-size:var(--text-lg); font-weight:500; margin-bottom:var(--space-3);">
-        FitnessApp es una aplicación web diseñada para ayudarte a alcanzar tus objetivos fitness de manera organizada y eficiente.
-    </p>
-    <p style="color:var(--color-text-secondary);">
-        Nuestra plataforma te permite gestionar tus rutinas de entrenamiento, registrar tu progreso y mantener un seguimiento detallado de tu evolución física.
-    </p>
+
+<!-- Introducción -->
+<div class="card" style="margin-bottom:var(--space-6); padding:var(--space-6);">
+  <div style="display:flex; align-items:center; gap:var(--space-4);">
+    <div style="width:56px; height:56px; border-radius:var(--radius-xl); background:var(--color-primary-light); color:var(--color-primary); display:flex; align-items:center; justify-content:center; font-size:1.5rem; flex-shrink:0;">
+      <i class="bi bi-book-half"></i>
+    </div>
+    <div>
+      <h1 style="font-size:var(--text-xl); font-weight:700; margin-bottom:var(--space-1);">Guía de la App CJFitness</h1>
+      <p style="color:var(--color-text-secondary); font-size:var(--text-sm); margin:0;">Todo lo que necesitas saber para usar la plataforma al máximo. Si tienes dudas adicionales, usa <a href="{{ url_for('soporte_usuario') }}" style="color:var(--color-primary); font-weight:600;">Soporte</a>.</p>
+    </div>
+  </div>
 </div>
 
-<!-- Stats -->
-<div class="stats-grid" style="margin-bottom: var(--space-6);">
-    <div class="card card-stat">
-        <span class="card-stat-value">100+</span>
-        <span class="card-stat-label">Ejercicios</span>
+<!-- 1. Mis Entrenamientos -->
+<div class="guia-section card" style="padding:0; overflow:hidden;">
+  <div class="card-header">
+    <div class="guia-icon"><i class="bi bi-calendar-week"></i></div>
+    <h2>Mis Entrenamientos</h2>
+  </div>
+  <div class="card-body">
+    <div class="paso">
+      <div class="paso-num">1</div>
+      <div class="paso-texto">
+        <strong>Accede a tu calendario</strong>
+        <p>En "Mis Entrenamientos" verás un calendario mensual con todas tus rutinas asignadas. Los días con rutina aparecen marcados.</p>
+      </div>
     </div>
-    <div class="card card-stat">
-        <span class="card-stat-value">24/7</span>
-        <span class="card-stat-label">Disponibilidad</span>
+    <div class="paso">
+      <div class="paso-num">2</div>
+      <div class="paso-texto">
+        <strong>Abre la rutina del día</strong>
+        <p>Haz clic sobre el día para ver los bloques y ejercicios del entrenamiento: nombre del ejercicio, series, repeticiones, RPE y carga planificada.</p>
+      </div>
     </div>
-    <div class="card card-stat">
-        <span class="card-stat-value">100%</span>
-        <span class="card-stat-label">Gratuito</span>
+    <div class="paso">
+      <div class="paso-num">3</div>
+      <div class="paso-texto">
+        <strong>Registra tu progreso</strong>
+        <p>Dentro de cada ejercicio puedes marcar las series como completadas e introducir los valores reales de RPE y carga. Guarda al terminar.</p>
+      </div>
     </div>
-    <div class="card card-stat">
-        <span class="card-stat-value">∞</span>
-        <span class="card-stat-label">Rutinas Personalizadas</span>
+    <div class="paso">
+      <div class="paso-num">4</div>
+      <div class="paso-texto">
+        <strong>Cambia de vista</strong>
+        <p>Puedes ver tus rutinas en vista diaria, semanal o mensual usando los botones superiores del calendario.</p>
+      </div>
     </div>
+    <div class="tip-box">
+      <i class="bi bi-lightbulb-fill"></i>
+      <span><strong>Consejo:</strong> Registra los valores justo después de entrenar para que tu entrenador tenga datos actualizados y pueda ajustar la carga correctamente.</span>
+    </div>
+  </div>
 </div>
 
-<!-- Características -->
-<div class="card" style="margin-bottom: var(--space-6);">
-    <h2 class="section-title" style="margin-bottom: var(--space-4);">Características Principales</h2>
-    {% set features = [
-        ('bi bi-calendar-check', 'color-primary', 'Rutinas Personalizadas', 'Accede a rutinas de entrenamiento diseñadas específicamente para ti'),
-        ('bi bi-graph-up', 'color-success', 'Seguimiento de Progreso', 'Registra y visualiza tu evolución con métricas detalladas'),
-        ('bi bi-book', 'color-accent', 'Base de Datos de Ejercicios', 'Información completa sobre cada ejercicio de tu rutina'),
-        ('bi bi-person-gear', 'color-primary', 'Perfil Personalizado', 'Gestiona tu información personal y preferencias'),
-        ('bi bi-calendar-week', 'color-success', 'Vistas Múltiples', 'Visualiza tus rutinas por día, semana o mes'),
-        ('bi bi-shield-check', 'color-text-secondary', 'Seguridad y Privacidad', 'Tus datos están protegidos con las mejores prácticas de seguridad')
-    ] %}
-    {% for icon, color, titulo, desc in features %}
-    <div style="display:flex; align-items:center; gap:var(--space-4); padding:var(--space-3) 0; border-bottom:1px solid var(--color-border);">
-        <div class="avatar" style="background:var(--{{ color }}); opacity:{{ '1' if color != 'color-text-secondary' else '0.6' }}; flex-shrink:0;">
-            <i class="{{ icon }}"></i>
-        </div>
-        <div>
-            <p style="font-weight:600; margin:0; font-size:var(--text-sm);">{{ titulo }}</p>
-            <p style="color:var(--color-text-secondary); margin:0; font-size:var(--text-sm);">{{ desc }}</p>
-        </div>
+<!-- 2. Nutrición -->
+<div class="guia-section card" style="padding:0; overflow:hidden;">
+  <div class="card-header" style="background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);">
+    <div class="guia-icon"><i class="bi bi-egg-fried"></i></div>
+    <h2>Nutrición</h2>
+  </div>
+  <div class="card-body">
+    <div class="paso">
+      <div class="paso-num">1</div>
+      <div class="paso-texto">
+        <strong>Completa tu perfil nutricional</strong>
+        <p>La primera vez que entres en Nutrición, rellena tus datos: peso, altura, objetivo (volumen / definición / mantenimiento) y preferencias (vegetariano, sin gluten, etc.).</p>
+      </div>
     </div>
-    {% endfor %}
+    <div class="paso">
+      <div class="paso-num">2</div>
+      <div class="paso-texto">
+        <strong>Recibe tu menú diario</strong>
+        <p>Cada día recibirás una recomendación de menú personalizada con desayuno, comida, merienda y cena. La IA adapta el menú a tus macros objetivo.</p>
+      </div>
+    </div>
+    <div class="paso">
+      <div class="paso-num">3</div>
+      <div class="paso-texto">
+        <strong>Consulta los macronutrientes</strong>
+        <p>Debajo de cada menú verás el desglose de proteínas, carbohidratos y grasas del día para que puedas hacer seguimiento de tus objetivos.</p>
+      </div>
+    </div>
+    <div class="tip-box">
+      <i class="bi bi-lightbulb-fill"></i>
+      <span><strong>Consejo:</strong> Si hay alimentos que no te gustan o no puedes tomar, indícalo en tu perfil nutricional (sección "Preferencias") para que el menú los excluya automáticamente.</span>
+    </div>
+  </div>
 </div>
 
-<!-- Cómo funciona -->
-<div class="card" style="margin-bottom: var(--space-6);">
-    <h2 class="section-title" style="margin-bottom: var(--space-6);">¿Cómo Funciona?</h2>
-    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-6); text-align:center;">
-        <div>
-            <div class="avatar" style="margin: 0 auto var(--space-3); background:var(--color-primary); width:56px; height:56px; font-size:1.5rem;">
-                <i class="bi bi-person-plus"></i>
-            </div>
-            <h3 style="font-size:var(--text-base); font-weight:600; margin-bottom:var(--space-1);">1. Regístrate</h3>
-            <p style="color:var(--color-text-secondary); font-size:var(--text-sm); margin:0;">Crea tu cuenta y completa tu perfil personal</p>
-        </div>
-        <div>
-            <div class="avatar" style="margin: 0 auto var(--space-3); background:var(--color-success); width:56px; height:56px; font-size:1.5rem;">
-                <i class="bi bi-calendar-check"></i>
-            </div>
-            <h3 style="font-size:var(--text-base); font-weight:600; margin-bottom:var(--space-1);">2. Recibe tu Rutina</h3>
-            <p style="color:var(--color-text-secondary); font-size:var(--text-sm); margin:0;">Tu entrenador te asigna rutinas específicas</p>
-        </div>
-        <div>
-            <div class="avatar" style="margin: 0 auto var(--space-3); background:var(--color-accent); width:56px; height:56px; font-size:1.5rem;">
-                <i class="bi bi-graph-up"></i>
-            </div>
-            <h3 style="font-size:var(--text-base); font-weight:600; margin-bottom:var(--space-1);">3. Entrena y Progresa</h3>
-            <p style="color:var(--color-text-secondary); font-size:var(--text-sm); margin:0;">Sigue tu rutina y registra tu progreso</p>
-        </div>
+<!-- 3. Ejercicios -->
+<div class="guia-section card" style="padding:0; overflow:hidden;">
+  <div class="card-header" style="background: linear-gradient(135deg, #0369a1 0%, #0ea5e9 100%);">
+    <div class="guia-icon"><i class="bi bi-book"></i></div>
+    <h2>Biblioteca de Ejercicios</h2>
+  </div>
+  <div class="card-body">
+    <div class="paso">
+      <div class="paso-num">1</div>
+      <div class="paso-texto">
+        <strong>Consulta la biblioteca</strong>
+        <p>En la sección "Ejercicios" encontrarás todos los movimientos organizados por bloque (Fuerza, Core, Potencia, etc.) y categoría.</p>
+      </div>
     </div>
+    <div class="paso">
+      <div class="paso-num">2</div>
+      <div class="paso-texto">
+        <strong>Entiende las características</strong>
+        <p>Cada ejercicio tiene información sobre el patrón de movimiento, material necesario y otras variables relevantes para ejecutarlo correctamente.</p>
+      </div>
+    </div>
+    <div class="tip-box">
+      <i class="bi bi-lightbulb-fill"></i>
+      <span><strong>Consejo:</strong> Si un ejercicio de tu rutina tiene un nombre que no reconoces, búscalo en la biblioteca para ver sus detalles antes de entrar al gimnasio.</span>
+    </div>
+  </div>
 </div>
 
-<!-- Versión -->
-<div class="card" style="text-align:center; background:var(--color-bg);">
-    <span class="badge badge-success" style="font-size:var(--text-sm); margin-bottom:var(--space-3); display:inline-block;">Versión 2.0</span>
-    <h3 style="font-size:var(--text-base); font-weight:600; margin-bottom:var(--space-2);">Información Técnica</h3>
-    <p style="color:var(--color-text-secondary); font-size:var(--text-sm); margin:0;">
-        <strong>Desarrollado con:</strong> Python, Flask, Bootstrap 5<br>
-        <strong>Base de datos:</strong> PostgreSQL<br>
-        <strong>Última actualización:</strong> {{ moment_actual }}
-    </p>
+<!-- 4. Mi Información -->
+<div class="guia-section card" style="padding:0; overflow:hidden;">
+  <div class="card-header" style="background: linear-gradient(135deg, #166534 0%, #22c55e 100%);">
+    <div class="guia-icon"><i class="bi bi-person-badge"></i></div>
+    <h2>Mi Información</h2>
+  </div>
+  <div class="card-body">
+    <div class="paso">
+      <div class="paso-num">1</div>
+      <div class="paso-texto">
+        <strong>Actualiza tus datos personales</strong>
+        <p>Mantén tu nombre, email y teléfono actualizados para que Christian pueda contactarte fácilmente.</p>
+      </div>
+    </div>
+    <div class="paso">
+      <div class="paso-num">2</div>
+      <div class="paso-texto">
+        <strong>Cambia tu contraseña</strong>
+        <p>Desde esta sección puedes actualizar tu contraseña en cualquier momento por seguridad.</p>
+      </div>
+    </div>
+  </div>
 </div>
+
+<!-- 5. Soporte -->
+<div class="guia-section card" style="padding:0; overflow:hidden;">
+  <div class="card-header" style="background: linear-gradient(135deg, #4b5563 0%, #9ca3af 100%);">
+    <div class="guia-icon"><i class="bi bi-headset"></i></div>
+    <h2>Soporte y Contacto</h2>
+  </div>
+  <div class="card-body">
+    <div class="paso">
+      <div class="paso-num">1</div>
+      <div class="paso-texto">
+        <strong>¿Tienes una duda que no está en esta guía?</strong>
+        <p>Usa la sección de Soporte para enviar un mensaje directamente a Christian. Responde en el menor tiempo posible.</p>
+      </div>
+    </div>
+    <div class="paso">
+      <div class="paso-num">2</div>
+      <div class="paso-texto">
+        <strong>¿Algo no funciona correctamente?</strong>
+        <p>Describe el problema con el mayor detalle posible (qué pantalla, qué acción) para que pueda resolverse rápidamente.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Preguntas frecuentes -->
+<div class="card" style="margin-bottom:var(--space-6); padding:var(--space-6);">
+  <h2 style="font-size:var(--text-lg); font-weight:700; margin-bottom:var(--space-5);">Preguntas Frecuentes</h2>
+
+  <details style="margin-bottom:var(--space-3); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-3) var(--space-4);">
+    <summary style="cursor:pointer; font-weight:600; font-size:var(--text-sm); color:var(--color-text);">¿Por qué no veo ninguna rutina asignada?</summary>
+    <p style="margin:var(--space-3) 0 0; font-size:var(--text-sm); color:var(--color-text-secondary);">Es posible que tu entrenador aún no haya asignado rutinas para las próximas semanas. Contacta con Christian a través de Soporte para confirmarlo.</p>
+  </details>
+
+  <details style="margin-bottom:var(--space-3); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-3) var(--space-4);">
+    <summary style="cursor:pointer; font-weight:600; font-size:var(--text-sm); color:var(--color-text);">¿Puedo ver rutinas de días pasados?</summary>
+    <p style="margin:var(--space-3) 0 0; font-size:var(--text-sm); color:var(--color-text-secondary);">Sí. En la vista de calendario puedes navegar hacia meses anteriores con las flechas de navegación para ver rutinas y registros pasados.</p>
+  </details>
+
+  <details style="margin-bottom:var(--space-3); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-3) var(--space-4);">
+    <summary style="cursor:pointer; font-weight:600; font-size:var(--text-sm); color:var(--color-text);">¿Con qué frecuencia se actualiza mi menú de nutrición?</summary>
+    <p style="margin:var(--space-3) 0 0; font-size:var(--text-sm); color:var(--color-text-secondary);">El menú se genera diariamente de forma automática basándose en tu perfil nutricional. Si no ves menú de hoy, espera unos minutos o contacta con Soporte.</p>
+  </details>
+
+  <details style="margin-bottom:var(--space-3); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-3) var(--space-4);">
+    <summary style="cursor:pointer; font-weight:600; font-size:var(--text-sm); color:var(--color-text);">¿Puedo acceder desde el móvil?</summary>
+    <p style="margin:var(--space-3) 0 0; font-size:var(--text-sm); color:var(--color-text-secondary);">Sí, la aplicación es totalmente responsive y funciona en cualquier dispositivo móvil desde el navegador. No necesitas instalar ninguna app.</p>
+  </details>
+
+  <details style="border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-3) var(--space-4);">
+    <summary style="cursor:pointer; font-weight:600; font-size:var(--text-sm); color:var(--color-text);">¿Cómo cambio mi contraseña?</summary>
+    <p style="margin:var(--space-3) 0 0; font-size:var(--text-sm); color:var(--color-text-secondary);">Ve a "Mi Información" en el dashboard y busca la sección de cambio de contraseña. También puedes usar "Olvidé mi contraseña" en la pantalla de login.</p>
+  </details>
+</div>
+
 {% endblock %}

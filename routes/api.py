@@ -460,6 +460,7 @@ def init_app(app):
     # ------------------ API PLANES / SUSCRIPCIÓN ------------------
 
     @app.route('/api/planes')
+    @login_required
     def api_planes():
         """API para obtener planes disponibles"""
         try:
@@ -614,6 +615,8 @@ def init_app(app):
 
             # Verificar que el ejercicio pertenece al usuario
             rutina = Rutina.query.get(ejercicio_asignado.bloque.rutina_id)
+            if not rutina:
+                return jsonify({'error': 'Rutina no encontrada'}), 404
             if rutina.usuario_id != usuario_id:
                 return jsonify({'error': 'No tienes permisos para este ejercicio'}), 403
 
@@ -626,18 +629,6 @@ def init_app(app):
                     return jsonify({'error': 'Formato de fecha inválido. Use YYYY-MM-DD'}), 400
             else:
                 fecha_ejecucion = datetime.today().date()
-
-            # Validar que la fecha pertenezca a la misma semana o sea igual a la fecha de la rutina
-            # Permitimos registrar para la fecha exacta de la rutina o, si se quiere flexibilidad,
-            # cualquier fecha. Aquí aplicamos validación suave: advertimos si se desvía más de 7 días.
-            try:
-                fecha_rutina = rutina.fecha
-                delta_dias = abs((fecha_ejecucion - fecha_rutina).days)
-                if delta_dias > 7:
-                    # No bloqueamos, pero informamos al cliente
-                    pass
-            except Exception:
-                pass
 
             # Validaciones ligeras de payload
             rpe_real = (data or {}).get('rpe_real', '')
@@ -719,13 +710,17 @@ def init_app(app):
             ids = [e.get('id') for e in ejercicios if e.get('id')]
             asignados = {ea.id: ea for ea in EjercicioAsignado.query.filter(EjercicioAsignado.id.in_(ids)).all()}
 
+            # Pre-cargar rutinas en una sola query para evitar N+1
+            rutina_ids = {ea.bloque.rutina_id for ea in asignados.values()}
+            rutinas_map = {r.id: r for r in Rutina.query.filter(Rutina.id.in_(rutina_ids)).all()}
+
             for item in ejercicios:
                 ej_id = item.get('id')
                 ea = asignados.get(ej_id)
                 if not ea:
                     continue
-                rutina = Rutina.query.get(ea.bloque.rutina_id)
-                if rutina.usuario_id != usuario_id:
+                rutina = rutinas_map.get(ea.bloque.rutina_id)
+                if not rutina or rutina.usuario_id != usuario_id:
                     continue
 
                 seguimiento = SeguimientoEjercicio.query.filter_by(
@@ -786,6 +781,8 @@ def init_app(app):
 
             # Verificar que el ejercicio pertenece al usuario
             rutina = Rutina.query.get(ejercicio_asignado.bloque.rutina_id)
+            if not rutina:
+                return jsonify({'error': 'Rutina no encontrada'}), 404
             if rutina.usuario_id != usuario_id:
                 return jsonify({'error': 'No tienes permisos para este ejercicio'}), 403
 
@@ -801,7 +798,10 @@ def init_app(app):
                     seg_en_fecha = query.filter_by(fecha_ejecucion=fecha_busqueda).first()
                 except ValueError:
                     return jsonify({'error': 'Formato de fecha inválido. Use YYYY-MM-DD'}), 400
-            seguimientos = query.order_by(SeguimientoEjercicio.fecha_ejecucion.desc()).all()
+            # Limitar histórico a 90 días para no cargar registros excesivos
+            desde = datetime.today().date() - timedelta(days=90)
+            seguimientos = query.filter(SeguimientoEjercicio.fecha_ejecucion >= desde)\
+                .order_by(SeguimientoEjercicio.fecha_ejecucion.desc()).all()
 
             seguimientos_data = []
             for seg in seguimientos:

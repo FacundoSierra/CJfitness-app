@@ -3,178 +3,383 @@
 
 {% block head_extra %}
 <style>
-.progreso-header {
-    display: flex;
-    background: var(--color-primary);
-    color: white;
-    border-radius: var(--radius-md) var(--radius-md) 0 0;
-    font-weight: 600;
-    font-size: var(--text-sm);
-}
-.progreso-header > div, .progreso-row > div {
-    padding: var(--space-2) var(--space-3);
-    flex: 1;
-}
-.progreso-header .col-acciones, .progreso-row .col-acciones {
-    flex: none;
-    min-width: 280px;
-}
-.progreso-row {
-    display: flex;
-    align-items: center;
-    background: white;
+  /* ── Tabla de progreso ──────────────────────────────────────────────────── */
+  .prog-table { width:100%; border-collapse:collapse; font-size:var(--text-sm); }
+  .prog-table th {
+    padding: var(--space-3) var(--space-4);
+    text-align:left;
+    font-weight:600;
+    font-size:var(--text-xs);
+    color:var(--color-text-secondary);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    border-bottom:2px solid var(--color-border);
+    white-space:nowrap;
+  }
+  .prog-table td {
+    padding: var(--space-3) var(--space-4);
     border-bottom: 1px solid var(--color-border);
-    font-size: var(--text-sm);
-}
-.progreso-row:last-child { border-bottom: none; }
-.progreso-container {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    margin-bottom: var(--space-4);
-}
-.progreso-dato { color: var(--color-text-secondary); margin: 2px 0; }
+    vertical-align:middle;
+  }
+  .prog-table tr:last-child td { border-bottom:none; }
+  .prog-table tr:hover td { background:var(--color-bg-alt); }
+
+  /* Comparación planificado vs real */
+  .val-block { display:flex; flex-direction:column; gap:2px; }
+  .val-row { display:flex; align-items:center; gap:var(--space-2); }
+  .val-label { font-size:var(--text-xs); color:var(--color-text-muted); width:40px; flex-shrink:0; }
+  .val-plan  { color:var(--color-text-secondary); }
+  .val-real  { font-weight:600; color:var(--color-text); }
+  .val-arrow { color:var(--color-border-dark); font-size:0.7rem; }
+
+  /* Bloque de día */
+  .dia-header {
+    display:flex; align-items:center; gap:var(--space-3);
+    padding: var(--space-3) var(--space-5);
+    background:var(--color-bg-alt);
+    border-radius:var(--radius-md);
+    margin-bottom:var(--space-2);
+    margin-top:var(--space-5);
+  }
+  .dia-header:first-child { margin-top:0; }
+  .dia-header .dia-label { font-weight:700; font-size:var(--text-sm); color:var(--color-text); }
+  .dia-header .dia-count { font-size:var(--text-xs); color:var(--color-text-secondary); }
+
+  /* Badge estado */
+  .badge-comp { background:var(--color-success-light); color:var(--color-success-dark); padding:2px 10px; border-radius:99px; font-size:var(--text-xs); font-weight:600; white-space:nowrap; }
+  .badge-pend { background:var(--color-warning-light); color:var(--color-warning-dark); padding:2px 10px; border-radius:99px; font-size:var(--text-xs); font-weight:600; white-space:nowrap; }
+
+  /* KPI summary */
+  .kpi-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:var(--space-4); margin-bottom:var(--space-6); }
+  @media(max-width:768px){ .kpi-strip { grid-template-columns:repeat(2,1fr); } }
+  .kpi-card { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-xl); padding:var(--space-5); }
+  .kpi-value { font-size:var(--text-2xl); font-weight:800; line-height:1; margin-bottom:var(--space-1); }
+  .kpi-label { font-size:var(--text-xs); color:var(--color-text-secondary); font-weight:500; text-transform:uppercase; letter-spacing:.04em; }
+
+  /* Empty state */
+  .empty-day { padding:var(--space-4) var(--space-5); color:var(--color-text-muted); font-size:var(--text-sm); font-style:italic; }
+
+  /* Vista tabs */
+  .vista-tabs { display:flex; gap:var(--space-1); background:var(--color-bg-alt); border-radius:var(--radius-lg); padding:4px; }
+  .vista-tab { padding:var(--space-2) var(--space-4); border-radius:var(--radius-md); font-size:var(--text-sm); font-weight:500; text-decoration:none; color:var(--color-text-secondary); border:none; background:transparent; cursor:pointer; transition:all var(--transition-fast); white-space:nowrap; }
+  .vista-tab.active, .vista-tab:hover { background:var(--color-surface); color:var(--color-primary); box-shadow:var(--shadow-sm); }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div style="display:flex; align-items:center; gap: var(--space-3);">
-        <a href="{{ url_for('admin_progresos') }}" class="btn btn-secondary btn-sm">
-            <i class="bi bi-arrow-left"></i>
-        </a>
-        <div>
-            <h1 class="page-title">{{ usuario.nombre }} {{ usuario.apellidos }}</h1>
-            <p class="page-subtitle">Historial de progresos</p>
-        </div>
-    </div>
-    <div style="display:flex; gap:var(--space-3); align-items:flex-end; flex-wrap:wrap;">
-        <div class="form-group" style="margin-bottom:0;">
-            <label class="form-label">Vista</label>
-            <select class="form-control" id="vistaSelect" onchange="cambiarVista()" style="width:auto;">
-                <option value="diaria" {{ 'selected' if vista_actual=='diaria' else '' }}>Diaria</option>
-                <option value="semanal" {{ 'selected' if vista_actual=='semanal' else '' }}>Semanal</option>
-                <option value="mensual" {{ 'selected' if vista_actual=='mensual' else '' }}>Mensual</option>
-            </select>
-        </div>
-        <div class="form-group" style="margin-bottom:0;">
-            <label class="form-label">Fecha</label>
-            <input type="date" class="form-control" id="fechaSelect"
-                   value="{{ fecha_actual.strftime('%Y-%m-%d') }}"
-                   onchange="cambiarVista()" style="width:auto;">
-        </div>
-        <a href="{{ url_for('exportar_progreso_pdf', user_id=usuario.id) }}"
-           class="btn btn-secondary btn-sm" title="Exportar progreso a PDF">
-            <i class="bi bi-file-earmark-pdf me-1"></i>Exportar PDF
-        </a>
-        <a href="{{ url_for('admin_feedbacks_usuario', user_id=usuario.id) }}"
-           class="btn btn-secondary btn-sm" title="Ver feedbacks del usuario">
-            <i class="bi bi-chat-heart me-1"></i>Feedbacks
-        </a>
-    </div>
-</div>
 
-{% macro progreso_fila(seg, suffix='') %}
-<div class="progreso-row">
-    <div style="font-weight:500;">
-        {{ seg.ejercicio_asignado.ejercicio.nombre if seg.ejercicio_asignado.ejercicio else seg.ejercicio_asignado.nombre_manual }}
+<!-- Cabecera -->
+<div class="page-header" style="align-items:flex-start; flex-wrap:wrap; gap:var(--space-4);">
+  <div style="display:flex; align-items:center; gap:var(--space-3);">
+    <a href="{{ url_for('admin_progresos') }}" class="btn btn-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div class="avatar" style="background:var(--color-primary-light); color:var(--color-primary); font-size:1.2rem; width:44px; height:44px; flex-shrink:0;">
+      {{ usuario.nombre[0]|upper }}
     </div>
     <div>
-        <div class="progreso-dato">S/R: {{ seg.series_reps_planificadas or '—' }}</div>
-        <div class="progreso-dato">RPE: {{ seg.rpe_planificado or '—' }}</div>
-        <div class="progreso-dato">Carga: {{ seg.carga_planificada or '—' }}</div>
+      <h1 class="page-title" style="margin-bottom:0;">{{ usuario.nombre }} {{ usuario.apellidos }}</h1>
+      <p class="page-subtitle" style="margin:0;">@{{ usuario.username }} · Historial de progreso</p>
     </div>
-    <div>
-        <div class="progreso-dato">S/R: {{ seg.series_reps_reales or '—' }}</div>
-        <div class="progreso-dato">RPE: {{ seg.rpe_real or '—' }}</div>
-        <div class="progreso-dato">Carga: {{ seg.carga_real or '—' }}</div>
-        {% if seg.notas %}<div class="progreso-dato">Notas: {{ seg.notas }}</div>{% endif %}
-    </div>
-    <div class="col-acciones" style="display:flex; align-items:center; gap:var(--space-1); flex-wrap:wrap;">
-        <span class="badge {{ 'badge-success' if seg.completado else 'badge-warning' }}">
-            {{ 'Completado' if seg.completado else 'En progreso' }}
-        </span>
-        <form style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;"
-              method="post" action="{{ url_for('admin_actualizar_progreso', seg_id=seg.id) }}">
-            <input type="hidden" name="next" value="{{ request.url }}">
-            <input type="text" class="form-control" name="series" placeholder="S/R"
-                   value="{{ seg.series_reps_reales or '' }}" style="width:90px;">
-            <input type="text" class="form-control" name="rpe" placeholder="RPE"
-                   value="{{ seg.rpe_real or '' }}" style="width:56px;">
-            <input type="text" class="form-control" name="carga" placeholder="Carga"
-                   value="{{ seg.carga_real or '' }}" style="width:72px;">
-            <input type="text" class="form-control" name="notas" placeholder="Notas"
-                   value="{{ seg.notas or '' }}" style="width:120px;">
-            <label style="display:flex; align-items:center; gap:4px; font-size:var(--text-sm);">
-                <input type="checkbox" name="completado" id="c{{ seg.id }}{{ suffix }}"
-                       {% if seg.completado %}checked{% endif %}> OK
-            </label>
-            <button class="btn btn-sm btn-success" type="submit">Guardar</button>
-        </form>
-        <form method="post" action="{{ url_for('admin_eliminar_progreso', seg_id=seg.id) }}"
-              onsubmit="return confirm('¿Eliminar este registro?')">
-            <input type="hidden" name="next" value="{{ request.url }}">
-            <button class="btn btn-sm btn-danger">Eliminar</button>
-        </form>
-    </div>
+  </div>
+  <div style="display:flex; gap:var(--space-3); align-items:center; flex-wrap:wrap;">
+    <a href="{{ url_for('exportar_progreso_pdf', user_id=usuario.id) }}"
+       class="btn btn-secondary btn-sm">
+      <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+    </a>
+    <a href="{{ url_for('admin_feedbacks_usuario', user_id=usuario.id) }}"
+       class="btn btn-secondary btn-sm">
+      <i class="bi bi-chat-heart me-1"></i>Feedbacks
+    </a>
+  </div>
 </div>
-{% endmacro %}
 
-{% macro dia_bloque(titulo, segs, suffix='') %}
-<div class="progreso-container">
-    <div class="progreso-header">
-        <div>{{ titulo }}</div>
-        <div>Planificado</div>
-        <div>Realizado</div>
-        <div class="col-acciones">Acciones</div>
-    </div>
-    {% if segs %}
-        {% for seg in segs %}{{ progreso_fila(seg, suffix) }}{% endfor %}
+<!-- Controles de vista y fecha -->
+<div style="display:flex; gap:var(--space-4); align-items:center; flex-wrap:wrap; margin-bottom:var(--space-6);">
+  <div class="vista-tabs">
+    <a href="?vista=diaria&fecha={{ fecha_actual.strftime('%Y-%m-%d') }}"
+       class="vista-tab {{ 'active' if vista_actual=='diaria' else '' }}">Diaria</a>
+    <a href="?vista=semanal&fecha={{ fecha_actual.strftime('%Y-%m-%d') }}"
+       class="vista-tab {{ 'active' if vista_actual=='semanal' else '' }}">Semanal</a>
+    <a href="?vista=mensual&fecha={{ fecha_actual.strftime('%Y-%m-%d') }}"
+       class="vista-tab {{ 'active' if vista_actual=='mensual' else '' }}">Mensual</a>
+  </div>
+  <input type="date" class="form-control" id="fechaSelect"
+         value="{{ fecha_actual.strftime('%Y-%m-%d') }}"
+         onchange="irAFecha(this.value)"
+         style="width:auto; max-width:170px;">
+  <!-- Navegación de periodo -->
+  <div style="display:flex; gap:var(--space-1);">
+    {% if vista_actual == 'diaria' %}
+      {% set prev = fecha_actual.strftime('%Y-%m-%d') %}
+      <a href="?vista=diaria&fecha={{ (fecha_actual - timedelta(days=1)).strftime('%Y-%m-%d') }}"
+         class="btn btn-secondary btn-sm"><i class="bi bi-chevron-left"></i></a>
+      <a href="?vista=diaria&fecha={{ (fecha_actual + timedelta(days=1)).strftime('%Y-%m-%d') }}"
+         class="btn btn-secondary btn-sm"><i class="bi bi-chevron-right"></i></a>
+    {% elif vista_actual == 'semanal' %}
+      <a href="?vista=semanal&fecha={{ (fecha_actual - timedelta(days=7)).strftime('%Y-%m-%d') }}"
+         class="btn btn-secondary btn-sm"><i class="bi bi-chevron-left"></i></a>
+      <a href="?vista=semanal&fecha={{ (fecha_actual + timedelta(days=7)).strftime('%Y-%m-%d') }}"
+         class="btn btn-secondary btn-sm"><i class="bi bi-chevron-right"></i></a>
     {% else %}
-        <div style="padding:var(--space-3); color:var(--color-text-secondary); font-size:var(--text-sm);">Sin registros.</div>
+      {% set mes_prev = fecha_actual.replace(day=1) - timedelta(days=1) %}
+      {% set mes_next = (fecha_actual.replace(day=28) + timedelta(days=4)).replace(day=1) %}
+      <a href="?vista=mensual&fecha={{ mes_prev.strftime('%Y-%m-%d') }}"
+         class="btn btn-secondary btn-sm"><i class="bi bi-chevron-left"></i></a>
+      <a href="?vista=mensual&fecha={{ mes_next.strftime('%Y-%m-%d') }}"
+         class="btn btn-secondary btn-sm"><i class="bi bi-chevron-right"></i></a>
     {% endif %}
+  </div>
 </div>
+
+<!-- KPI strip — se calcula sobre los datos de la vista actual -->
+{% set all_segs = [] %}
+{% if datos_vista.tipo == 'diaria' %}
+  {% set all_segs = datos_vista.seguimientos %}
+{% elif datos_vista.tipo == 'semanal' %}
+  {% for dia, segs in datos_vista.dias.items() %}{% for s in segs %}{% if all_segs.append(s) %}{% endif %}{% endfor %}{% endfor %}
+{% else %}
+  {% for semana in datos_vista.semanas %}{% for dia, segs in semana.dias.items() %}{% for s in segs %}{% if all_segs.append(s) %}{% endif %}{% endfor %}{% endfor %}{% endfor %}
+{% endif %}
+{% set total_v = all_segs | length %}
+{% set comp_v  = all_segs | selectattr('completado') | list | length %}
+{% set tasa_v  = ((comp_v / total_v * 100) | round(0) | int) if total_v > 0 else 0 %}
+
+{% if total_v > 0 %}
+<div class="kpi-strip">
+  <div class="kpi-card">
+    <div class="kpi-value" style="color:var(--color-primary);">{{ total_v }}</div>
+    <div class="kpi-label">Ejercicios registrados</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-value" style="color:var(--color-success);">{{ comp_v }}</div>
+    <div class="kpi-label">Completados</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-value" style="color:{% if tasa_v >= 75 %}var(--color-success){% elif tasa_v >= 40 %}var(--color-accent-dark){% else %}var(--color-danger){% endif %};">{{ tasa_v }}%</div>
+    <div class="kpi-label">Tasa de finalización</div>
+  </div>
+  <div class="kpi-card">
+    {% set con_notas = all_segs | selectattr('notas') | list | length %}
+    <div class="kpi-value" style="color:var(--color-accent-dark);">{{ con_notas }}</div>
+    <div class="kpi-label">Con notas del usuario</div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Contenido de la vista ─────────────────────────────────────────────── -->
+
+{% macro progreso_tabla(segs, suffix='') %}
+{% if segs %}
+<div class="table-container" style="margin-bottom:0; border-radius:var(--radius-lg); overflow:hidden;">
+  <table class="prog-table">
+    <thead>
+      <tr>
+        <th style="width:220px;">Ejercicio</th>
+        <th>Planificado</th>
+        <th>Realizado</th>
+        <th style="width:90px; text-align:center;">Estado</th>
+        <th style="text-align:right; width:100px;">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for seg in segs %}
+      <tr>
+        <td>
+          <span style="font-weight:600;">
+            {{ seg.ejercicio_asignado.ejercicio.nombre if seg.ejercicio_asignado and seg.ejercicio_asignado.ejercicio else (seg.ejercicio_asignado.nombre_manual if seg.ejercicio_asignado else '—') }}
+          </span>
+          {% if seg.notas %}
+          <div style="font-size:var(--text-xs); color:var(--color-text-muted); margin-top:2px;">
+            <i class="bi bi-chat-square-text me-1"></i>{{ seg.notas }}
+          </div>
+          {% endif %}
+        </td>
+        <td>
+          <div class="val-block">
+            <div class="val-row">
+              <span class="val-label">S/R</span>
+              <span class="val-plan">{{ seg.series_reps_planificadas or '—' }}</span>
+            </div>
+            <div class="val-row">
+              <span class="val-label">RPE</span>
+              <span class="val-plan">{{ seg.rpe_planificado or '—' }}</span>
+            </div>
+            <div class="val-row">
+              <span class="val-label">Carga</span>
+              <span class="val-plan">{{ seg.carga_planificada or '—' }}</span>
+            </div>
+          </div>
+        </td>
+        <td>
+          <div class="val-block">
+            <div class="val-row">
+              <span class="val-label">S/R</span>
+              <span class="val-real">{{ seg.series_reps_reales or '—' }}</span>
+            </div>
+            <div class="val-row">
+              <span class="val-label">RPE</span>
+              <span class="val-real">{{ seg.rpe_real or '—' }}</span>
+            </div>
+            <div class="val-row">
+              <span class="val-label">Carga</span>
+              <span class="val-real">{{ seg.carga_real or '—' }}</span>
+            </div>
+          </div>
+        </td>
+        <td style="text-align:center;">
+          {% if seg.completado %}
+          <span class="badge-comp"><i class="bi bi-check-circle me-1"></i>OK</span>
+          {% else %}
+          <span class="badge-pend"><i class="bi bi-clock me-1"></i>Pendiente</span>
+          {% endif %}
+        </td>
+        <td style="text-align:right;">
+          <div style="display:flex; justify-content:flex-end; gap:var(--space-1);">
+            <button class="btn btn-sm btn-secondary"
+                    title="Editar registro"
+                    onclick="abrirEditar({{ seg.id }},
+                      '{{ seg.series_reps_reales or '' }}',
+                      '{{ seg.rpe_real or '' }}',
+                      '{{ seg.carga_real or '' }}',
+                      {{ 'true' if seg.completado else 'false' }},
+                      '{{ (seg.notas or '')|replace("'", "\\'") }}')">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <form method="post" action="{{ url_for('admin_eliminar_progreso', seg_id=seg.id) }}"
+                  onsubmit="return confirm('¿Eliminar este registro?')" style="display:inline;">
+              <input type="hidden" name="next" value="{{ request.url }}">
+              <button class="btn btn-sm btn-danger" type="submit" title="Eliminar">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-day">Sin registros para este día.</div>
+{% endif %}
 {% endmacro %}
 
-<!-- Vista diaria -->
-{% if datos_vista.tipo == 'diaria' %}
-{{ dia_bloque('🏋️ ' + datos_vista.fecha.strftime('%A %d/%m/%Y')|capitalize, datos_vista.seguimientos, 'd') }}
+{% macro dia_bloque(titulo, segs, fecha_str='', suffix='') %}
+<div class="dia-header">
+  <i class="bi bi-calendar-day" style="color:var(--color-primary); font-size:1rem;"></i>
+  <span class="dia-label">{{ titulo }}</span>
+  <span class="dia-count">{{ segs|length }} ejercicio{{ 's' if segs|length != 1 else '' }}</span>
+</div>
+{{ progreso_tabla(segs, suffix) }}
+{% endmacro %}
 
-<!-- Vista semanal -->
+{% if datos_vista.tipo == 'diaria' %}
+  {{ dia_bloque(datos_vista.fecha.strftime('%A %d de %B de %Y')|capitalize, datos_vista.seguimientos, datos_vista.fecha.strftime('%Y-%m-%d'), 'd') }}
+
 {% elif datos_vista.tipo == 'semanal' %}
-<div class="card" style="margin-bottom:var(--space-4); padding-bottom:var(--space-2);">
-    <p style="font-weight:600; margin:0;">
-        Semana del {{ datos_vista.inicio.strftime('%d/%m') }} al {{ datos_vista.fin.strftime('%d/%m') }}
-    </p>
+<div style="display:flex; align-items:center; gap:var(--space-2); margin-bottom:var(--space-5);">
+  <i class="bi bi-calendar-week" style="color:var(--color-primary);"></i>
+  <span style="font-weight:700; font-size:var(--text-base);">
+    Semana del {{ datos_vista.inicio.strftime('%d/%m') }} al {{ datos_vista.fin.strftime('%d/%m/%Y') }}
+  </span>
 </div>
 {% for dia, segs in datos_vista.dias|dictsort %}
-{{ dia_bloque(dia.strftime('%A %d/%m')|capitalize, segs, 's') }}
+  {{ dia_bloque(dia.strftime('%A %d de %B')|capitalize, segs, dia.strftime('%Y-%m-%d'), 's') }}
 {% endfor %}
-
-<!-- Vista mensual -->
-{% else %}
-{% for semana in datos_vista.semanas %}
-<div class="card" style="margin-bottom:var(--space-2); padding-bottom:var(--space-1);">
-    <p style="font-weight:600; margin:0;">
-        Semana del {{ semana.inicio.strftime('%d/%m') }} al {{ semana.fin.strftime('%d/%m') }}
-    </p>
+{% if not datos_vista.dias %}
+<div class="card" style="text-align:center; padding:var(--space-8);">
+  <i class="bi bi-graph-up" style="font-size:2.5rem; color:var(--color-border); display:block; margin-bottom:var(--space-3);"></i>
+  <p style="color:var(--color-text-secondary); margin:0;">Sin registros esta semana.</p>
 </div>
-{% for dia, segs in semana.dias|dictsort %}
-{{ dia_bloque(dia.strftime('%A %d/%m')|capitalize, segs, 'm') }}
-{% endfor %}
-{% endfor %}
 {% endif %}
+
+{% else %}
+{% if datos_vista.semanas %}
+  {% for semana in datos_vista.semanas %}
+  <div style="margin-bottom:var(--space-6);">
+    <div style="display:flex; align-items:center; gap:var(--space-2); margin-bottom:var(--space-3);">
+      <i class="bi bi-calendar3" style="color:var(--color-text-secondary); font-size:0.9rem;"></i>
+      <span style="font-weight:700; font-size:var(--text-sm); color:var(--color-text-secondary);">
+        Semana del {{ semana.inicio.strftime('%d/%m') }} al {{ semana.fin.strftime('%d/%m') }}
+      </span>
+    </div>
+    {% for dia, segs in semana.dias|dictsort %}
+      {{ dia_bloque(dia.strftime('%A %d de %B')|capitalize, segs, dia.strftime('%Y-%m-%d'), 'm') }}
+    {% endfor %}
+  </div>
+  {% endfor %}
+{% else %}
+<div class="card" style="text-align:center; padding:var(--space-8);">
+  <i class="bi bi-graph-up" style="font-size:2.5rem; color:var(--color-border); display:block; margin-bottom:var(--space-3);"></i>
+  <p style="color:var(--color-text-secondary); margin:0;">Sin registros este mes.</p>
+</div>
+{% endif %}
+{% endif %}
+
+<!-- ── Modal de edición ───────────────────────────────────────────────────── -->
+<div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content" style="border-radius:var(--radius-xl); overflow:hidden; border:none; box-shadow:var(--shadow-xl);">
+      <div class="modal-header" style="background:var(--color-sidebar); border:none; padding:var(--space-4) var(--space-6);">
+        <h5 class="modal-title" style="color:white; font-size:var(--text-base); font-weight:700; margin:0;">
+          <i class="bi bi-pencil me-2"></i>Editar registro
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="formEditar" method="post" action="">
+        <input type="hidden" name="next" value="{{ request.url }}">
+        <div class="modal-body" style="padding:var(--space-6); display:flex; flex-direction:column; gap:var(--space-4);">
+          <div>
+            <label class="form-label">Series / Reps reales</label>
+            <input type="text" class="form-control" name="series" id="editSeries" placeholder="Ej: 4x8">
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3);">
+            <div>
+              <label class="form-label">RPE real</label>
+              <input type="text" class="form-control" name="rpe" id="editRpe" placeholder="1-10">
+            </div>
+            <div>
+              <label class="form-label">Carga real</label>
+              <input type="text" class="form-control" name="carga" id="editCarga" placeholder="Ej: 80kg">
+            </div>
+          </div>
+          <div>
+            <label class="form-label">Notas</label>
+            <input type="text" class="form-control" name="notas" id="editNotas" placeholder="Observaciones opcionales">
+          </div>
+          <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer; font-size:var(--text-sm); font-weight:600;">
+            <input type="checkbox" name="completado" id="editCompletado" style="width:16px; height:16px;"> Marcar como completado
+          </label>
+        </div>
+        <div class="modal-footer" style="border:none; padding:var(--space-4) var(--space-6); background:var(--color-bg-alt);">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary btn-sm">Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block scripts_extra %}
 <script>
-function cambiarVista() {
-    const vista = document.getElementById('vistaSelect').value;
-    const fecha = document.getElementById('fechaSelect').value;
-    const url = new URL(window.location);
-    url.searchParams.set('vista', vista);
-    url.searchParams.set('fecha', fecha);
-    window.location.href = url.toString();
+function irAFecha(fecha) {
+  const url = new URL(window.location);
+  url.searchParams.set('fecha', fecha);
+  window.location.href = url.toString();
+}
+
+function abrirEditar(segId, series, rpe, carga, completado, notas) {
+  document.getElementById('editSeries').value     = series;
+  document.getElementById('editRpe').value        = rpe;
+  document.getElementById('editCarga').value      = carga;
+  document.getElementById('editNotas').value      = notas;
+  document.getElementById('editCompletado').checked = completado;
+  document.getElementById('formEditar').action =
+    '/admin/progresos/' + segId + '/actualizar';
+  new bootstrap.Modal(document.getElementById('modalEditar')).show();
 }
 </script>
 {% endblock %}

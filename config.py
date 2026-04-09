@@ -1,4 +1,5 @@
 import os
+import secrets
 from dotenv import load_dotenv
 
 # Cargar variables de entorno
@@ -19,7 +20,7 @@ def _build_db_uri():
 
 class Config:
     # Configuración básica
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    SECRET_KEY = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
     FLASK_ENV = os.environ.get('FLASK_ENV', 'development')
 
     # Base de datos

@@ -135,7 +135,18 @@
     <p>Tu centro de control personal para alcanzar tus objetivos fitness</p>
   </div>
 
-  <!-- Grid de accesos rápidos -->
+  {% if not tiene_rutina %}
+  <div style="
+    display:flex; align-items:center; gap:var(--space-3);
+    background:var(--color-info-light); border:1px solid var(--color-info-border);
+    border-radius:var(--radius-xl); padding:var(--space-4) var(--space-6);
+    margin-bottom:var(--space-6); font-size:var(--text-sm); color:var(--color-text);">
+    <i class="bi bi-info-circle-fill" style="color:var(--color-info-icon); font-size:1.2rem; flex-shrink:0;"></i>
+    <span>Tu entrenador aún no te ha asignado una rutina. <a href="{{ url_for('soporte_usuario') }}" style="color:var(--color-primary); font-weight:600;">Contacta con Christian</a> para comenzar.</span>
+  </div>
+  {% endif %}
+
+  <!-- Grid de accesos rápidos — orden por relevancia diaria -->
   <div class="feature-grid">
 
     <!-- Mis Entrenamientos -->
@@ -146,6 +157,18 @@
       <div>
         <h3>Mis Entrenamientos</h3>
         <p>Consulta y sigue tus rutinas personalizadas. Registra tu progreso diario.</p>
+      </div>
+      <span class="feature-arrow"><i class="bi bi-arrow-right"></i></span>
+    </a>
+
+    <!-- Nutrición -->
+    <a href="{{ url_for('nutricion_dashboard') }}" class="feature-card">
+      <div class="feature-icon" style="background: #fef3c7; color: #d97706;">
+        <i class="bi bi-egg-fried"></i>
+      </div>
+      <div>
+        <h3>Nutrición</h3>
+        <p>Recibe menús diarios personalizados según tus objetivos y perfil.</p>
       </div>
       <span class="feature-arrow"><i class="bi bi-arrow-right"></i></span>
     </a>
@@ -174,6 +197,18 @@
       <span class="feature-arrow"><i class="bi bi-arrow-right"></i></span>
     </a>
 
+    <!-- Soporte -->
+    <a href="{{ url_for('soporte_usuario') }}" class="feature-card">
+      <div class="feature-icon" style="background: var(--color-bg-alt); color: var(--color-text-secondary);">
+        <i class="bi bi-headset"></i>
+      </div>
+      <div>
+        <h3>Soporte</h3>
+        <p>Habla con Christian para cualquier duda o ajuste en tu plan.</p>
+      </div>
+      <span class="feature-arrow"><i class="bi bi-arrow-right"></i></span>
+    </a>
+
     <!-- Sobre Mí -->
     <a href="{{ url_for('sobre_mi') }}" class="feature-card">
       <div class="feature-icon" style="background: #fce7f3; color: #be185d;">
@@ -186,38 +221,14 @@
       <span class="feature-arrow"><i class="bi bi-arrow-right"></i></span>
     </a>
 
-    <!-- Sobre la App -->
+    <!-- Guía de la App -->
     <a href="{{ url_for('sobre_app') }}" class="feature-card">
       <div class="feature-icon" style="background: #ede9fe; color: #7c3aed;">
-        <i class="bi bi-info-circle"></i>
+        <i class="bi bi-book-half"></i>
       </div>
       <div>
-        <h3>Sobre la App</h3>
-        <p>Información sobre la aplicación y sus funcionalidades.</p>
-      </div>
-      <span class="feature-arrow"><i class="bi bi-arrow-right"></i></span>
-    </a>
-
-    <!-- Nutrición -->
-    <a href="{{ url_for('nutricion_dashboard') }}" class="feature-card">
-      <div class="feature-icon" style="background: #fef3c7; color: #d97706;">
-        <i class="bi bi-egg-fried"></i>
-      </div>
-      <div>
-        <h3>Nutrición</h3>
-        <p>Recibe menús diarios personalizados según tus objetivos y perfil.</p>
-      </div>
-      <span class="feature-arrow"><i class="bi bi-arrow-right"></i></span>
-    </a>
-
-    <!-- Soporte -->
-    <a href="{{ url_for('soporte_usuario') }}" class="feature-card">
-      <div class="feature-icon" style="background: var(--color-bg-alt); color: var(--color-text-secondary);">
-        <i class="bi bi-headset"></i>
-      </div>
-      <div>
-        <h3>Soporte</h3>
-        <p>Obtén ayuda y soporte técnico cuando lo necesites.</p>
+        <h3>Guía de la App</h3>
+        <p>Aprende a sacar el máximo partido a tu panel paso a paso.</p>
       </div>
       <span class="feature-arrow"><i class="bi bi-arrow-right"></i></span>
     </a>

@@ -37,6 +37,10 @@ from payment_service import payment_service
 from utils import setup_logging, log_activity, log_error, handle_db_error, admin_required, login_required
 logger = setup_logging(app)
 
+# Advertencia si no se ha configurado SECRET_KEY en el entorno
+if not os.environ.get('SECRET_KEY'):
+    logger.warning("⚠️  SECRET_KEY no configurada en .env — usando clave aleatoria (las sesiones se invalidan al reiniciar)")
+
 # ------------------ RUTAS ESTÁTICAS ------------------
 
 @app.route('/sitemap.xml')

@@ -49,9 +49,12 @@ class Ejercicio(db.Model):
 
 class Rutina(db.Model):
     __tablename__ = 'rutinas'
+    __table_args__ = (
+        db.Index('ix_rutina_usuario_fecha', 'usuario_id', 'fecha'),
+    )
     id = db.Column(db.Integer, primary_key=True)
-    usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
-    fecha = db.Column(db.Date, nullable=False, default=datetime.utcnow)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False, index=True)
+    fecha = db.Column(db.Date, nullable=False, default=datetime.utcnow, index=True)
     # Columnas removidas: nombre, descripcion, activa (no existen en Render DB)
 
     bloques = db.relationship('Bloque', backref='rutina', lazy=True, cascade='all, delete-orphan')
@@ -69,7 +72,7 @@ class Bloque(db.Model):
 class EjercicioAsignado(db.Model):
     __tablename__ = 'ejercicios_asignados'
     id = db.Column(db.Integer, primary_key=True)
-    bloque_id = db.Column(db.Integer, db.ForeignKey('bloques.id'), nullable=False)
+    bloque_id = db.Column(db.Integer, db.ForeignKey('bloques.id'), nullable=False, index=True)
     ejercicio_id = db.Column(db.Integer, db.ForeignKey('ejercicios.id'), nullable=True)
     nombre_manual = db.Column(db.String(128), nullable=True)
     series_reps = db.Column(db.String(32), nullable=True)   # legacy

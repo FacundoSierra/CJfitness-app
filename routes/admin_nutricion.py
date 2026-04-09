@@ -16,18 +16,27 @@ def init_app(app):
         usuarios = Usuario.query.filter(Usuario.rol != 'admin').order_by(Usuario.nombre).all()
         hoy = date.today()
 
+        # Pre-cargar perfiles y recomendaciones en 2 queries (en vez de 2×N)
+        ids = [u.id for u in usuarios]
+        perfiles = {
+            p.usuario_id: p
+            for p in PerfilNutricional.query.filter(PerfilNutricional.usuario_id.in_(ids)).all()
+        }
+        recs = {}
+        for r in (
+            RecomendacionDiaria.query
+            .filter(RecomendacionDiaria.usuario_id.in_(ids))
+            .order_by(RecomendacionDiaria.fecha.desc())
+            .all()
+        ):
+            recs.setdefault(r.usuario_id, r)  # conserva solo la más reciente por usuario
+
         datos = []
         for u in usuarios:
-            perfil = PerfilNutricional.query.filter_by(usuario_id=u.id).first()
-            rec = (
-                RecomendacionDiaria.query
-                .filter_by(usuario_id=u.id)
-                .order_by(RecomendacionDiaria.fecha.desc())
-                .first()
-            )
+            rec = recs.get(u.id)
             datos.append({
                 'usuario': u,
-                'perfil':  perfil,
+                'perfil':  perfiles.get(u.id),
                 'rec':     rec,
                 'es_hoy':  rec.fecha == hoy if rec else False,
             })
