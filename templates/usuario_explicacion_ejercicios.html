@@ -1,179 +1,295 @@
 {% extends "base.html" %}
-{% block title %}Ejercicios{% endblock %}
-{% block page_title %}Ejercicios{% endblock %}
+{% block title %}Biblioteca de Ejercicios{% endblock %}
+{% block page_title %}Biblioteca de Ejercicios{% endblock %}
 
 {% block head_extra %}
 <style>
+/* ── Buscador y filtros ─────────────────────────────── */
 .filter-pill {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     color: var(--color-text);
     border-radius: var(--radius-full);
-    padding: 4px 12px;
+    padding: 4px 14px;
     font-size: var(--text-xs);
     font-weight: 500;
     cursor: pointer;
     transition: background 0.15s, color 0.15s, border-color 0.15s;
+    white-space: nowrap;
 }
 .filter-pill:hover, .filter-pill.active {
     background: var(--color-primary);
     color: white;
     border-color: var(--color-primary);
 }
-.category-header {
+
+/* ── Bloque (nivel 1) ───────────────────────────────── */
+.bloque-section {
+    margin-bottom: var(--space-8);
+}
+.bloque-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-5);
     background: var(--color-primary);
     color: white;
-    padding: var(--space-3) var(--space-4);
     border-radius: var(--radius-md) var(--radius-md) 0 0;
-    font-weight: 600;
-    font-size: var(--text-sm);
+    font-weight: 700;
+    font-size: var(--text-base);
+}
+.bloque-body {
+    border: 1px solid var(--color-border);
+    border-top: none;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    overflow: hidden;
+}
+
+/* ── Categoría (nivel 2) ────────────────────────────── */
+.cat-header {
     display: flex;
     align-items: center;
     gap: var(--space-2);
-}
-.subcategory-header {
+    padding: var(--space-2) var(--space-5);
     background: var(--color-bg);
-    padding: var(--space-2) var(--space-4);
     font-weight: 600;
     font-size: var(--text-sm);
     color: var(--color-text-secondary);
     border-bottom: 1px solid var(--color-border);
+}
+
+/* ── Subcategoría (nivel 3) ─────────────────────────── */
+.subcat-header {
     display: flex;
     align-items: center;
     gap: var(--space-2);
+    padding: var(--space-1) var(--space-6);
+    background: var(--color-surface);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* ── Tarjeta de ejercicio ───────────────────────────── */
+.exercise-list {
+    padding: var(--space-3) var(--space-5);
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--space-3);
 }
 .exercise-card {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     padding: var(--space-3) var(--space-4);
-    margin-bottom: var(--space-2);
+    background: var(--color-surface);
     transition: border-color 0.15s, box-shadow 0.15s;
-    cursor: pointer;
+    cursor: default;
 }
 .exercise-card:hover {
     border-color: var(--color-primary);
     box-shadow: var(--shadow-hover);
 }
-.exercise-name { font-weight: 600; margin-bottom: var(--space-1); }
-.exercise-description { font-size: var(--text-sm); color: var(--color-text-secondary); margin-bottom: var(--space-2); }
-.exercise-tags { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.exercise-name {
+    font-weight: 600;
+    font-size: var(--text-sm);
+    margin-bottom: var(--space-1);
+    color: var(--color-text);
+}
+.exercise-meta {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-2);
+    line-height: 1.4;
+}
+.exercise-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: var(--space-1);
+}
+.tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    border-radius: var(--radius-full);
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 500;
+}
+.tag-gray {
+    background: var(--color-bg);
+    color: var(--color-text-muted);
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Búsqueda y filtros -->
+
+<!-- ── Buscador y filtros ──────────────────────────── -->
 <div class="card" style="margin-bottom: var(--space-6);">
     <div style="display:grid; grid-template-columns:1fr auto; gap:var(--space-3); margin-bottom:var(--space-3);">
         <div class="search-wrapper">
             <i class="bi bi-search search-icon"></i>
-            <input type="text" class="form-control search-input" id="searchInput" placeholder="Buscar ejercicios...">
+            <input type="text" class="form-control search-input" id="searchInput" placeholder="Buscar ejercicio...">
         </div>
-        <select class="form-control" id="categoryFilter" style="width:auto;">
-            <option value="">Todas las categorías</option>
-            {% for categoria in ejercicios.keys() %}
-            <option value="{{ categoria }}">{{ categoria }}</option>
+        <select class="form-control" id="bloqueFilter" style="width:auto;">
+            <option value="">Todos los bloques</option>
+            {% for bloque in ejercicios.keys() %}
+            <option value="{{ bloque }}">{{ bloque }}</option>
             {% endfor %}
         </select>
     </div>
     <div style="display:flex; flex-wrap:wrap; gap:var(--space-1);">
         <button class="filter-pill active" data-filter="all">Todos</button>
-        {% for categoria in ejercicios.keys() %}
-        <button class="filter-pill" data-filter="{{ categoria }}">{{ categoria }}</button>
+        {% for bloque in ejercicios.keys() %}
+        <button class="filter-pill" data-filter="{{ bloque }}">{{ bloque }}</button>
         {% endfor %}
     </div>
 </div>
 
-<!-- Ejercicios por categoría -->
+<!-- ── Ejercicios agrupados ───────────────────────── -->
 {% if ejercicios %}
-    {% for categoria, subcategorias in ejercicios.items() %}
-    <div class="category-section" data-category="{{ categoria }}" style="margin-bottom: var(--space-6);">
-        <div class="category-header">
-            <i class="bi bi-collection"></i>
-            {{ categoria }}
-            <span class="badge" style="background:rgba(255,255,255,0.2); margin-left:auto;">
-                {{ subcategorias.values() | map('list') | map('length') | sum }}
-            </span>
+  {% for bloque, categorias in ejercicios.items() %}
+  {% set total_bloque = namespace(n=0) %}
+  {% for cat, subcats in categorias.items() %}
+    {% for subcat, lista in subcats.items() %}
+      {% set total_bloque.n = total_bloque.n + lista|length %}
+    {% endfor %}
+  {% endfor %}
+
+  <div class="bloque-section" data-bloque="{{ bloque }}">
+    <div class="bloque-header">
+      <i class="bi bi-layers-fill"></i>
+      {{ bloque }}
+      <span style="background:rgba(255,255,255,0.2); border-radius:var(--radius-full); padding:2px 10px; font-size:var(--text-xs); margin-left:auto;">
+        {{ total_bloque.n }} ejercicios
+      </span>
+    </div>
+    <div class="bloque-body">
+      {% for cat, subcats in categorias.items() %}
+      {% set total_cat = namespace(n=0) %}
+      {% for subcat, lista in subcats.items() %}{% set total_cat.n = total_cat.n + lista|length %}{% endfor %}
+
+      <div class="cat-section">
+        <div class="cat-header">
+          <i class="bi bi-tag-fill" style="color:var(--color-primary); font-size:0.7rem;"></i>
+          {{ cat }}
+          <span class="badge badge-info" style="margin-left:auto;">{{ total_cat.n }}</span>
         </div>
-        <div style="border:1px solid var(--color-border); border-top:none; border-radius:0 0 var(--radius-md) var(--radius-md); overflow:hidden;">
-            {% for subcategoria, ejercicios_lista in subcategorias.items() %}
-            <div>
-                <div class="subcategory-header">
-                    <i class="bi bi-tag"></i>{{ subcategoria }}
-                    <span class="badge badge-info" style="margin-left:auto;">{{ ejercicios_lista | length }}</span>
-                </div>
-                <div style="padding: var(--space-3) var(--space-4);">
-                    {% for ejercicio in ejercicios_lista %}
-                    <div class="exercise-card"
-                         data-name="{{ ejercicio.nombre.lower() }}"
-                         data-category="{{ categoria }}"
-                         data-subcategory="{{ subcategoria }}">
-                        <div class="exercise-name">{{ ejercicio.nombre }}</div>
-                        {% if ejercicio.descripcion %}
-                        <div class="exercise-description">{{ ejercicio.descripcion }}</div>
-                        {% endif %}
-                        <div class="exercise-tags">
-                            <span class="badge badge-success">{{ categoria }}</span>
-                            <span class="badge badge-warning">{{ subcategoria }}</span>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
+
+        {% for subcat, lista in subcats.items() %}
+          {% if subcat %}
+          <div class="subcat-header">
+            <i class="bi bi-dot"></i> {{ subcat }}
+            <span style="margin-left:4px; opacity:0.6;">({{ lista|length }})</span>
+          </div>
+          {% endif %}
+          <div class="exercise-list">
+            {% for ej in lista %}
+            <div class="exercise-card"
+                 data-name="{{ ej.nombre.lower() }}"
+                 data-bloque="{{ bloque }}">
+              <div class="exercise-name">{{ ej.nombre }}</div>
+
+              {% if ej.otras_caracteristicas %}
+              <div class="exercise-meta">{{ ej.otras_caracteristicas }}</div>
+              {% endif %}
+
+              <div class="exercise-tags">
+                {% if ej.subcategoria %}
+                <span class="tag"><i class="bi bi-bookmark-fill" style="font-size:9px;"></i>{{ ej.subcategoria.nombre }}</span>
+                {% endif %}
+                {% if ej.material %}
+                <span class="tag tag-gray"><i class="bi bi-box"></i>{{ ej.material }}</span>
+                {% endif %}
+                {% if ej.caracteristicas_json %}
+                  {% for k, v in ej.caracteristicas_json.items() %}
+                  <span class="tag tag-gray">{{ k }}: {{ v }}</span>
+                  {% endfor %}
+                {% endif %}
+              </div>
             </div>
             {% endfor %}
-        </div>
+          </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
+  </div>
+  {% endfor %}
+
 {% else %}
-<div class="card" style="text-align:center; padding: var(--space-8);">
-    <i class="bi bi-exclamation-circle" style="font-size:3rem; color:var(--color-border); display:block; margin-bottom:var(--space-3);"></i>
-    <h3 style="font-size:var(--text-xl);">No hay ejercicios disponibles</h3>
-    <p style="color:var(--color-text-secondary);">No se encontraron ejercicios en tu rutina actual.</p>
+<div class="card" style="text-align:center; padding:var(--space-10);">
+    <i class="bi bi-collection" style="font-size:3rem; color:var(--color-border); display:block; margin-bottom:var(--space-4);"></i>
+    <h3 style="font-size:var(--text-xl);">Biblioteca vacía</h3>
+    <p style="color:var(--color-text-secondary); margin:0;">Aún no hay ejercicios cargados en la biblioteca.</p>
 </div>
 {% endif %}
+
+<!-- contador resultados búsqueda -->
+<div id="noResults" style="display:none; text-align:center; padding:var(--space-8);">
+    <i class="bi bi-search" style="font-size:2rem; color:var(--color-border); display:block; margin-bottom:var(--space-3);"></i>
+    <p style="color:var(--color-text-muted);">No se encontraron ejercicios para "<span id="searchTerm"></span>".</p>
+</div>
+
 {% endblock %}
 
 {% block scripts_extra %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const searchInput = document.getElementById('searchInput');
-    const categoryFilter = document.getElementById('categoryFilter');
-    const pills = document.querySelectorAll('.filter-pill');
-    const cards = document.querySelectorAll('.exercise-card');
-    const sections = document.querySelectorAll('.category-section');
+    const searchInput  = document.getElementById('searchInput');
+    const bloqueFilter = document.getElementById('bloqueFilter');
+    const pills        = document.querySelectorAll('.filter-pill');
+    const cards        = document.querySelectorAll('.exercise-card');
+    const sections     = document.querySelectorAll('.bloque-section');
+    const noResults    = document.getElementById('noResults');
+    const searchTerm   = document.getElementById('searchTerm');
 
     function applyFilters() {
-        const term = searchInput.value.toLowerCase();
-        const cat = categoryFilter.value;
+        const term   = searchInput.value.toLowerCase().trim();
+        const bloque = bloqueFilter.value;
+        let visible  = 0;
 
         cards.forEach(card => {
-            const matches = card.dataset.name.includes(term) && (!cat || card.dataset.category === cat);
-            card.style.display = matches ? 'block' : 'none';
+            const nameMatch   = card.dataset.name.includes(term);
+            const bloqueMatch = !bloque || card.dataset.bloque === bloque;
+            const show = nameMatch && bloqueMatch;
+            card.style.display = show ? '' : 'none';
+            if (show) visible++;
         });
 
-        sections.forEach(section => {
-            const visible = section.querySelectorAll('.exercise-card:not([style*="display: none"])');
-            section.style.display = visible.length ? 'block' : 'none';
+        // Ocultar secciones vacías
+        sections.forEach(sec => {
+            const anyVisible = sec.querySelectorAll('.exercise-card:not([style*="display: none"])').length > 0;
+            sec.style.display = anyVisible ? '' : 'none';
         });
+
+        // Ocultar cat-sections vacías dentro de secciones visibles
+        document.querySelectorAll('.cat-section').forEach(cat => {
+            const anyVisible = cat.querySelectorAll('.exercise-card:not([style*="display: none"])').length > 0;
+            cat.style.display = anyVisible ? '' : 'none';
+        });
+
+        noResults.style.display = visible === 0 && term ? 'block' : 'none';
+        if (searchTerm) searchTerm.textContent = term;
     }
 
     searchInput.addEventListener('input', applyFilters);
-    categoryFilter.addEventListener('change', applyFilters);
+    bloqueFilter.addEventListener('change', applyFilters);
 
     pills.forEach(pill => {
         pill.addEventListener('click', function () {
             pills.forEach(p => p.classList.remove('active'));
             this.classList.add('active');
             const filter = this.dataset.filter;
-            sections.forEach(sec => {
-                if (filter === 'all' || sec.dataset.category === filter) {
-                    sec.style.display = 'block';
-                    sec.querySelectorAll('.exercise-card').forEach(c => c.style.display = 'block');
-                } else {
-                    sec.style.display = 'none';
-                }
-            });
-            searchInput.value = '';
-            categoryFilter.value = filter === 'all' ? '' : filter;
+            bloqueFilter.value = filter === 'all' ? '' : filter;
+            searchInput.value  = '';
+            applyFilters();
         });
     });
 });

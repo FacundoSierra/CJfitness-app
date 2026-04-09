@@ -6,7 +6,7 @@ from calendar import monthrange
 
 
 def init_app(app):
-    from models import db, Usuario, Ejercicio, Rutina, Bloque, EjercicioAsignado, Pago, ConfiguracionPagoMensual
+    from models import db, Usuario, Ejercicio, Rutina, Bloque, EjercicioAsignado, Pago, ConfiguracionPagoMensual, EjercicioCompleto
     from utils import log_activity, log_error, handle_db_error, login_required
 
     logger = logging.getLogger('fitness_app')
@@ -169,22 +169,33 @@ def init_app(app):
     @login_required
     @handle_db_error
     def exercises():
-        # Obtener todos los ejercicios agrupados por categoría
-        ejercicios = Ejercicio.query.order_by(Ejercicio.categoria, Ejercicio.subcategoria, Ejercicio.nombre).all()
+        # Cargar todos los ejercicios activos con sus relaciones de taxonomía
+        ejercicios_raw = (
+            EjercicioCompleto.query
+            .filter_by(activo=True)
+            .join(EjercicioCompleto.bloque)
+            .outerjoin(EjercicioCompleto.categoria)
+            .outerjoin(EjercicioCompleto.subcategoria)
+            .order_by(
+                EjercicioCompleto.bloque_id,
+                EjercicioCompleto.categoria_id,
+                EjercicioCompleto.subcategoria_id,
+                EjercicioCompleto.nombre
+            )
+            .all()
+        )
 
-        # Agrupar ejercicios por categoría y subcategoría
+        # Agrupar: bloque → categoría → subcategoría → ejercicios
         ejercicios_agrupados = {}
-        for ejercicio in ejercicios:
-            categoria = ejercicio.categoria or "Sin categoría"
-            subcategoria = ejercicio.subcategoria or "Sin subcategoría"
+        for ej in ejercicios_raw:
+            bloque = ej.bloque.nombre if ej.bloque else "Sin bloque"
+            cat    = ej.categoria.nombre if ej.categoria else "Sin categoría"
+            subcat = ej.subcategoria.nombre if ej.subcategoria else None
 
-            if categoria not in ejercicios_agrupados:
-                ejercicios_agrupados[categoria] = {}
-
-            if subcategoria not in ejercicios_agrupados[categoria]:
-                ejercicios_agrupados[categoria][subcategoria] = []
-
-            ejercicios_agrupados[categoria][subcategoria].append(ejercicio)
+            ejercicios_agrupados.setdefault(bloque, {})
+            ejercicios_agrupados[bloque].setdefault(cat, {})
+            ejercicios_agrupados[bloque][cat].setdefault(subcat, [])
+            ejercicios_agrupados[bloque][cat][subcat].append(ej)
 
         return render_template('usuario_explicacion_ejercicios.html', ejercicios=ejercicios_agrupados)
 
