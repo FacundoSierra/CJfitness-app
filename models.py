@@ -103,15 +103,20 @@ class EjercicioAsignado(db.Model):
         d = self.series_data_parsed
         if d:
             if d.get('variar'):
-                parts = [
-                    f"S{i+1}: {s.get('reps','?')}r @ {s.get('carga','?')} RPE{s.get('rpe','?')}"
-                    for i, s in enumerate(d.get('series_data', []))
-                ]
+                parts = []
+                for i, s in enumerate(d.get('series_data', [])):
+                    reps  = s.get('reps') or '?'
+                    carga = str(s.get('carga') or '').strip()
+                    rpe   = str(s.get('rpe') or '').strip()
+                    parte = f"S{i+1}: {reps}r"
+                    if carga: parte += f" {carga}"
+                    if rpe:   parte += f" RPE{rpe}"
+                    parts.append(parte)
                 return ' / '.join(parts)
-            carga = d.get('carga', '')
-            carga_str = f" @ {carga}" if carga else ''
-            rpe = d.get('rpe', '')
-            rpe_str = f" (RPE {rpe})" if rpe else ''
+            carga = str(d.get('carga') or '').strip()
+            rpe   = str(d.get('rpe') or '').strip()
+            carga_str = f" {carga}" if carga else ''
+            rpe_str   = f" RPE{rpe}" if rpe else ''
             return f"{d.get('series','?')}×{d.get('reps','?')}{carga_str}{rpe_str}"
         return self.series_reps or ''
 

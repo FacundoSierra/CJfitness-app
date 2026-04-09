@@ -196,35 +196,35 @@
           {% endif %}
         </td>
         <td>
-          <div class="val-block">
-            <div class="val-row">
-              <span class="val-label">S/R</span>
-              <span class="val-plan">{{ seg.series_reps_planificadas or '—' }}</span>
-            </div>
-            <div class="val-row">
-              <span class="val-label">RPE</span>
-              <span class="val-plan">{{ seg.rpe_planificado or '—' }}</span>
-            </div>
-            <div class="val-row">
-              <span class="val-label">Carga</span>
-              <span class="val-plan">{{ seg.carga_planificada or '—' }}</span>
-            </div>
+          <div style="font-size:var(--text-xs); line-height:1.6;">
+            {% if seg.series_reps_planificadas %}
+            <div>{{ seg.series_reps_planificadas }}</div>
+            {% endif %}
+            {% if seg.rpe_planificado %}
+            <div style="color:var(--color-text-muted);">RPE {{ seg.rpe_planificado }}</div>
+            {% endif %}
+            {% if seg.carga_planificada %}
+            <div style="color:var(--color-text-muted);">{{ seg.carga_planificada }}</div>
+            {% endif %}
+            {% if not seg.series_reps_planificadas and not seg.rpe_planificado and not seg.carga_planificada %}
+            <span style="color:var(--color-text-muted);">—</span>
+            {% endif %}
           </div>
         </td>
         <td>
-          <div class="val-block">
-            <div class="val-row">
-              <span class="val-label">S/R</span>
-              <span class="val-real">{{ seg.series_reps_reales or '—' }}</span>
-            </div>
-            <div class="val-row">
-              <span class="val-label">RPE</span>
-              <span class="val-real">{{ seg.rpe_real or '—' }}</span>
-            </div>
-            <div class="val-row">
-              <span class="val-label">Carga</span>
-              <span class="val-real">{{ seg.carga_real or '—' }}</span>
-            </div>
+          <div style="font-size:var(--text-xs); line-height:1.6;">
+            {% if seg.series_reps_reales %}
+            <div style="font-weight:600;">{{ seg.series_reps_reales }}</div>
+            {% endif %}
+            {% if seg.rpe_real %}
+            <div style="color:var(--color-text-muted);">RPE {{ seg.rpe_real }}</div>
+            {% endif %}
+            {% if seg.carga_real %}
+            <div style="color:var(--color-text-muted);">{{ seg.carga_real }}</div>
+            {% endif %}
+            {% if not seg.series_reps_reales and not seg.rpe_real and not seg.carga_real %}
+            <span style="color:var(--color-text-muted);">Sin registrar</span>
+            {% endif %}
           </div>
         </td>
         <td style="text-align:center;">

@@ -113,6 +113,7 @@
 </div>
 
 {% macro ejercicio_card(ejercicio) %}
+{% set sdata = ejercicio.series_data_parsed %}
 <div class="exercise-item">
     <div class="exercise-name">
         {{ ejercicio.ejercicio.nombre if ejercicio.ejercicio else ejercicio.nombre_manual }}
@@ -122,9 +123,26 @@
         {% if ejercicio.subcategoria %}<span class="badge" style="background:var(--color-surface); border:1px solid var(--color-border); color:var(--color-text-secondary);">{{ ejercicio.subcategoria }}</span>{% endif %}
     </div>
     <div class="exercise-details">
-        <i class="bi bi-arrow-repeat me-1"></i><strong>S/R:</strong> {{ ejercicio.series_reps }}<br>
-        <i class="bi bi-speedometer2 me-1"></i><strong>RPE:</strong> {{ ejercicio.rpe }}<br>
-        <i class="bi bi-weight me-1"></i><strong>Carga:</strong> {{ ejercicio.carga }}
+        {% if sdata %}
+            {% if sdata.variar %}
+                <i class="bi bi-list-ol me-1"></i><strong>Series:</strong><br>
+                {% for s in sdata.series_data %}
+                <span style="margin-left:var(--space-4); display:block;">
+                    S{{ loop.index }}: {{ s.reps or '?' }} reps
+                    {% if s.carga %} {{ s.carga }}{% endif %}
+                    {% if s.rpe %} RPE{{ s.rpe }}{% endif %}
+                </span>
+                {% endfor %}
+            {% else %}
+                <i class="bi bi-arrow-repeat me-1"></i><strong>Series:</strong> {{ sdata.series }}×{{ sdata.reps }}
+                {% if sdata.carga %} {{ sdata.carga }}{% endif %}
+                {% if sdata.rpe %} &nbsp;<i class="bi bi-speedometer2 me-1"></i><strong>RPE:</strong> {{ sdata.rpe }}{% endif %}
+            {% endif %}
+        {% else %}
+            <i class="bi bi-arrow-repeat me-1"></i><strong>S/R:</strong> {{ ejercicio.series_reps or '—' }}<br>
+            {% if ejercicio.rpe %}<i class="bi bi-speedometer2 me-1"></i><strong>RPE:</strong> {{ ejercicio.rpe }}<br>{% endif %}
+            {% if ejercicio.carga %}<i class="bi bi-weight me-1"></i><strong>Carga:</strong> {{ ejercicio.carga }}{% endif %}
+        {% endif %}
     </div>
 </div>
 {% endmacro %}

@@ -234,7 +234,14 @@
           </td>
           <td style="white-space: nowrap;">{{ seg.fecha_ejecucion.strftime('%d/%m/%Y') }}</td>
           <td style="font-size: var(--text-xs);">
-            {{ seg.series_reps_planificadas or '—' }} → {{ seg.series_reps_reales or '—' }}
+            {% if seg.series_reps_planificadas %}
+            <span style="color:var(--color-text-muted);">Plan: {{ seg.series_reps_planificadas }}</span><br>
+            {% endif %}
+            {% if seg.series_reps_reales %}
+            <strong>{{ seg.series_reps_reales }}</strong>
+            {% else %}
+            <span style="color:var(--color-text-muted);">—</span>
+            {% endif %}
           </td>
           <td>
             <span class="badge {{ 'badge-success' if seg.completado else 'badge-warning' }}">

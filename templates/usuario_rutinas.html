@@ -75,44 +75,124 @@
 
 {# ── Macros ────────────────────────────────────────────────────── #}
 {% macro seguimiento_form(ejercicio, fecha_str) %}
-<div class="seguimiento-form" id="form-{{ ejercicio.id }}" style="display:none;">
-    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:var(--space-3);">
-        <div class="form-group">
-            <label class="form-label">Series/Reps Realizadas</label>
-            <input type="text" class="form-control" id="series_reales_{{ ejercicio.id }}"
-                   placeholder="{{ ejercicio.series_display }}" value="">
-        </div>
-        <div class="form-group">
-            <label class="form-label">RPE Real</label>
-            <input type="text" class="form-control" id="rpe_real_{{ ejercicio.id }}"
-                   placeholder="{{ ejercicio.rpe }}" value="">
-        </div>
-        <div class="form-group">
-            <label class="form-label">Carga Real</label>
-            <input type="text" class="form-control" id="carga_real_{{ ejercicio.id }}"
-                   placeholder="{{ ejercicio.carga }}" value="">
-        </div>
+{% set sdata = ejercicio.series_data_parsed %}
+{% set eid = ejercicio.id %}
+<div class="seguimiento-form" id="form-{{ eid }}" style="display:none;">
+
+  {# ── Modo estructurado: hay series_json ── #}
+  {% if sdata %}
+    {% if sdata.variar %}
+      {% set series_plan = sdata.series_data %}
+    {% else %}
+      {# series fijas: repetir N veces el mismo plan #}
+      {% set series_plan = [] %}
+      {% for i in range(sdata.series | int) %}
+        {% if series_plan.append({'reps': sdata.reps, 'rpe': sdata.rpe, 'carga': sdata.carga}) %}{% endif %}
+      {% endfor %}
+    {% endif %}
+
+    {# Barra de selección múltiple #}
+    <div style="display:flex; align-items:center; gap:var(--space-2); margin-bottom:var(--space-2); padding:var(--space-2) var(--space-3); background:var(--color-bg); border-radius:var(--radius-md); font-size:var(--text-xs); flex-wrap:wrap;">
+      <label style="display:flex; align-items:center; gap:6px; cursor:pointer; white-space:nowrap;">
+        <input type="checkbox" id="sel-todas-{{ eid }}" onchange="seleccionarTodasSeries(this, {{ eid }})"> Selec. todas
+      </label>
+      <span style="color:var(--color-border);">|</span>
+      <span style="color:var(--color-text-muted); white-space:nowrap;">Aplicar a marcadas:</span>
+      <input type="text" class="form-control form-control-sm" id="bulk-reps-{{ eid }}" placeholder="Reps" style="width:58px;">
+      <input type="text" class="form-control form-control-sm" id="bulk-rpe-{{ eid }}" placeholder="RPE" style="width:52px;">
+      <select class="form-select form-select-sm" id="bulk-carga-{{ eid }}" style="width:90px;">
+        <option value="">Carga</option>
+        {% for v in range(0, 101) %}
+        <option value="{{ v / 2 }}">{{ v / 2 }} kg</option>
+        {% endfor %}
+      </select>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="aplicarBulk({{ eid }})">Aplicar</button>
     </div>
-    <div class="form-group">
-        <label class="form-label">Notas</label>
-        <textarea class="form-control" id="notas_{{ ejercicio.id }}" rows="2" placeholder="Añadir notas..."></textarea>
+
+    {# Cabecera de columnas #}
+    <div style="display:grid; grid-template-columns:20px 45px 1fr 65px 90px 34px; gap:var(--space-2); align-items:center; margin-bottom:4px; padding:0 2px;">
+      <span></span>
+      <span style="font-size:10px; font-weight:600; color:var(--color-text-muted);">Serie</span>
+      <span style="font-size:10px; font-weight:600; color:var(--color-text-muted);">Reps</span>
+      <span style="font-size:10px; font-weight:600; color:var(--color-text-muted);">RPE</span>
+      <span style="font-size:10px; font-weight:600; color:var(--color-text-muted);">Carga</span>
+      <span></span>
     </div>
-    <div style="margin-bottom:var(--space-3);">
-        <label style="display:flex; align-items:center; gap:var(--space-2); font-size:var(--text-sm);">
-            <input type="checkbox" id="completado_{{ ejercicio.id }}"> Marcar como completado
-        </label>
-    </div>
-    <div style="display:flex; gap:var(--space-2);">
-        <button class="btn btn-secondary btn-sm" onclick="copiarDelPlan(this, {{ ejercicio.id }})">
-            <i class="bi bi-clipboard-check me-1"></i>Copiar del plan
+
+    {# Tabla por serie #}
+    <div id="series-rows-{{ eid }}">
+      {% for s in series_plan %}
+      <div class="serie-row" style="display:grid; grid-template-columns:20px 45px 1fr 65px 90px 34px; gap:var(--space-2); align-items:center; margin-bottom:var(--space-2);">
+        <input type="checkbox" class="serie-check-{{ eid }}" style="width:16px;">
+        <span style="font-size:var(--text-xs); font-weight:700; color:var(--color-primary);">S{{ loop.index }}</span>
+        <input type="text" class="form-control form-control-sm serie-reps"
+               placeholder="{{ s.reps or '?' }}"
+               data-plan-reps="{{ s.reps or '' }}"
+               style="font-size:var(--text-xs);">
+        <input type="text" class="form-control form-control-sm serie-rpe"
+               placeholder="{{ s.rpe or '—' }}"
+               data-plan-rpe="{{ s.rpe or '' }}"
+               style="font-size:var(--text-xs);">
+        <select class="form-select form-select-sm serie-carga"
+                data-plan-carga="{{ s.carga or '' }}"
+                style="font-size:var(--text-xs);">
+          <option value="">{{ s.carga or '—' }}</option>
+          {% for v in range(0, 101) %}
+          <option value="{{ v / 2 }}" {% if s.carga and (s.carga | string) == (v / 2 | string) %}selected{% endif %}>{{ v / 2 }} kg</option>
+          {% endfor %}
+        </select>
+        <button type="button" class="btn btn-sm" style="font-size:10px; padding:2px 6px; background:var(--color-primary-light); color:var(--color-primary); border:none; border-radius:var(--radius-sm);"
+                onclick="copiarPlanSerie(this)" title="Copiar objetivo">
+          <i class="bi bi-clipboard-check"></i>
         </button>
-        <button class="btn btn-success btn-sm" onclick="guardarSeguimiento(this, {{ ejercicio.id }}, '{{ fecha_str }}')">
-            <i class="bi bi-save me-1"></i>Guardar
-        </button>
-        <button class="btn btn-secondary btn-sm" onclick="cancelarSeguimiento(this, {{ ejercicio.id }})">
-            <i class="bi bi-x me-1"></i>Cancelar
-        </button>
+      </div>
+      {% endfor %}
     </div>
+
+  {# ── Modo legacy: sin series_json ── #}
+  {% else %}
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:var(--space-3); margin-bottom:var(--space-3);">
+      <div class="form-group">
+        <label class="form-label" style="font-size:var(--text-xs);">Series/Reps</label>
+        <input type="text" class="form-control" id="series_reales_{{ eid }}"
+               placeholder="{{ ejercicio.series_display or '—' }}" value="">
+      </div>
+      <div class="form-group">
+        <label class="form-label" style="font-size:var(--text-xs);">RPE Real</label>
+        <input type="text" class="form-control" id="rpe_real_{{ eid }}"
+               placeholder="{{ ejercicio.rpe or '—' }}" value="">
+      </div>
+      <div class="form-group">
+        <label class="form-label" style="font-size:var(--text-xs);">Carga Real</label>
+        <select class="form-control" id="carga_real_{{ eid }}">
+          <option value="">{{ ejercicio.carga or '—' }}</option>
+          {% for v in range(0, 101) %}
+          <option value="{{ v / 2 }}">{{ v / 2 }} kg</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  {% endif %}
+
+  {# ── Notas y completado (comunes) ── #}
+  <div style="display:grid; grid-template-columns:1fr auto; gap:var(--space-3); align-items:end; margin-top:var(--space-3);">
+    <div class="form-group" style="margin:0;">
+      <label class="form-label" style="font-size:var(--text-xs);">Notas</label>
+      <textarea class="form-control form-control-sm" id="notas_{{ eid }}" rows="1" placeholder="Notas opcionales..."></textarea>
+    </div>
+    <label style="display:flex; align-items:center; gap:6px; font-size:var(--text-xs); padding-bottom:4px; white-space:nowrap;">
+      <input type="checkbox" id="completado_{{ eid }}"> Completado
+    </label>
+  </div>
+
+  <div style="display:flex; gap:var(--space-2); margin-top:var(--space-3);">
+    <button class="btn btn-success btn-sm" onclick="guardarSeguimiento(this, {{ eid }}, '{{ fecha_str }}')">
+      <i class="bi bi-save me-1"></i>Guardar
+    </button>
+    <button class="btn btn-secondary btn-sm" onclick="cancelarSeguimiento(this, {{ eid }})">
+      <i class="bi bi-x me-1"></i>Cancelar
+    </button>
+  </div>
 </div>
 {% endmacro %}
 
@@ -139,13 +219,13 @@
                 {% for s in sdata.series_data %}
                     <span style="margin-left:var(--space-4);">
                         S{{ loop.index }}: {{ s.reps or '?' }} reps
-                        {% if s.carga %} @ {{ s.carga }}{% endif %}
-                        {% if s.rpe %} (RPE {{ s.rpe }}){% endif %}
+                        {% if s.carga %} {{ s.carga }}{% endif %}
+                        {% if s.rpe %} RPE{{ s.rpe }}{% endif %}
                     </span><br>
                 {% endfor %}
             {% else %}
                 <i class="bi bi-arrow-repeat"></i><strong>Series:</strong> {{ sdata.series }}×{{ sdata.reps }}
-                {% if sdata.carga %} @ {{ sdata.carga }}{% endif %}
+                {% if sdata.carga %} {{ sdata.carga }}{% endif %}
                 {% if sdata.rpe %} &nbsp;<i class="bi bi-speedometer2"></i><strong>RPE:</strong> {{ sdata.rpe }}{% endif %}
             {% endif %}
         {% else %}
@@ -519,41 +599,88 @@ function cancelarSeguimiento(btn, ejercicioId) {
     if (acciones) acciones.style.display = '';
 }
 
-function copiarDelPlan(btn, ejercicioId) {
-    const exerciseItem = btn.closest('.exercise-item');
-    if (!exerciseItem) return;
-    const series = exerciseItem.dataset.planSeries || '';
-    const rpe = exerciseItem.dataset.planRpe || '';
-    const carga = exerciseItem.dataset.planCarga || '';
-    const s = document.getElementById(`series_reales_${ejercicioId}`);
-    const r = document.getElementById(`rpe_real_${ejercicioId}`);
-    const c = document.getElementById(`carga_real_${ejercicioId}`);
-    if (s) s.value = series;
-    if (r) r.value = rpe;
-    if (c) c.value = carga;
+// ── Copiar plan a una fila individual ────────────────────────────
+function copiarPlanSerie(btn) {
+    const row = btn.closest('.serie-row');
+    if (!row) return;
+    row.querySelector('.serie-reps').value = row.querySelector('.serie-reps').dataset.planReps || '';
+    row.querySelector('.serie-rpe').value  = row.querySelector('.serie-rpe').dataset.planRpe  || '';
+    const cargaEl  = row.querySelector('.serie-carga');
+    const planCarga = cargaEl.dataset.planCarga || '';
+    // Intentar seleccionar el valor numérico en el select
+    const numVal = parseFloat(planCarga);
+    if (!isNaN(numVal)) {
+        cargaEl.value = numVal;
+    } else {
+        cargaEl.value = '';
+    }
 }
 
+// ── Seleccionar / deseleccionar todas las filas ───────────────────
+function seleccionarTodasSeries(masterCb, ejercicioId) {
+    document.querySelectorAll(`.serie-check-${ejercicioId}`).forEach(cb => {
+        cb.checked = masterCb.checked;
+    });
+}
+
+// ── Aplicar valores en bloque a las filas marcadas ────────────────
+function aplicarBulk(ejercicioId) {
+    const reps  = document.getElementById(`bulk-reps-${ejercicioId}`)?.value || '';
+    const rpe   = document.getElementById(`bulk-rpe-${ejercicioId}`)?.value  || '';
+    const carga = document.getElementById(`bulk-carga-${ejercicioId}`)?.value || '';
+    const rows  = document.querySelectorAll(`#series-rows-${ejercicioId} .serie-row`);
+    rows.forEach(row => {
+        const cb = row.querySelector(`input[type="checkbox"]`);
+        if (!cb || !cb.checked) return;
+        if (reps)  row.querySelector('.serie-reps').value  = reps;
+        if (rpe)   row.querySelector('.serie-rpe').value   = rpe;
+        if (carga) row.querySelector('.serie-carga').value = carga;
+    });
+}
+
+// ── Guardar seguimiento ───────────────────────────────────────────
 async function guardarSeguimiento(btn, ejercicioId, fecha) {
     try {
-        const seriesEl = document.getElementById(`series_reales_${ejercicioId}`);
-        const rpeEl = document.getElementById(`rpe_real_${ejercicioId}`);
-        const cargaEl = document.getElementById(`carga_real_${ejercicioId}`);
-        const notasEl = document.getElementById(`notas_${ejercicioId}`);
-        const compEl = document.getElementById(`completado_${ejercicioId}`);
-        const form = btn.closest('.seguimiento-form');
+        const form      = btn.closest('.seguimiento-form');
+        const notasEl   = document.getElementById(`notas_${ejercicioId}`);
+        const compEl    = document.getElementById(`completado_${ejercicioId}`);
         const fechaEjec = (form?.dataset?.fecha) || fecha || document.getElementById('fechaSelect')?.value;
 
-        const rpeVal = rpeEl?.value ? Number(rpeEl.value) : null;
-        if (rpeVal != null && (rpeVal < 0 || rpeVal > 10)) { alert('RPE debe estar entre 0 y 10'); return; }
-        const cargaVal = cargaEl?.value ? Number(cargaEl.value) : null;
-        if (cargaVal != null && cargaVal < 0) { alert('La carga no puede ser negativa'); return; }
+        let series_reps_reales = '';
+        let rpe_real           = '';
+        let carga_real         = '';
+
+        // Modo estructurado (hay filas por serie)
+        const rows = document.querySelectorAll(`#series-rows-${ejercicioId} .serie-row`);
+        if (rows.length > 0) {
+            const partes = [];
+            rows.forEach((row, i) => {
+                const r = row.querySelector('.serie-reps')?.value.trim()  || '';
+                const p = row.querySelector('.serie-rpe')?.value.trim()   || '';
+                const c = row.querySelector('.serie-carga')?.value.trim() || '';
+                let parte = `S${i+1}: ${r || '?'}r`;
+                if (c) parte += ` ${c}`;
+                if (p) parte += ` RPE${p}`;
+                partes.push(parte);
+            });
+            series_reps_reales = partes.join(' / ');
+            // Usar valores de última serie como rpe/carga_real para compatibilidad
+            const lastRow = rows[rows.length - 1];
+            rpe_real   = lastRow?.querySelector('.serie-rpe')?.value.trim()   || '';
+            carga_real = lastRow?.querySelector('.serie-carga')?.value.trim() || '';
+        } else {
+            // Modo legacy (campo de texto libre)
+            series_reps_reales = document.getElementById(`series_reales_${ejercicioId}`)?.value || '';
+            rpe_real   = document.getElementById(`rpe_real_${ejercicioId}`)?.value   || '';
+            carga_real = document.getElementById(`carga_real_${ejercicioId}`)?.value || '';
+        }
 
         const data = {
-            fecha_ejecucion: fechaEjec,
-            series_reps_reales: seriesEl?.value || '',
-            rpe_real: rpeEl?.value || '',
-            carga_real: cargaEl?.value || '',
-            notas: notasEl?.value || '',
+            fecha_ejecucion:    fechaEjec,
+            series_reps_reales,
+            rpe_real,
+            carga_real,
+            notas:     notasEl?.value    || '',
             completado: compEl?.checked || false
         };
 
@@ -565,13 +692,12 @@ async function guardarSeguimiento(btn, ejercicioId, fecha) {
         const result = await response.json();
 
         if (result.success) {
-            alert('¡Progreso guardado correctamente!');
             cancelarSeguimiento(btn, ejercicioId);
-            const fechaKey = fechaEjec || '';
-            const statusEl = document.getElementById(`status-${ejercicioId}${fechaKey ? '-' + fechaKey : ''}`);
+            const fechaKey    = fechaEjec || '';
+            const statusEl    = document.getElementById(`status-${ejercicioId}${fechaKey ? '-' + fechaKey : ''}`);
             const actualizarEl = document.getElementById(`btn-actualizar-${ejercicioId}${fechaKey ? '-' + fechaKey : ''}`);
             const registrarBtn = document.querySelector(`.btn-registrar-progreso[data-ejercicio-id='${ejercicioId}'][data-fecha='${fechaKey}']`);
-            if (statusEl) statusEl.classList.remove('d-none');
+            if (statusEl)     statusEl.classList.remove('d-none');
             if (actualizarEl) actualizarEl.classList.remove('d-none');
             if (registrarBtn) registrarBtn.classList.add('d-none');
         } else {
@@ -720,6 +846,7 @@ async function guardarSeguimientoDesdeModal() {
 }
 
 function marcarDiaCompletado(fecha) {
+    const boton = event.currentTarget || event.target;
     if (confirm(`¿Quieres marcar el día ${fecha} como completado?`)) {
         fetch('/api/marcar-dia-completado', {
             method: 'POST',
@@ -729,11 +856,11 @@ function marcarDiaCompletado(fecha) {
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                alert('¡Día marcado como completado!');
-                const boton = event.target;
-                boton.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Completado';
-                boton.classList.replace('btn-success', 'btn-outline-success');
-                boton.disabled = true;
+                if (boton) {
+                    boton.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Completado';
+                    boton.classList.replace('btn-success', 'btn-outline-success');
+                    boton.disabled = true;
+                }
             } else {
                 alert('Error: ' + data.message);
             }
