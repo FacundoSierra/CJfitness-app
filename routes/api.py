@@ -42,43 +42,44 @@ def init_app(app):
         else:
             fecha_obj = hoy.date()
 
-        # Preparar datos según la vista
+        # Helper: serializar rutina a dict JSON-safe (con series_json) para el modal de edición JS
+        def serializar_para_js(rutina):
+            return {
+                'fecha': rutina.fecha.strftime('%Y-%m-%d'),
+                'bloques': [
+                    {
+                        'nombre_bloque': b.nombre_bloque,
+                        'categoria': b.categoria,
+                        'ejercicios': [
+                            {
+                                'nombre_manual': e.nombre_manual,
+                                'series_json': e.series_json,
+                                'categoria': e.categoria,
+                                'subcategoria': e.subcategoria,
+                            }
+                            for e in b.ejercicios
+                        ]
+                    }
+                    for b in rutina.bloques
+                ]
+            }
+
+        # Preparar datos según la vista — pasar model objects directamente al template
         if vista == "diaria":
-            # Vista diaria - solo un día
-            rutinas = Rutina.query.filter_by(
-                usuario_id=user_id,
-                fecha=fecha_obj
-            ).order_by(Rutina.fecha).all()
-
-            # Agrupar por bloques para el día
-            bloques_dia = []
-            for r in rutinas:
-                for b in r.bloques:
-                    ejercicios = []
-                    for e in b.ejercicios:
-                        ejercicios.append({
-                            "nombre_manual": e.nombre_manual,
-                            "series_reps": e.series_display,
-                            "rpe": e.rpe,
-                            "carga": e.carga,
-                            "ejercicio": {"nombre": e.ejercicio.nombre} if e.ejercicio else None,
-                            "categoria": e.categoria,
-                            "subcategoria": e.subcategoria
-                        })
-                    bloques_dia.append({
-                        "nombre_bloque": b.nombre_bloque,
-                        "categoria": b.categoria,
-                        "ejercicios": ejercicios
-                    })
-
+            rutina = Rutina.query.filter_by(usuario_id=user_id, fecha=fecha_obj).first()
             datos_vista = {
                 "tipo": "diaria",
                 "fecha": fecha_obj,
-                "bloques": bloques_dia
+                "bloques": rutina.bloques if rutina else []
             }
+            lunes = fecha_obj - timedelta(days=fecha_obj.weekday())
+            rutinas_para_js = [{
+                "inicio": str(lunes),
+                "fin": str(lunes + timedelta(days=6)),
+                "rutinas": [serializar_para_js(rutina)] if rutina else []
+            }]
 
         elif vista == "semanal":
-            # Vista semanal - semana completa
             lunes = fecha_obj - timedelta(days=fecha_obj.weekday())
             domingo = lunes + timedelta(days=6)
 
@@ -88,32 +89,9 @@ def init_app(app):
                 Rutina.fecha <= domingo
             ).order_by(Rutina.fecha).all()
 
-            # Agrupar por día de la semana
-            dias_semana = {}
-            for i in range(7):
-                fecha_dia = lunes + timedelta(days=i)
-                dias_semana[fecha_dia] = []
-
+            dias_semana = {lunes + timedelta(days=i): [] for i in range(7)}
             for r in rutinas:
-                bloques_dia = []
-                for b in r.bloques:
-                    ejercicios = []
-                    for e in b.ejercicios:
-                        ejercicios.append({
-                            "nombre_manual": e.nombre_manual,
-                            "series_reps": e.series_display,
-                            "rpe": e.rpe,
-                            "carga": e.carga,
-                            "ejercicio": {"nombre": e.ejercicio.nombre} if e.ejercicio else None,
-                            "categoria": e.categoria,
-                            "subcategoria": e.subcategoria
-                        })
-                    bloques_dia.append({
-                        "nombre_bloque": b.nombre_bloque,
-                        "categoria": b.categoria,
-                        "ejercicios": ejercicios
-                    })
-                dias_semana[r.fecha] = bloques_dia
+                dias_semana[r.fecha] = r.bloques
 
             datos_vista = {
                 "tipo": "semanal",
@@ -121,9 +99,13 @@ def init_app(app):
                 "fin": domingo,
                 "dias": dias_semana
             }
+            rutinas_para_js = [{
+                "inicio": str(lunes),
+                "fin": str(domingo),
+                "rutinas": [serializar_para_js(r) for r in rutinas]
+            }]
 
         else:  # vista == "mensual"
-            # Vista mensual - por semanas (original)
             inicio = fecha_obj.replace(day=1)
             fin = (inicio.replace(day=28) + timedelta(days=4)).replace(day=1)
 
@@ -133,50 +115,27 @@ def init_app(app):
                 Rutina.fecha < fin
             ).order_by(Rutina.fecha).all()
 
-            # Agrupar por semana (lunes como clave)
             semanas_ordenadas = defaultdict(list)
             for r in rutinas:
-                lunes = r.fecha - timedelta(days=r.fecha.weekday())
-                semanas_ordenadas[lunes].append(r)
+                lunes_key = r.fecha - timedelta(days=r.fecha.weekday())
+                semanas_ordenadas[lunes_key].append(r)
 
-            # Convertir a estructura que el template entienda
-            semanas_final = []
-            for lunes, rutinas_semana in sorted(semanas_ordenadas.items()):
-                bloques_semana = []
-                for r in rutinas_semana:
-                    bloques = []
-                    for b in r.bloques:
-                        ejercicios = []
-                        for e in b.ejercicios:
-                            ejercicios.append({
-                                "nombre_manual": e.nombre_manual,
-                                "series_reps": e.series_display,
-                                "rpe": e.rpe,
-                                "carga": e.carga,
-                                "ejercicio": {"nombre": e.ejercicio.nombre} if e.ejercicio else None,
-                                "categoria": e.categoria,
-                                "subcategoria": e.subcategoria
-                            })
-                        bloques.append({
-                            "nombre_bloque": b.nombre_bloque,
-                            "categoria": b.categoria,
-                            "ejercicios": ejercicios
-                        })
-                    bloques_semana.append({
-                        "fecha": r.fecha.strftime("%Y-%m-%d"),
-                        "bloques": bloques
-                    })
-
-                semanas_final.append({
-                    "inicio": lunes,
-                    "fin": lunes + timedelta(days=6),
-                    "rutinas": bloques_semana
+            semanas_template = []
+            semanas_js = []
+            for lunes_key, ruts in sorted(semanas_ordenadas.items()):
+                semanas_template.append({
+                    'inicio': lunes_key,
+                    'fin': lunes_key + timedelta(days=6),
+                    'rutinas': [{'fecha': r.fecha, 'bloques': r.bloques} for r in ruts]
+                })
+                semanas_js.append({
+                    'inicio': str(lunes_key),
+                    'fin': str(lunes_key + timedelta(days=6)),
+                    'rutinas': [serializar_para_js(r) for r in ruts]
                 })
 
-            datos_vista = {
-                "tipo": "mensual",
-                "semanas": semanas_final
-            }
+            datos_vista = {"tipo": "mensual", "semanas": semanas_template}
+            rutinas_para_js = semanas_js
 
         mes_actual = fecha_obj.strftime("%Y-%m")
         fecha_actual = fecha_obj.strftime("%Y-%m-%d")
@@ -187,6 +146,7 @@ def init_app(app):
                                vista_actual=vista,
                                mes_actual=mes_actual,
                                fecha_actual=fecha_actual,
+                               rutinas_para_js=rutinas_para_js,
                                active_page='entrenamientos')
 
     # ------------------ ADMIN API_EJERCICIOS ------------------

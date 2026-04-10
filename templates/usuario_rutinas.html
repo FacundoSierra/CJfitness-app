@@ -545,7 +545,14 @@ function irAHoy() {
 
 function navegarPeriodo(delta) {
     const vista = document.getElementById('vistaSelect').value;
-    const fecha = new Date(document.getElementById('fechaSelect').value || new Date());
+    const dateStr = document.getElementById('fechaSelect').value;
+    let fecha;
+    if (dateStr) {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        fecha = new Date(y, m - 1, d);  // hora local, evita off-by-one UTC
+    } else {
+        fecha = new Date();
+    }
     if (vista === 'diaria') fecha.setDate(fecha.getDate() + delta);
     else if (vista === 'semanal') fecha.setDate(fecha.getDate() + delta * 7);
     else fecha.setMonth(fecha.getMonth() + delta);

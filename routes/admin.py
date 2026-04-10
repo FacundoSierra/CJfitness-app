@@ -372,9 +372,7 @@ def init_app(app):
                 logger.info(f"Bloque {bloque_id} creado con ID: {bloque.id}")
 
                 ejercicios    = request.form.getlist(f"ejercicio_{bloque_id}[]")
-                series        = request.form.getlist(f"series_{bloque_id}[]")
-                rpes          = request.form.getlist(f"rpe_{bloque_id}[]")
-                cargas        = request.form.getlist(f"carga_{bloque_id}[]")
+                series_jsons  = request.form.getlist(f"series_json_{bloque_id}[]")
                 bloques_ej    = request.form.getlist(f"bloque_ej_{bloque_id}[]")
                 categorias_ej = request.form.getlist(f"categoria_ej_{bloque_id}[]")
 
@@ -384,14 +382,13 @@ def init_app(app):
                     nombre_ej    = ejercicios[i]
                     bloque_ej    = bloques_ej[i]    if i < len(bloques_ej)    else None
                     categoria_ej = categorias_ej[i] if i < len(categorias_ej) else None
+                    sj           = series_jsons[i]  if i < len(series_jsons)  else None
 
                     asignado = EjercicioAsignado(
                         bloque_id=bloque.id,
                         ejercicio_id=None,
                         nombre_manual=nombre_ej,
-                        series_reps=series[i] if i < len(series) else None,
-                        rpe=rpes[i] if i < len(rpes) else None,
-                        carga=cargas[i] if i < len(cargas) else None,
+                        series_json=sj,
                         categoria=bloque_ej,
                         subcategoria=categoria_ej
                     )

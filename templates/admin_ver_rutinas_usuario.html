@@ -315,9 +315,8 @@ function eliminarRutina(fecha) {
 }
 </script>
 
-{% if datos_vista.tipo == 'mensual' %}
 <script>
-let rutinasPorFecha = {{ datos_vista.semanas|tojson|safe }};
+let rutinasPorFecha = {{ rutinas_para_js|tojson|safe }};
 </script>
 <script src="{{ url_for('static', filename='js/editar_rutinas.js') }}"></script>
 <script>
@@ -330,5 +329,4 @@ if (modalEditarRutina) {
     });
 }
 </script>
-{% endif %}
 {% endblock %}

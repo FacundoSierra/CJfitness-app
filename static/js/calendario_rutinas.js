@@ -45,6 +45,16 @@ function buildRpeOptions(selected, placeholder) {
   return opts;
 }
 
+function buildCargaOptions(selected) {
+  let opts = '<option value="">Carga</option>';
+  for (let i = 0; i <= 100; i++) {
+    const val = i / 2;
+    const sel = String(selected) === String(val) ? 'selected' : '';
+    opts += `<option value="${val}" ${sel}>${val} kg</option>`;
+  }
+  return opts;
+}
+
 // ── BLOQUE ────────────────────────────────────────────────────────────────────
 
 function agregarBloque() {
@@ -169,7 +179,9 @@ function agregarEjercicio(btn, bloqueIndex) {
         </div>
         <div>
           <label style="font-size:var(--text-xs); font-weight:600; color:var(--color-text-secondary); margin-bottom:4px; display:block;">Carga</label>
-          <input type="text" class="form-control carga-input" placeholder="Ej: 80kg, BW+20">
+          <select class="form-select carga-input">
+            ${buildCargaOptions('')}
+          </select>
         </div>
         <div style="padding-bottom:2px;">
           <button type="button" class="btn btn-sm btn-outline-primary variar-btn"
@@ -301,8 +313,9 @@ function actualizarFilasSeries(seriesSelect) {
           </select>
         </td>
         <td style="padding:3px var(--space-3);">
-          <input type="text" class="form-control form-control-sm carga-serie"
-                 style="width:120px;" value="${carga}" placeholder="Ej: 80kg">
+          <select class="form-select form-select-sm carga-serie" style="width:110px;">
+            ${buildCargaOptions(carga)}
+          </select>
         </td>
       </tr>
     `);
