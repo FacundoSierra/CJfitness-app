@@ -110,13 +110,38 @@
 
       <!-- PASO 7: Nombre -->
       <div class="form-group" style="margin-bottom:var(--space-6);">
-        <label class="form-label" for="nombre">
-          <span style="background:var(--color-primary); color:#fff; border-radius:999px; padding:1px 8px; font-size:var(--text-xs); margin-right:6px;">7</span>
-          Nombre del ejercicio <span style="color:var(--color-danger);">*</span>
-        </label>
-        <input type="text" name="nombre" id="nombre" class="form-control" required
-               placeholder="Escribe el nombre del ejercicio…"
-               value="{{ ejercicio.nombre if ejercicio else '' }}">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-2);">
+          <label class="form-label" for="nombre" style="margin:0;">
+            <span style="background:var(--color-primary); color:#fff; border-radius:999px; padding:1px 8px; font-size:var(--text-xs); margin-right:6px;">7</span>
+            Nombre del ejercicio <span style="color:var(--color-danger);">*</span>
+          </label>
+          {% if not ejercicio %}
+          <label style="display:flex; align-items:center; gap:6px; font-size:var(--text-sm); cursor:pointer; user-select:none;">
+            <input type="checkbox" id="toggleMasivo" onchange="activarModoMasivo(this)">
+            Añadir varios a la vez
+          </label>
+          {% endif %}
+        </div>
+
+        <!-- Modo individual (default) -->
+        <div id="modo-individual">
+          <input type="text" name="nombre" id="nombre" class="form-control" required
+                 placeholder="Escribe el nombre del ejercicio…"
+                 value="{{ ejercicio.nombre if ejercicio else '' }}">
+        </div>
+
+        <!-- Modo masivo (oculto por defecto) -->
+        <div id="modo-masivo" style="display:none;">
+          <div style="display:grid; grid-template-columns:1fr 200px 34px; gap:var(--space-2); padding:4px 2px; margin-bottom:4px;">
+            <span style="font-size:10px; font-weight:600; color:var(--color-text-muted); text-transform:uppercase;">Nombre *</span>
+            <span style="font-size:10px; font-weight:600; color:var(--color-text-muted); text-transform:uppercase;">Material</span>
+            <span></span>
+          </div>
+          <div id="filas-masivo"></div>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="agregarFilaMasivo()" style="margin-top:var(--space-2);">
+            <i class="bi bi-plus-circle me-1"></i>Añadir fila
+          </button>
+        </div>
       </div>
 
       <div style="display:flex; gap:var(--space-3);">
@@ -408,5 +433,48 @@ window.addEventListener('DOMContentLoaded', () => {
     sel.dispatchEvent(new Event('change'));
   }
 });
+
+// ── Modo masivo ───────────────────────────────────────────────────────────
+
+function activarModoMasivo(cb) {
+  const individual = document.getElementById('modo-individual');
+  const masivo     = document.getElementById('modo-masivo');
+  const form       = document.getElementById('formEjercicio');
+  const nombreInput = document.getElementById('nombre');
+
+  if (cb.checked) {
+    individual.style.display = 'none';
+    masivo.style.display     = 'block';
+    nombreInput.required     = false;
+    form.action              = '{{ url_for("ejercicio_nuevo_masivo") }}';
+    if (!document.querySelector('.fila-masivo')) agregarFilaMasivo();
+  } else {
+    individual.style.display = 'block';
+    masivo.style.display     = 'none';
+    nombreInput.required     = true;
+    form.action              = '{{ url_for("ejercicio_nuevo_post") }}';
+  }
+}
+
+function agregarFilaMasivo() {
+  const materialGlobal = (document.getElementById('material')?.value || '').trim();
+  const container = document.getElementById('filas-masivo');
+  const div = document.createElement('div');
+  div.className = 'fila-masivo';
+  div.style.cssText = 'display:grid; grid-template-columns:1fr 200px 34px; gap:var(--space-2); margin-bottom:var(--space-2); align-items:center;';
+  div.innerHTML = `
+    <input type="text" name="nombres[]" class="form-control"
+           placeholder="Nombre del ejercicio" required>
+    <input type="text" name="materiales[]" class="form-control"
+           list="lista-materiales" placeholder="Material"
+           value="${materialGlobal.replace(/"/g, '&quot;')}">
+    <button type="button" class="btn btn-sm btn-danger"
+            onclick="this.closest('.fila-masivo').remove()"
+            title="Eliminar fila">
+      <i class="bi bi-x"></i>
+    </button>`;
+  container.appendChild(div);
+  div.querySelector('input[name="nombres[]"]').focus();
+}
 </script>
 {% endblock %}

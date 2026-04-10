@@ -270,6 +270,52 @@ def init_app(app):
         flash(f'Ejercicio "{nombre}" creado correctamente.', 'success')
         return redirect(url_for('admin_ejercicios2'))
 
+    @app.route('/admin/ejercicios2/nuevo-masivo', methods=['POST'])
+    @admin_required
+    @handle_db_error
+    def ejercicio_nuevo_masivo():
+        bloque_id       = request.form.get('bloque_id', type=int)
+        categoria_id    = request.form.get('categoria_id', type=int) or None
+        subcategoria_id = request.form.get('subcategoria_id', type=int) or None
+        otras           = request.form.get('otras_caracteristicas', '').strip() or None
+
+        if not bloque_id:
+            flash('El bloque es obligatorio.', 'danger')
+            return redirect(url_for('ejercicio_nuevo_form'))
+
+        # Características dinámicas (mismo patrón que ejercicio_nuevo_post)
+        caracteristicas = {}
+        for key, value in request.form.items():
+            if key.startswith('caracteristica_') and value.strip():
+                tipo_nombre = key[len('caracteristica_'):]
+                caracteristicas[tipo_nombre] = value.strip()
+
+        nombres    = request.form.getlist('nombres[]')
+        materiales = request.form.getlist('materiales[]')
+
+        creados = 0
+        for i, nombre in enumerate(nombres):
+            nombre = nombre.strip()
+            if not nombre:
+                continue
+            material = (materiales[i].strip() if i < len(materiales) else '') or None
+            ej = EjercicioCompleto(
+                nombre=nombre,
+                bloque_id=bloque_id,
+                categoria_id=categoria_id,
+                subcategoria_id=subcategoria_id,
+                caracteristicas_json=caracteristicas or None,
+                material=material,
+                otras_caracteristicas=otras,
+                activo=True
+            )
+            db.session.add(ej)
+            creados += 1
+
+        db.session.commit()
+        flash(f'✅ {creados} ejercicio{"s" if creados != 1 else ""} creado{"s" if creados != 1 else ""} correctamente.', 'success')
+        return redirect(url_for('admin_ejercicios2'))
+
     @app.route('/admin/ejercicios2/<int:ej_id>/editar', methods=['GET'])
     @admin_required
     @handle_db_error

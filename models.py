@@ -109,13 +109,13 @@ class EjercicioAsignado(db.Model):
                     carga = str(s.get('carga') or '').strip()
                     rpe   = str(s.get('rpe') or '').strip()
                     parte = f"S{i+1}: {reps}r"
-                    if carga: parte += f" {carga}"
+                    if carga: parte += f" {carga} kg"
                     if rpe:   parte += f" RPE{rpe}"
                     parts.append(parte)
                 return ' / '.join(parts)
             carga = str(d.get('carga') or '').strip()
             rpe   = str(d.get('rpe') or '').strip()
-            carga_str = f" {carga}" if carga else ''
+            carga_str = f" {carga} kg" if carga else ''
             rpe_str   = f" RPE{rpe}" if rpe else ''
             return f"{d.get('series','?')}×{d.get('reps','?')}{carga_str}{rpe_str}"
         return self.series_reps or ''
@@ -179,12 +179,12 @@ class SeguimientoEjercicio(db.Model):
     fecha_ejecucion = db.Column(db.Date, nullable=False, default=lambda: datetime.utcnow().date())
     
     # Valores planificados (del admin)
-    series_reps_planificadas = db.Column(db.String(100), nullable=True)
+    series_reps_planificadas = db.Column(db.Text, nullable=True)
     rpe_planificado = db.Column(db.String(50), nullable=True)
     carga_planificada = db.Column(db.String(50), nullable=True)
-    
+
     # Valores reales (del usuario)
-    series_reps_reales = db.Column(db.String(100), nullable=True)
+    series_reps_reales = db.Column(db.Text, nullable=True)
     rpe_real = db.Column(db.String(50), nullable=True)
     carga_real = db.Column(db.String(50), nullable=True)
     

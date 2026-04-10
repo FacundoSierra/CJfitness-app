@@ -37,7 +37,34 @@
 }
 .exercise-item:last-child { margin-bottom: 0; }
 .exercise-name { font-weight: 600; margin-bottom: var(--space-1); }
-.exercise-details { font-size: var(--text-sm); color: var(--color-text-secondary); line-height: 1.7; }
+.ej-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: var(--space-2);
+    font-size: var(--text-sm);
+}
+.ej-table th {
+    padding: var(--space-1) var(--space-3);
+    text-align: left;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg-alt);
+}
+.ej-table td {
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+}
+.ej-table tbody tr:last-child td { border-bottom: none; }
+.ej-table tbody tr:hover td { background: var(--color-bg-alt); }
+.ej-table .serie-num {
+    font-weight: 700;
+    color: var(--color-primary);
+    width: 48px;
+}
 .bloque-section { margin-bottom: var(--space-4); }
 .bloque-section:last-child { margin-bottom: 0; }
 .bloque-title {
@@ -122,28 +149,45 @@
         {% if ejercicio.categoria %}<span class="badge badge-info">{{ ejercicio.categoria }}</span>{% endif %}
         {% if ejercicio.subcategoria %}<span class="badge" style="background:var(--color-surface); border:1px solid var(--color-border); color:var(--color-text-secondary);">{{ ejercicio.subcategoria }}</span>{% endif %}
     </div>
-    <div class="exercise-details">
-        {% if sdata %}
-            {% if sdata.variar %}
-                <i class="bi bi-list-ol me-1"></i><strong>Series:</strong><br>
-                {% for s in sdata.series_data %}
-                <span style="margin-left:var(--space-4); display:block;">
-                    S{{ loop.index }}: {{ s.reps or '?' }} reps
-                    {% if s.carga %} {{ s.carga }}{% endif %}
-                    {% if s.rpe %} RPE{{ s.rpe }}{% endif %}
-                </span>
-                {% endfor %}
+    <table class="ej-table">
+        <thead>
+            <tr>
+                <th>Serie</th>
+                <th>Reps</th>
+                <th>Carga</th>
+                <th>RPE</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if sdata %}
+                {% if sdata.variar %}
+                    {% for s in sdata.series_data %}
+                    <tr>
+                        <td class="serie-num">S{{ loop.index }}</td>
+                        <td>{{ s.reps or '—' }}</td>
+                        <td>{% if s.carga %}{{ s.carga }} kg{% else %}—{% endif %}</td>
+                        <td>{% if s.rpe %}{{ s.rpe }}{% else %}—{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    {% for i in range(sdata.series | int) %}
+                    <tr>
+                        <td class="serie-num">S{{ loop.index }}</td>
+                        <td>{{ sdata.reps or '—' }}</td>
+                        <td>{% if sdata.carga %}{{ sdata.carga }} kg{% else %}—{% endif %}</td>
+                        <td>{% if sdata.rpe %}{{ sdata.rpe }}{% else %}—{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                {% endif %}
             {% else %}
-                <i class="bi bi-arrow-repeat me-1"></i><strong>Series:</strong> {{ sdata.series }}×{{ sdata.reps }}
-                {% if sdata.carga %} {{ sdata.carga }}{% endif %}
-                {% if sdata.rpe %} &nbsp;<i class="bi bi-speedometer2 me-1"></i><strong>RPE:</strong> {{ sdata.rpe }}{% endif %}
+            <tr>
+                <td colspan="4" style="color:var(--color-text-muted); font-style:italic;">
+                    {{ ejercicio.series_reps or '—' }}
+                </td>
+            </tr>
             {% endif %}
-        {% else %}
-            <i class="bi bi-arrow-repeat me-1"></i><strong>S/R:</strong> {{ ejercicio.series_reps or '—' }}<br>
-            {% if ejercicio.rpe %}<i class="bi bi-speedometer2 me-1"></i><strong>RPE:</strong> {{ ejercicio.rpe }}<br>{% endif %}
-            {% if ejercicio.carga %}<i class="bi bi-weight me-1"></i><strong>Carga:</strong> {{ ejercicio.carga }}{% endif %}
-        {% endif %}
-    </div>
+        </tbody>
+    </table>
 </div>
 {% endmacro %}
 

@@ -63,6 +63,34 @@
 .exercise-name { font-weight: 600; margin-bottom: var(--space-2); }
 .exercise-details { font-size: var(--text-sm); color: var(--color-text-secondary); }
 .exercise-details i { margin-right: var(--space-1); color: var(--color-primary); }
+.ej-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: var(--space-2);
+    font-size: var(--text-sm);
+}
+.ej-table th {
+    padding: var(--space-1) var(--space-3);
+    text-align: left;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg-alt);
+}
+.ej-table td {
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+}
+.ej-table tbody tr:last-child td { border-bottom: none; }
+.ej-table tbody tr:hover td { background: var(--color-bg-alt); }
+.ej-table .serie-num {
+    font-weight: 700;
+    color: var(--color-primary);
+    width: 48px;
+}
 
 .seguimiento-form {
     background: var(--color-bg);
@@ -212,28 +240,45 @@
         {% if ejercicio.subcategoria %}<span class="badge badge-success">{{ ejercicio.subcategoria }}</span>{% endif %}
         {% if material %}<span class="badge" style="background:var(--color-bg); color:var(--color-text-muted); border:1px solid var(--color-border);"><i class="bi bi-box me-1" style="font-size:10px;"></i>{{ material }}</span>{% endif %}
     </div>
-    <div class="exercise-details">
-        {% if sdata %}
-            {% if sdata.variar %}
-                <i class="bi bi-list-ol"></i><strong>Series:</strong><br>
-                {% for s in sdata.series_data %}
-                    <span style="margin-left:var(--space-4);">
-                        S{{ loop.index }}: {{ s.reps or '?' }} reps
-                        {% if s.carga %} {{ s.carga }}{% endif %}
-                        {% if s.rpe %} RPE{{ s.rpe }}{% endif %}
-                    </span><br>
-                {% endfor %}
+    <table class="ej-table">
+        <thead>
+            <tr>
+                <th>Serie</th>
+                <th>Reps</th>
+                <th>Carga</th>
+                <th>RPE</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if sdata %}
+                {% if sdata.variar %}
+                    {% for s in sdata.series_data %}
+                    <tr>
+                        <td class="serie-num">S{{ loop.index }}</td>
+                        <td>{{ s.reps or '—' }}</td>
+                        <td>{% if s.carga %}{{ s.carga }} kg{% else %}—{% endif %}</td>
+                        <td>{% if s.rpe %}{{ s.rpe }}{% else %}—{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    {% for i in range(sdata.series | int) %}
+                    <tr>
+                        <td class="serie-num">S{{ loop.index }}</td>
+                        <td>{{ sdata.reps or '—' }}</td>
+                        <td>{% if sdata.carga %}{{ sdata.carga }} kg{% else %}—{% endif %}</td>
+                        <td>{% if sdata.rpe %}{{ sdata.rpe }}{% else %}—{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                {% endif %}
             {% else %}
-                <i class="bi bi-arrow-repeat"></i><strong>Series:</strong> {{ sdata.series }}×{{ sdata.reps }}
-                {% if sdata.carga %} {{ sdata.carga }}{% endif %}
-                {% if sdata.rpe %} &nbsp;<i class="bi bi-speedometer2"></i><strong>RPE:</strong> {{ sdata.rpe }}{% endif %}
+            <tr>
+                <td colspan="4" style="color:var(--color-text-muted); font-style:italic;">
+                    {{ ejercicio.series_reps or '—' }}
+                </td>
+            </tr>
             {% endif %}
-        {% else %}
-            <i class="bi bi-arrow-repeat"></i><strong>Series/Reps:</strong> {{ ejercicio.series_reps or '—' }}<br>
-            <i class="bi bi-speedometer2"></i><strong>RPE:</strong> {{ ejercicio.rpe or '—' }}<br>
-            <i class="bi bi-weight"></i><strong>Carga:</strong> {{ ejercicio.carga or '—' }}
-        {% endif %}
-    </div>
+        </tbody>
+    </table>
     {{ seguimiento_form(ejercicio, fecha_str) }}
     <div class="exercise-actions" style="display:flex; align-items:center; gap:var(--space-2); margin-top:var(--space-3);">
         <button class="btn btn-primary btn-sm btn-registrar-progreso"
@@ -452,45 +497,60 @@
     {% endif %}
 {% endif %}
 
-<!-- Modal Seguimiento -->
+<!-- Modal Seguimiento (fallback para "Actualizar") -->
 <div class="modal fade" id="seguimientoModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Registrar / Actualizar Progreso</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content" style="border:none; box-shadow:var(--shadow-xl);">
+            <div class="modal-header" style="background:var(--color-primary); border:none;">
+                <div>
+                    <h5 class="modal-title" style="color:white; font-size:var(--text-base); font-weight:700; margin:0;">
+                        <i class="bi bi-pencil-square me-2"></i>Actualizar Progreso
+                    </h5>
+                    <div id="modal_ej_header" style="color:rgba(255,255,255,.75); font-size:var(--text-sm); margin-top:3px;"></div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Fecha</label>
-                    <input type="text" class="form-control" id="modal_fecha" readonly>
+            <div class="modal-body" style="padding:var(--space-6);">
+                <input type="hidden" id="modal_fecha">
+
+                <!-- Plan del entrenador (read-only) -->
+                <div style="margin-bottom:var(--space-5);">
+                    <p style="font-size:var(--text-xs); font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--color-text-secondary); margin-bottom:var(--space-2);">
+                        <i class="bi bi-clipboard me-1"></i>Plan del entrenador
+                    </p>
+                    <table class="ej-table" style="opacity:.7;">
+                        <thead><tr><th>Serie</th><th>Reps</th><th>Carga</th><th>RPE</th></tr></thead>
+                        <tbody id="modal_plan_body"></tbody>
+                    </table>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Series/Reps Realizadas</label>
-                    <input type="text" class="form-control" id="modal_series" placeholder="Ej: 3x12">
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3);">
-                    <div class="form-group">
-                        <label class="form-label">RPE (0–10)</label>
-                        <input type="number" class="form-control" id="modal_rpe" min="0" max="10">
+
+                <!-- Lo que hiciste (editable) -->
+                <div style="margin-bottom:var(--space-4);">
+                    <p style="font-size:var(--text-xs); font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--color-primary); margin-bottom:var(--space-2);">
+                        <i class="bi bi-check2-circle me-1"></i>Lo que hiciste
+                    </p>
+                    <div style="display:grid; grid-template-columns:48px 1fr 1fr 1fr 34px; gap:var(--space-2); padding:2px 4px; margin-bottom:4px;">
+                        <span style="font-size:10px; font-weight:600; color:var(--color-text-muted);">S</span>
+                        <span style="font-size:10px; font-weight:600; color:var(--color-text-muted);">Reps</span>
+                        <span style="font-size:10px; font-weight:600; color:var(--color-text-muted);">Carga</span>
+                        <span style="font-size:10px; font-weight:600; color:var(--color-text-muted);">RPE</span>
+                        <span></span>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Carga (kg)</label>
-                        <input type="number" class="form-control" id="modal_carga" min="0" step="0.5">
+                    <div id="modal_series_rows"></div>
+                </div>
+
+                <!-- Notas + Completado -->
+                <div style="display:grid; grid-template-columns:1fr auto; gap:var(--space-3); align-items:end;">
+                    <div class="form-group" style="margin:0;">
+                        <label class="form-label" style="font-size:var(--text-xs);">Notas</label>
+                        <textarea class="form-control form-control-sm" id="modal_notas" rows="2" placeholder="Notas opcionales..."></textarea>
                     </div>
+                    <label style="display:flex; align-items:center; gap:6px; font-size:var(--text-sm); font-weight:600; padding-bottom:4px; cursor:pointer; white-space:nowrap;">
+                        <input type="checkbox" id="modal_completado" style="width:16px;height:16px;"> Completado
+                    </label>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Notas</label>
-                    <textarea class="form-control" id="modal_notas" rows="2"></textarea>
-                </div>
-                <label style="display:flex; align-items:center; gap:var(--space-2); font-size:var(--text-sm);">
-                    <input type="checkbox" id="modal_completado"> Marcar como completado
-                </label>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" id="modal_copiar_plan">
-                    <i class="bi bi-clipboard-check me-1"></i>Copiar del plan
-                </button>
+            <div class="modal-footer" style="border:none; background:var(--color-bg-alt);">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-success" id="modal_guardar">
                     <i class="bi bi-save me-1"></i>Guardar
@@ -578,24 +638,8 @@ function mostrarFormularioSeguimiento(btnOrEvent, ejercicioId, fecha) {
         return;
     }
 
-    // Fallback: modal
-    modalCtx = { ejercicioId, fecha: fechaVal, exerciseItem };
-    const planSeries = exerciseItem?.dataset?.planSeries || '';
-    const planRpe = exerciseItem?.dataset?.planRpe || '';
-    const planCarga = exerciseItem?.dataset?.planCarga || '';
-    document.getElementById('modal_fecha').value = fechaVal || '';
-    document.getElementById('modal_series').value = '';
-    document.getElementById('modal_rpe').value = '';
-    document.getElementById('modal_carga').value = '';
-    document.getElementById('modal_notas').value = '';
-    document.getElementById('modal_completado').checked = false;
-    document.getElementById('modal_copiar_plan').onclick = () => {
-        document.getElementById('modal_series').value = planSeries;
-        document.getElementById('modal_rpe').value = planRpe;
-        document.getElementById('modal_carga').value = planCarga;
-    };
-    document.getElementById('modal_guardar').onclick = guardarSeguimientoDesdeModal;
-    if (seguimientoModal) seguimientoModal.show();
+    // Fallback: modal (llamar a abrirModalActualizar que ya maneja todo)
+    abrirModalActualizar(ejercicioId, fechaVal);
 }
 
 function cancelarSeguimiento(btn, ejercicioId) {
@@ -666,7 +710,7 @@ async function guardarSeguimiento(btn, ejercicioId, fecha) {
                 const p = row.querySelector('.serie-rpe')?.value.trim()   || '';
                 const c = row.querySelector('.serie-carga')?.value.trim() || '';
                 let parte = `S${i+1}: ${r || '?'}r`;
-                if (c) parte += ` ${c}`;
+                if (c) parte += ` ${c} kg`;
                 if (p) parte += ` RPE${p}`;
                 partes.push(parte);
             });
@@ -739,40 +783,167 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 });
 
+// ── Helpers para parsear "S1: 10r 80 kg RPE7" ────────────────────────────
+function parseSerieStr(parte) {
+    if (!parte || !parte.trim()) return { num: '?', reps: '', carga: '', rpe: '' };
+    const num   = parte.includes(':') ? parte.split(':')[0].trim() : '?';
+    const after = (parte.includes(':') ? parte.split(':')[1] : parte).trim();
+    const toks  = after.split(' ');
+    const reps  = (toks[0] || '').replace(/r$/i, '');
+    const kgIdx = toks.indexOf('kg');
+    const carga = kgIdx > 0 ? toks[kgIdx - 1] : '';
+    const rpeIdx = toks.findIndex(t => t.toUpperCase().startsWith('RPE'));
+    const rpe   = rpeIdx >= 0 ? toks[rpeIdx].replace(/^RPE/i, '') : '';
+    return { num, reps, carga, rpe };
+}
+
+function buildModalCargaOpts(selected) {
+    let html = '<option value="">— kg</option>';
+    for (let i = 0; i <= 100; i++) {
+        const v = i / 2;
+        const sel = String(selected) === String(v) ? 'selected' : '';
+        html += `<option value="${v}" ${sel}>${v} kg</option>`;
+    }
+    return html;
+}
+
+function serializarModalSeries() {
+    const rows = document.querySelectorAll('.serie-row-modal');
+    return Array.from(rows).map((row, i) => {
+        const reps  = row.querySelector('.modal-reps').value  || '0';
+        const carga = row.querySelector('.modal-carga').value;
+        const rpe   = row.querySelector('.modal-rpe').value;
+        let s = `S${i+1}: ${reps}r`;
+        if (carga) s += ` ${carga} kg`;
+        if (rpe)   s += ` RPE${rpe}`;
+        return s;
+    }).join(' / ');
+}
+
+function buildModalRows(planParts, realParts) {
+    const n = Math.max(planParts.length, realParts.length, 1);
+    let html = '';
+    for (let i = 0; i < n; i++) {
+        const r = parseSerieStr(realParts[i] || '');
+        const p = parseSerieStr(planParts[i] || '');
+        html += `<div class="serie-row-modal" style="display:grid; grid-template-columns:48px 1fr 1fr 1fr 34px; gap:var(--space-2); align-items:center; margin-bottom:var(--space-2);">
+            <span style="font-size:var(--text-xs); font-weight:700; color:var(--color-primary);">S${i+1}</span>
+            <input type="text" class="form-control form-control-sm modal-reps"
+                   value="${r.reps}" placeholder="${p.reps || '?'}" style="font-size:var(--text-xs);">
+            <select class="form-select form-select-sm modal-carga" style="font-size:var(--text-xs);">
+                ${buildModalCargaOpts(r.carga)}
+            </select>
+            <input type="text" class="form-control form-control-sm modal-rpe"
+                   value="${r.rpe}" placeholder="${p.rpe || '—'}" style="font-size:var(--text-xs);">
+            <button type="button" class="btn btn-sm" title="Copiar plan"
+                    style="font-size:10px;padding:2px 5px;background:var(--color-primary-light);color:var(--color-primary);border:none;border-radius:var(--radius-sm);"
+                    onclick="copiarPlanRowModal(this,'${p.reps}','${p.carga}','${p.rpe}')">
+                <i class="bi bi-clipboard-check"></i>
+            </button>
+        </div>`;
+    }
+    return html;
+}
+
+function copiarPlanRowModal(btn, reps, carga, rpe) {
+    const row = btn.closest('.serie-row-modal');
+    row.querySelector('.modal-reps').value  = reps;
+    row.querySelector('.modal-carga').value = carga;
+    row.querySelector('.modal-rpe').value   = rpe;
+}
+
 async function verHistorialEjercicio(ejercicioId) {
     try {
         const response = await fetch(`/api/ejercicio/${ejercicioId}/seguimiento`);
         const data = await response.json();
 
         if (data.seguimientos && data.seguimientos.length > 0) {
-            let historialHTML = `
-                <div class="modal fade" id="historialModal" tabindex="-1">
-                    <div class="modal-dialog modal-lg">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Historial de ${data.ejercicio.nombre}</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="table-responsive">
-                                    <table class="table table-striped">
-                                        <thead><tr>
-                                            <th>Fecha</th><th>Series/Reps</th><th>RPE</th>
-                                            <th>Carga</th><th>Completado</th><th>Notas</th>
-                                        </tr></thead>
-                                        <tbody>`;
+
+            // Construye una ej-table (S/Reps/Carga/RPE) desde un string de series
+            const buildEjTable = (seriesStr, bold) => {
+                const TH = 'padding:4px 14px;font-size:10px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #e5e7eb;background:#f9fafb;';
+                const TD = `padding:8px 14px;border-bottom:1px solid #f3f4f6;font-size:0.82rem;${bold ? 'font-weight:600;' : ''}`;
+                if (!seriesStr) {
+                    return `<table style="border-collapse:collapse;width:100%;">
+                        <thead><tr>
+                            <th style="${TH}">S</th><th style="${TH}">Reps</th><th style="${TH}">Carga</th><th style="${TH}">RPE</th>
+                        </tr></thead>
+                        <tbody><tr><td colspan="4" style="${TD}color:#aaa;font-style:italic;">Sin datos</td></tr></tbody>
+                    </table>`;
+                }
+                const parts = seriesStr.split(' / ');
+                let tbody = '';
+                parts.forEach(p => {
+                    const s = parseSerieStr(p);
+                    tbody += `<tr>
+                        <td style="${TD}font-weight:700;color:#3b82f6;">${s.num}</td>
+                        <td style="${TD}">${s.reps || '—'}</td>
+                        <td style="${TD}">${s.carga ? s.carga + ' kg' : '—'}</td>
+                        <td style="${TD}">${s.rpe || '—'}</td>
+                    </tr>`;
+                });
+                return `<table style="border-collapse:collapse;width:100%;">
+                    <thead><tr>
+                        <th style="${TH}">S</th><th style="${TH}">Reps</th><th style="${TH}">Carga</th><th style="${TH}">RPE</th>
+                    </tr></thead>
+                    <tbody>${tbody}</tbody>
+                </table>`;
+            };
+
+            let sesionesHTML = '';
             data.seguimientos.forEach(seg => {
-                historialHTML += `<tr>
-                    <td>${seg.fecha_ejecucion}</td>
-                    <td><small class="text-muted">Plan: ${seg.series_reps_planificadas || 'N/A'}</small><br><strong>${seg.series_reps_reales || 'N/A'}</strong></td>
-                    <td><small class="text-muted">Plan: ${seg.rpe_planificado || 'N/A'}</small><br><strong>${seg.rpe_real || 'N/A'}</strong></td>
-                    <td><small class="text-muted">Plan: ${seg.carga_planificada || 'N/A'}</small><br><strong>${seg.carga_real || 'N/A'}</strong></td>
-                    <td><span class="badge ${seg.completado ? 'bg-success' : 'bg-warning'}">${seg.completado ? 'Sí' : 'No'}</span></td>
-                    <td>${seg.notas || 'Sin notas'}</td>
-                </tr>`;
+                const estadoBadge = seg.completado
+                    ? '<span style="display:inline-flex;align-items:center;gap:4px;background:#dcfce7;color:#166534;padding:4px 12px;border-radius:99px;font-size:0.75rem;font-weight:600;"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="6" fill="#166534" fill-opacity=".15"/><path d="M3 6l2 2 4-4" stroke="#166534" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>OK</span>'
+                    : '<span style="display:inline-flex;align-items:center;gap:4px;background:#fef9c3;color:#854d0e;padding:4px 12px;border-radius:99px;font-size:0.75rem;font-weight:600;">Pendiente</span>';
+
+                sesionesHTML += `
+                <div style="border:1px solid #e5e7eb;border-radius:10px;margin-bottom:16px;overflow:hidden;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#f9fafb;border-bottom:1px solid #e5e7eb;">
+                        <span style="font-size:0.82rem;font-weight:700;color:#374151;">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="margin-right:6px;vertical-align:-1px;"><rect x="1" y="2" width="12" height="11" rx="2" stroke="#6b7280" stroke-width="1.3"/><path d="M4 1v2M10 1v2M1 6h12" stroke="#6b7280" stroke-width="1.3" stroke-linecap="round"/></svg>
+                            ${seg.fecha_ejecucion}
+                        </span>
+                        ${estadoBadge}
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+                        <div style="border-right:1px solid #e5e7eb;">
+                            <div style="padding:8px 14px 4px;font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">
+                                Planificado
+                            </div>
+                            ${buildEjTable(seg.series_reps_planificadas, false)}
+                        </div>
+                        <div>
+                            <div style="padding:8px 14px 4px;font-size:10px;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:.05em;">
+                                Realizado
+                            </div>
+                            ${buildEjTable(seg.series_reps_reales, true)}
+                        </div>
+                    </div>
+                    ${seg.notas ? `<div style="padding:8px 16px;background:#f9fafb;border-top:1px solid #e5e7eb;font-size:0.75rem;color:#6b7280;"><i style="margin-right:4px;">📝</i>${seg.notas}</div>` : ''}
+                </div>`;
             });
-            historialHTML += `</tbody></table></div></div>
-                            <div class="modal-footer">
+
+            const historialHTML = `
+                <div class="modal fade" id="historialModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                        <div class="modal-content" style="border:none;box-shadow:0 20px 60px rgba(0,0,0,.15);">
+                            <div class="modal-header" style="background:var(--color-primary);border:none;padding:16px 24px;">
+                                <div>
+                                    <h5 class="modal-title" style="color:white;font-weight:700;margin:0;font-size:1rem;">
+                                        <i class="bi bi-clock-history me-2"></i>Progreso
+                                    </h5>
+                                    <div style="color:rgba(255,255,255,.8);font-size:0.85rem;margin-top:3px;">
+                                        <strong>${data.ejercicio.nombre}</strong>
+                                        ${data.ejercicio.categoria ? `<span style="margin-left:6px;background:rgba(255,255,255,.2);border-radius:99px;padding:1px 8px;font-size:0.7rem;">${data.ejercicio.categoria}</span>` : ''}
+                                        ${data.ejercicio.subcategoria ? `<span style="margin-left:4px;background:rgba(255,255,255,.15);border-radius:99px;padding:1px 8px;font-size:0.7rem;">${data.ejercicio.subcategoria}</span>` : ''}
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body" style="padding:20px 24px;">
+                                ${sesionesHTML}
+                            </div>
+                            <div class="modal-footer" style="border:none;background:#f9fafb;">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                             </div>
                         </div>
@@ -796,24 +967,37 @@ async function abrirModalActualizar(ejercicioId, fecha) {
     try {
         const resp = await fetch(`/api/ejercicio/${ejercicioId}/seguimiento?fecha=${fecha}`);
         const data = await resp.json();
-        if (!data.existe_en_fecha) {
-            document.getElementById('modal_fecha').value = fecha;
-            document.getElementById('modal_series').value = '';
-            document.getElementById('modal_rpe').value = '';
-            document.getElementById('modal_carga').value = '';
-            document.getElementById('modal_notas').value = '';
-            document.getElementById('modal_completado').checked = false;
-            if (seguimientoModal) seguimientoModal.show();
-            return;
-        }
-        const seg = data.seguimiento_en_fecha;
-        document.getElementById('modal_fecha').value = seg.fecha_ejecucion;
-        document.getElementById('modal_series').value = seg.series_reps_reales || '';
-        document.getElementById('modal_rpe').value = seg.rpe_real || '';
-        document.getElementById('modal_carga').value = seg.carga_real || '';
-        document.getElementById('modal_notas').value = seg.notas || '';
-        document.getElementById('modal_completado').checked = !!seg.completado;
+
+        const ej = data.ejercicio || {};
+        let hdr = ej.nombre ? `<strong>${ej.nombre}</strong>` : '';
+        if (ej.categoria)    hdr += ` <span style="background:rgba(255,255,255,.2);border-radius:99px;padding:1px 8px;font-size:0.7rem;">${ej.categoria}</span>`;
+        if (ej.subcategoria) hdr += ` <span style="background:rgba(255,255,255,.15);border-radius:99px;padding:1px 8px;font-size:0.7rem;">${ej.subcategoria}</span>`;
+        document.getElementById('modal_ej_header').innerHTML = hdr;
+        document.getElementById('modal_fecha').value = fecha;
+
+        // Plan rows (read-only)
+        const planStr = data.seguimiento_en_fecha?.series_reps_planificadas || '';
+        const planParts = planStr ? planStr.split(' / ') : [];
+        document.getElementById('modal_plan_body').innerHTML = planParts.map(p => {
+            const s = parseSerieStr(p);
+            return `<tr>
+                <td class="serie-num">${s.num}</td>
+                <td>${s.reps || '—'}</td>
+                <td>${s.carga ? s.carga + ' kg' : '—'}</td>
+                <td>${s.rpe || '—'}</td>
+            </tr>`;
+        }).join('') || '<tr><td colspan="4" style="color:var(--color-text-muted);padding:4px 6px;">Sin plan</td></tr>';
+
+        // Real rows (editable)
+        const realStr = data.existe_en_fecha ? (data.seguimiento_en_fecha?.series_reps_reales || '') : '';
+        const realParts = realStr ? realStr.split(' / ') : [];
+        document.getElementById('modal_series_rows').innerHTML = buildModalRows(planParts, realParts);
+
+        document.getElementById('modal_notas').value = data.seguimiento_en_fecha?.notas || '';
+        document.getElementById('modal_completado').checked = !!data.seguimiento_en_fecha?.completado;
+
         modalCtx = { ejercicioId, fecha, exerciseItem: null };
+        document.getElementById('modal_guardar').onclick = guardarSeguimientoDesdeModal;
         if (seguimientoModal) seguimientoModal.show();
     } catch (e) {
         console.error('Error abriendo actualización:', e);
@@ -823,20 +1007,15 @@ async function abrirModalActualizar(ejercicioId, fecha) {
 async function guardarSeguimientoDesdeModal() {
     const ejercicioId = modalCtx.ejercicioId;
     const fecha = modalCtx.fecha;
-    const series = document.getElementById('modal_series').value;
-    const rpe = document.getElementById('modal_rpe').value;
-    const carga = document.getElementById('modal_carga').value;
+    const series = serializarModalSeries();
     const notas = document.getElementById('modal_notas').value;
     const completado = document.getElementById('modal_completado').checked;
-
-    if (rpe && (Number(rpe) < 0 || Number(rpe) > 10)) { alert('RPE debe estar entre 0 y 10'); return; }
-    if (carga && Number(carga) < 0) { alert('La carga no puede ser negativa'); return; }
 
     try {
         const resp = await fetch(`/api/ejercicio/${ejercicioId}/registrar`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fecha_ejecucion: fecha, series_reps_reales: series, rpe_real: rpe, carga_real: carga, notas, completado })
+            body: JSON.stringify({ fecha_ejecucion: fecha, series_reps_reales: series, rpe_real: '', carga_real: '', notas, completado })
         });
         const result = await resp.json();
         if (!resp.ok || !result.success) { alert(`Error: ${result.error || 'No se pudo guardar'}`); return; }

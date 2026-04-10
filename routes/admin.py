@@ -331,68 +331,87 @@ def init_app(app):
 
             logger.info(f"Editando rutina para usuario {user_id} en fecha {fecha}")
 
-            # Eliminar rutina anterior — cascade borra bloques y ejercicios asignados
-            rutina_ant = Rutina.query.filter_by(usuario_id=user_id, fecha=fecha).first()
-            if rutina_ant:
-                logger.info(f"Eliminando rutina anterior con {len(rutina_ant.bloques)} bloques")
-                db.session.delete(rutina_ant)
-                db.session.commit()
+            # Obtener o crear rutina (conservar el mismo ID)
+            rutina = Rutina.query.filter_by(usuario_id=user_id, fecha=fecha).first()
+            if not rutina:
+                rutina = Rutina(usuario_id=user_id, fecha=fecha)
+                db.session.add(rutina)
+                db.session.flush()
+            logger.info(f"Rutina ID={rutina.id}")
 
-            # Crear nueva rutina
-            rutina = Rutina(usuario_id=user_id, fecha=fecha)
-            db.session.add(rutina)
-            db.session.commit()
-            logger.info(f"Nueva rutina creada con ID: {rutina.id}")
-
-            # Detectar todos los bloques enviados
+            # Detectar bloques enviados por el formulario (índices posicionales)
             bloque_ids = []
             for key in request.form:
                 if key.startswith("ejercicio_") and key.endswith("[]"):
-                    bloque_id = key.split("_")[1].replace("[]", "")
-                    if bloque_id not in bloque_ids:
-                        bloque_ids.append(bloque_id)
+                    bid = key.split("_")[1].replace("[]", "")
+                    if bid not in bloque_ids:
+                        bloque_ids.append(bid)
 
-            logger.info(f"Bloques detectados: {bloque_ids}")
+            # Bloques existentes ordenados por ID (posición estable)
+            bloques_existentes = sorted(rutina.bloques, key=lambda b: b.id)
 
-            for bloque_id in bloque_ids:
-                # Obtener la categoría del bloque
-                categoria_bloque = request.form.get(f"categoria_bloque_{bloque_id}")
-                if not categoria_bloque:
-                    categoria_bloque = "General"  # Categoría por defecto
+            for pos, bloque_id in enumerate(bloque_ids):
+                categoria_bloque = request.form.get(f"categoria_bloque_{bloque_id}") or "General"
 
-                logger.info(f"Creando bloque {bloque_id} con categoría: {categoria_bloque}")
-
-                bloque = Bloque(
-                    rutina_id=rutina.id,
-                    nombre_bloque=f'Bloque {bloque_id}',
-                    categoria=categoria_bloque
-                )
-                db.session.add(bloque)
-                db.session.commit()
-                logger.info(f"Bloque {bloque_id} creado con ID: {bloque.id}")
+                # UPDATE bloque existente en esa posición, o INSERT si es nuevo
+                if pos < len(bloques_existentes):
+                    bloque = bloques_existentes[pos]
+                    bloque.nombre_bloque = f'Bloque {bloque_id}'
+                    bloque.categoria = categoria_bloque
+                else:
+                    bloque = Bloque(rutina_id=rutina.id,
+                                    nombre_bloque=f'Bloque {bloque_id}',
+                                    categoria=categoria_bloque)
+                    db.session.add(bloque)
+                    db.session.flush()
 
                 ejercicios    = request.form.getlist(f"ejercicio_{bloque_id}[]")
                 series_jsons  = request.form.getlist(f"series_json_{bloque_id}[]")
                 bloques_ej    = request.form.getlist(f"bloque_ej_{bloque_id}[]")
                 categorias_ej = request.form.getlist(f"categoria_ej_{bloque_id}[]")
 
-                logger.info(f"Ejercicios para bloque {bloque_id}: {ejercicios}")
+                # Ejercicios existentes en este bloque ordenados por ID
+                ejs_existentes = sorted(bloque.ejercicios, key=lambda e: e.id)
 
-                for i in range(len(ejercicios)):
-                    nombre_ej    = ejercicios[i]
+                for i, nombre_ej in enumerate(ejercicios):
                     bloque_ej    = bloques_ej[i]    if i < len(bloques_ej)    else None
                     categoria_ej = categorias_ej[i] if i < len(categorias_ej) else None
                     sj           = series_jsons[i]  if i < len(series_jsons)  else None
 
-                    asignado = EjercicioAsignado(
-                        bloque_id=bloque.id,
-                        ejercicio_id=None,
-                        nombre_manual=nombre_ej,
-                        series_json=sj,
-                        categoria=bloque_ej,
-                        subcategoria=categoria_ej
-                    )
-                    db.session.add(asignado)
+                    if i < len(ejs_existentes):
+                        # UPDATE ejercicio existente
+                        ej = ejs_existentes[i]
+                        ej.nombre_manual = nombre_ej
+                        ej.series_json   = sj
+                        ej.categoria     = bloque_ej
+                        ej.subcategoria  = categoria_ej
+                        ej.ejercicio_id  = None
+                    else:
+                        # INSERT nuevo ejercicio
+                        ej = EjercicioAsignado(
+                            bloque_id=bloque.id,
+                            ejercicio_id=None,
+                            nombre_manual=nombre_ej,
+                            series_json=sj,
+                            categoria=bloque_ej,
+                            subcategoria=categoria_ej
+                        )
+                        db.session.add(ej)
+
+                # Eliminar ejercicios sobrantes (el formulario tiene menos que la BD)
+                for ej_extra in ejs_existentes[len(ejercicios):]:
+                    SeguimientoEjercicio.query.filter_by(
+                        ejercicio_asignado_id=ej_extra.id
+                    ).delete(synchronize_session=False)
+                    db.session.delete(ej_extra)
+
+            # Eliminar bloques sobrantes (el formulario tiene menos bloques que la BD)
+            for bloque_extra in bloques_existentes[len(bloque_ids):]:
+                for ej_extra in bloque_extra.ejercicios:
+                    SeguimientoEjercicio.query.filter_by(
+                        ejercicio_asignado_id=ej_extra.id
+                    ).delete(synchronize_session=False)
+                db.session.delete(bloque_extra)
 
             db.session.commit()
             logger.info(f"✅ Rutina actualizada exitosamente para {fecha}")
@@ -415,12 +434,13 @@ def init_app(app):
         # Buscar y eliminar la rutina
         rutina = Rutina.query.filter_by(usuario_id=user_id, fecha=fecha).first()
         if rutina:
-            # Eliminar ejercicios asignados primero
             for bloque in rutina.bloques:
-                EjercicioAsignado.query.filter_by(bloque_id=bloque.id).delete()
+                for ej in bloque.ejercicios:
+                    SeguimientoEjercicio.query.filter_by(
+                        ejercicio_asignado_id=ej.id
+                    ).delete(synchronize_session=False)
+                    db.session.delete(ej)
                 db.session.delete(bloque)
-
-            # Eliminar la rutina
             db.session.delete(rutina)
             db.session.commit()
 
