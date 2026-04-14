@@ -1,0 +1,431 @@
+{% extends 'base_admin.html' %}
+{% block title %}Calendario — CJFitness Admin{% endblock %}
+{% block page_title %}Calendario{% endblock %}
+
+{% block head_extra %}
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' />
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+<style>
+  #calendar-wrapper {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Toolbar */
+  .fc .fc-toolbar-title { font-size: var(--text-lg); font-weight: 600; }
+  .fc .fc-button {
+    background: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+    font-size: var(--text-sm) !important;
+    padding: 4px 12px !important;
+    border-radius: 6px !important;
+  }
+  .fc .fc-button:hover { opacity: 0.88; }
+  .fc .fc-button-active { opacity: 0.7 !important; }
+  .fc .fc-today-button { background: var(--color-accent) !important; border-color: var(--color-accent) !important; }
+
+  /* Eventos */
+  .fc-daygrid-event  { border-radius: 5px !important; font-size: 0.78rem !important; padding: 1px 4px !important; }
+  .fc-timegrid-event { border-radius: 5px !important; font-size: 0.78rem !important; }
+  .fc-event-title    { font-weight: 500; }
+
+  /* Cabecera columnas */
+  .fc .fc-col-header-cell {
+    background: var(--color-bg);
+    padding: 6px 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted, #6c757d);
+  }
+
+  /* Time grid: etiquetas de hora */
+  .fc .fc-timegrid-slot-label-cushion {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--color-text-muted, #6c757d);
+    padding-right: 8px;
+  }
+  /* Línea de hora actual */
+  .fc .fc-timegrid-now-indicator-line {
+    border-color: var(--color-primary) !important;
+    border-width: 2px !important;
+  }
+  .fc .fc-timegrid-now-indicator-arrow {
+    border-top-color: var(--color-primary) !important;
+    border-bottom-color: var(--color-primary) !important;
+  }
+  /* Separadores de hora completa vs media hora */
+  .fc .fc-timegrid-slot-minor { border-top-style: dotted !important; border-color: #e9ecef !important; }
+  .fc .fc-timegrid-slot       { height: 40px; }
+
+  /* Celda "today" en week/day */
+  .fc .fc-timegrid-col.fc-day-today { background: rgba(var(--color-primary-rgb, 55,136,216), 0.04) !important; }
+  /* all-day row */
+  .fc .fc-daygrid-body { font-size: 0.82rem; }
+
+  /* Modal evento */
+  #modalEvento .modal-header { background: var(--color-primary); color: #fff; }
+  #modalEvento .modal-header .btn-close { filter: invert(1); }
+  .color-swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff; cursor: pointer; box-shadow: 0 0 0 2px #ccc; }
+  .color-swatch.selected { box-shadow: 0 0 0 3px var(--color-primary); }
+  #colorInput { width: 38px; height: 38px; padding: 0; border: none; cursor: pointer; background: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header" style="margin-bottom: var(--space-4);">
+  <div>
+    <h1 class="page-title">Calendario</h1>
+    <p class="page-subtitle">Entrenos asignados y eventos personales</p>
+  </div>
+  <button class="btn btn-primary" onclick="abrirModalCrear(null)">
+    <i class="bi bi-plus-lg me-1"></i> Nuevo evento
+  </button>
+</div>
+
+<div id="calendar-wrapper">
+  <div id="calendar"></div>
+</div>
+
+<!-- ── MODAL EVENTO ──────────────────────────────────────────────────── -->
+<div class="modal fade" id="modalEvento" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalEventoTitulo">Nuevo evento</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="eventoId">
+
+        <div class="mb-3">
+          <label class="form-label">Título *</label>
+          <input type="text" class="form-control" id="eventoTitulo" placeholder="Título del evento" required>
+        </div>
+
+        <div class="mb-3 form-check">
+          <input type="checkbox" class="form-check-input" id="eventoTodoElDia" onchange="toggleTodoElDia(this)">
+          <label class="form-check-label" for="eventoTodoElDia">Todo el día</label>
+        </div>
+
+        <div class="row mb-3" id="camposHora">
+          <div class="col">
+            <label class="form-label">Inicio</label>
+            <input type="datetime-local" class="form-control" id="eventoInicio">
+          </div>
+          <div class="col">
+            <label class="form-label">Fin</label>
+            <input type="datetime-local" class="form-control" id="eventoFin">
+          </div>
+        </div>
+
+        <div class="row mb-3" id="camposFecha" style="display:none !important;">
+          <div class="col">
+            <label class="form-label">Fecha inicio</label>
+            <input type="date" class="form-control" id="eventoFechaInicio">
+          </div>
+          <div class="col">
+            <label class="form-label">Fecha fin</label>
+            <input type="date" class="form-control" id="eventoFechaFin">
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Descripción</label>
+          <textarea class="form-control" id="eventoDescripcion" rows="2" placeholder="Opcional"></textarea>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label">Color</label>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <span class="color-swatch" style="background:#3788d8;" data-color="#3788d8" onclick="seleccionarColor(this)"></span>
+            <span class="color-swatch" style="background:#e74c3c;" data-color="#e74c3c" onclick="seleccionarColor(this)"></span>
+            <span class="color-swatch" style="background:#f39c12;" data-color="#f39c12" onclick="seleccionarColor(this)"></span>
+            <span class="color-swatch" style="background:#8e44ad;" data-color="#8e44ad" onclick="seleccionarColor(this)"></span>
+            <span class="color-swatch" style="background:#16a085;" data-color="#16a085" onclick="seleccionarColor(this)"></span>
+            <span class="color-swatch" style="background:#2c3e50;" data-color="#2c3e50" onclick="seleccionarColor(this)"></span>
+            <input type="color" id="colorInput" value="#3788d8" title="Color personalizado"
+                   oninput="eventoColorActual = this.value; document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected'));">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content:space-between;">
+        <button type="button" class="btn btn-danger" id="btnEliminarEvento"
+                style="display:none;" onclick="eliminarEvento()">
+          <i class="bi bi-trash"></i> Eliminar
+        </button>
+        <div>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-success" onclick="guardarEvento()">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+let calendar;
+let eventoColorActual = '#3788d8';
+
+document.addEventListener('DOMContentLoaded', function() {
+  const el = document.getElementById('calendar');
+  calendar = new FullCalendar.Calendar(el, {
+    locale: 'es',
+    initialView: 'dayGridMonth',
+    height: 'auto',
+    headerToolbar: {
+      left:   'prev,next today',
+      center: 'title',
+      right:  'dayGridMonth,timeGridWeek,timeGridDay'
+    },
+    editable: true,
+
+    // ── Vistas semana / día ─────────────────────────────────────────────────
+    slotMinTime: '06:00:00',
+    slotMaxTime: '24:00:00',
+    slotDuration: '00:30:00',
+    slotLabelInterval: '01:00',
+    slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+    scrollTime: '08:00:00',
+    nowIndicator: true,
+    allDayText: 'Todo el día',
+    views: {
+      timeGridWeek: {
+        dayHeaderFormat: { weekday: 'short', day: 'numeric', month: 'numeric' },
+      },
+      timeGridDay: {
+        dayHeaderFormat: { weekday: 'long', day: 'numeric', month: 'long' },
+      },
+    },
+
+    eventSources: [
+      {
+        url:    '/admin/api/rutinas-calendario',
+        color:  '#28a745',
+        textColor: 'white',
+        editable: false,
+      },
+      {
+        url:   '/admin/api/eventos',
+        color: '#3788d8',
+        textColor: 'white',
+      }
+    ],
+    dateClick: function(info) {
+      abrirModalCrear(info.dateStr);
+    },
+    eventClick: function(info) {
+      const props = info.event.extendedProps;
+      if (props.tipo === 'rutina') {
+        window.location.href = '/admin/ver_rutinas_usuario/' + props.usuario_id;
+      } else {
+        abrirModalEditar(info.event);
+      }
+    },
+    eventDrop: function(info) {
+      guardarCambioFecha(info.event, info.revert);
+    },
+    eventResize: function(info) {
+      guardarCambioFecha(info.event, info.revert);
+    },
+  });
+  calendar.render();
+});
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function fmtDatetimeLocal(dt) {
+  if (!dt) return '';
+  const d = new Date(dt);
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function fmtDate(dt) {
+  if (!dt) return '';
+  const d = new Date(dt);
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function toggleTodoElDia(cb) {
+  const camposHora  = document.getElementById('camposHora');
+  const camposFecha = document.getElementById('camposFecha');
+  if (cb.checked) {
+    camposHora.style.setProperty('display', 'none', 'important');
+    camposFecha.style.removeProperty('display');
+  } else {
+    camposFecha.style.setProperty('display', 'none', 'important');
+    camposHora.style.removeProperty('display');
+  }
+}
+
+function seleccionarColor(el) {
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  eventoColorActual = el.dataset.color;
+  document.getElementById('colorInput').value = eventoColorActual;
+}
+
+function resetModal() {
+  document.getElementById('eventoId').value = '';
+  document.getElementById('eventoTitulo').value = '';
+  document.getElementById('eventoDescripcion').value = '';
+  document.getElementById('eventoTodoElDia').checked = false;
+  document.getElementById('eventoInicio').value = '';
+  document.getElementById('eventoFin').value = '';
+  document.getElementById('eventoFechaInicio').value = '';
+  document.getElementById('eventoFechaFin').value = '';
+  document.getElementById('camposHora').style.removeProperty('display');
+  document.getElementById('camposFecha').style.setProperty('display', 'none', 'important');
+  eventoColorActual = '#3788d8';
+  document.getElementById('colorInput').value = eventoColorActual;
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+  document.querySelector(`.color-swatch[data-color="#3788d8"]`).classList.add('selected');
+  document.getElementById('btnEliminarEvento').style.display = 'none';
+}
+
+// ── Abrir modal crear ─────────────────────────────────────────────────────────
+
+function abrirModalCrear(dateStr) {
+  resetModal();
+  document.getElementById('modalEventoTitulo').textContent = 'Nuevo evento';
+  if (dateStr) {
+    // Determine if allDay or datetime
+    if (dateStr.includes('T')) {
+      document.getElementById('eventoInicio').value = dateStr.slice(0, 16);
+    } else {
+      document.getElementById('eventoFechaInicio').value = dateStr;
+      document.getElementById('eventoTodoElDia').checked = true;
+      toggleTodoElDia(document.getElementById('eventoTodoElDia'));
+    }
+  }
+  new bootstrap.Modal(document.getElementById('modalEvento')).show();
+}
+
+// ── Abrir modal editar ────────────────────────────────────────────────────────
+
+function abrirModalEditar(event) {
+  resetModal();
+  document.getElementById('modalEventoTitulo').textContent = 'Editar evento';
+  document.getElementById('eventoId').value = event.extendedProps.db_id;
+  document.getElementById('eventoTitulo').value = event.title;
+  document.getElementById('eventoDescripcion').value = event.extendedProps.descripcion || '';
+  document.getElementById('btnEliminarEvento').style.display = 'inline-block';
+
+  const allDay = event.allDay;
+  document.getElementById('eventoTodoElDia').checked = allDay;
+  toggleTodoElDia(document.getElementById('eventoTodoElDia'));
+
+  if (allDay) {
+    document.getElementById('eventoFechaInicio').value = fmtDate(event.start);
+    document.getElementById('eventoFechaFin').value   = event.end ? fmtDate(new Date(event.end - 86400000)) : '';
+  } else {
+    document.getElementById('eventoInicio').value = fmtDatetimeLocal(event.start);
+    document.getElementById('eventoFin').value    = event.end ? fmtDatetimeLocal(event.end) : '';
+  }
+
+  eventoColorActual = event.backgroundColor || '#3788d8';
+  document.getElementById('colorInput').value = eventoColorActual;
+  const swatch = document.querySelector(`.color-swatch[data-color="${eventoColorActual}"]`);
+  if (swatch) swatch.classList.add('selected');
+
+  new bootstrap.Modal(document.getElementById('modalEvento')).show();
+}
+
+// ── Guardar evento ────────────────────────────────────────────────────────────
+
+async function guardarEvento() {
+  const titulo = document.getElementById('eventoTitulo').value.trim();
+  if (!titulo) { alert('El título es obligatorio'); return; }
+
+  const id         = document.getElementById('eventoId').value;
+  const todoElDia  = document.getElementById('eventoTodoElDia').checked;
+  const descripcion = document.getElementById('eventoDescripcion').value.trim();
+
+  let fechaInicio, fechaFin;
+  if (todoElDia) {
+    fechaInicio = document.getElementById('eventoFechaInicio').value;
+    fechaFin    = document.getElementById('eventoFechaFin').value || null;
+    if (!fechaInicio) { alert('Indica la fecha de inicio'); return; }
+    // For all-day, append T00:00:00 so server parses as datetime
+    fechaInicio = fechaInicio + 'T00:00:00';
+    if (fechaFin) fechaFin = fechaFin + 'T00:00:00';
+  } else {
+    fechaInicio = document.getElementById('eventoInicio').value;
+    fechaFin    = document.getElementById('eventoFin').value || null;
+    if (!fechaInicio) { alert('Indica la fecha/hora de inicio'); return; }
+  }
+
+  const payload = { titulo, descripcion, fecha_inicio: fechaInicio, fecha_fin: fechaFin,
+                    todo_el_dia: todoElDia, color: eventoColorActual };
+
+  const url    = id ? `/admin/api/eventos/${id}` : '/admin/api/eventos';
+  const method = id ? 'PUT' : 'POST';
+
+  const resp = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (resp.ok) {
+    bootstrap.Modal.getInstance(document.getElementById('modalEvento')).hide();
+    calendar.refetchEvents();
+  } else {
+    const data = await resp.json();
+    alert('Error: ' + (data.error || resp.status));
+  }
+}
+
+// ── Eliminar evento ───────────────────────────────────────────────────────────
+
+async function eliminarEvento() {
+  const id = document.getElementById('eventoId').value;
+  if (!id) return;
+  if (!confirm('¿Eliminar este evento?')) return;
+
+  const resp = await fetch(`/admin/api/eventos/${id}`, { method: 'DELETE' });
+  if (resp.ok) {
+    bootstrap.Modal.getInstance(document.getElementById('modalEvento')).hide();
+    calendar.refetchEvents();
+  } else {
+    alert('Error al eliminar');
+  }
+}
+
+// ── Drag & drop ───────────────────────────────────────────────────────────────
+
+async function guardarCambioFecha(event, revertFn) {
+  const id = event.extendedProps.db_id;
+  if (!id) return;
+
+  const fechaInicio = event.allDay
+    ? event.start.toISOString().slice(0, 10) + 'T00:00:00'
+    : event.start.toISOString().replace('Z', '');
+
+  const fechaFin = event.end
+    ? (event.allDay
+        ? event.end.toISOString().slice(0, 10) + 'T00:00:00'
+        : event.end.toISOString().replace('Z', ''))
+    : null;
+
+  const resp = await fetch(`/admin/api/eventos/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fecha_inicio: fechaInicio, fecha_fin: fechaFin }),
+  });
+
+  if (!resp.ok) {
+    alert('Error al mover el evento');
+    if (revertFn) revertFn();
+  }
+}
+</script>
+{% endblock %}

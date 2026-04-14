@@ -7,7 +7,7 @@ from sqlalchemy import func
 
 
 def init_app(app):
-    from models import db, Usuario, Ejercicio, Rutina, Bloque, EjercicioAsignado, Plan, Pago, ConfiguracionPagoMensual, SeguimientoEjercicio, FeedbackSesion, EjercicioCompleto
+    from models import db, Usuario, Ejercicio, Rutina, Bloque, EjercicioAsignado, Plan, Pago, ConfiguracionPagoMensual, SeguimientoEjercicio, FeedbackSesion, EjercicioCompleto, EventoAdmin
     from utils import log_activity, log_error, handle_db_error, admin_required
     from payment_service import payment_service
 
@@ -1489,3 +1489,140 @@ def init_app(app):
             log_error(e, session.get('user_id'))
             flash(f'Error al copiar la semana: {str(e)}', 'danger')
             return redirect(url_for('calendario_entrenamientos_usuario', user_id=user_id))
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # CALENDARIO ADMIN
+    # ─────────────────────────────────────────────────────────────────────────
+
+    @app.route('/admin/calendario')
+    @admin_required
+    def admin_calendario():
+        return render_template('admin_calendario.html')
+
+    @app.route('/admin/api/eventos')
+    @admin_required
+    def api_eventos_admin():
+        start_str = request.args.get('start', '')
+        end_str   = request.args.get('end', '')
+        try:
+            start = datetime.fromisoformat(start_str[:10])
+            end   = datetime.fromisoformat(end_str[:10])
+        except Exception:
+            return jsonify([])
+
+        eventos = EventoAdmin.query.filter(
+            EventoAdmin.fecha_inicio >= start,
+            EventoAdmin.fecha_inicio <  end
+        ).all()
+
+        result = []
+        for e in eventos:
+            item = {
+                'id':    f'e-{e.id}',
+                'title': e.titulo,
+                'color': e.color,
+                'extendedProps': {
+                    'tipo':        'evento',
+                    'descripcion': e.descripcion or '',
+                    'db_id':       e.id,
+                }
+            }
+            if e.todo_el_dia:
+                item['start']  = e.fecha_inicio.strftime('%Y-%m-%d')
+                item['allDay'] = True
+                if e.fecha_fin:
+                    item['end'] = e.fecha_fin.strftime('%Y-%m-%d')
+            else:
+                item['start'] = e.fecha_inicio.isoformat()
+                if e.fecha_fin:
+                    item['end'] = e.fecha_fin.isoformat()
+            result.append(item)
+        return jsonify(result)
+
+    @app.route('/admin/api/rutinas-calendario')
+    @admin_required
+    def api_rutinas_calendario():
+        start_str = request.args.get('start', '')
+        end_str   = request.args.get('end', '')
+        try:
+            start = datetime.fromisoformat(start_str[:10]).date()
+            end   = datetime.fromisoformat(end_str[:10]).date()
+        except Exception:
+            return jsonify([])
+
+        rutinas = (Rutina.query
+                   .join(Usuario, Rutina.usuario_id == Usuario.id)
+                   .filter(Rutina.fecha >= start, Rutina.fecha < end)
+                   .add_columns(Usuario.nombre, Usuario.apellidos)
+                   .all())
+
+        result = []
+        for rutina, nombre, apellidos in rutinas:
+            result.append({
+                'id':      f'r-{rutina.id}',
+                'title':   f'{nombre} {apellidos}',
+                'start':   rutina.fecha.isoformat(),
+                'allDay':  True,
+                'color':   '#28a745',
+                'editable': False,
+                'extendedProps': {
+                    'tipo':       'rutina',
+                    'rutina_id':  rutina.id,
+                    'usuario_id': rutina.usuario_id,
+                }
+            })
+        return jsonify(result)
+
+    @app.route('/admin/api/eventos', methods=['POST'])
+    @admin_required
+    def api_crear_evento_admin():
+        data = request.get_json() or {}
+        try:
+            fecha_inicio = datetime.fromisoformat(data['fecha_inicio'])
+            fecha_fin    = datetime.fromisoformat(data['fecha_fin']) if data.get('fecha_fin') else None
+            evento = EventoAdmin(
+                titulo       = data.get('titulo', 'Sin título').strip(),
+                descripcion  = data.get('descripcion', '').strip() or None,
+                fecha_inicio = fecha_inicio,
+                fecha_fin    = fecha_fin,
+                todo_el_dia  = bool(data.get('todo_el_dia', False)),
+                color        = data.get('color', '#3788d8'),
+            )
+            db.session.add(evento)
+            db.session.commit()
+            return jsonify({'ok': True, 'id': evento.id}), 201
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'ok': False, 'error': str(e)}), 400
+
+    @app.route('/admin/api/eventos/<int:evento_id>', methods=['PUT'])
+    @admin_required
+    def api_editar_evento_admin(evento_id):
+        evento = EventoAdmin.query.get_or_404(evento_id)
+        data   = request.get_json() or {}
+        try:
+            if 'titulo'      in data: evento.titulo      = data['titulo'].strip()
+            if 'descripcion' in data: evento.descripcion = data['descripcion'].strip() or None
+            if 'color'       in data: evento.color       = data['color']
+            if 'todo_el_dia' in data: evento.todo_el_dia = bool(data['todo_el_dia'])
+            if 'fecha_inicio' in data:
+                evento.fecha_inicio = datetime.fromisoformat(data['fecha_inicio'])
+            if 'fecha_fin' in data:
+                evento.fecha_fin = datetime.fromisoformat(data['fecha_fin']) if data['fecha_fin'] else None
+            db.session.commit()
+            return jsonify({'ok': True})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'ok': False, 'error': str(e)}), 400
+
+    @app.route('/admin/api/eventos/<int:evento_id>', methods=['DELETE'])
+    @admin_required
+    def api_borrar_evento_admin(evento_id):
+        evento = EventoAdmin.query.get_or_404(evento_id)
+        try:
+            db.session.delete(evento)
+            db.session.commit()
+            return '', 204
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'ok': False, 'error': str(e)}), 400

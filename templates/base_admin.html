@@ -75,6 +75,12 @@
           Estadísticas
         </a>
 
+        <a href="{{ url_for('admin_calendario') }}"
+           class="sidebar-link {% if request.endpoint == 'admin_calendario' %}active{% endif %}">
+          <i class="bi bi-calendar3"></i>
+          Calendario
+        </a>
+
         <span class="sidebar-section-label">Finanzas</span>
 
         <a href="{{ url_for('admin_pagos') }}"

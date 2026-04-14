@@ -473,3 +473,17 @@ class EjercicioCompleto(db.Model):
 
     def __repr__(self):
         return f'<EjercicioCompleto "{self.nombre}">'
+
+class EventoAdmin(db.Model):
+    __tablename__ = 'eventos_admin'
+    id           = db.Column(db.Integer, primary_key=True)
+    titulo       = db.Column(db.String(200), nullable=False)
+    descripcion  = db.Column(db.Text, nullable=True)
+    fecha_inicio = db.Column(db.DateTime, nullable=False)
+    fecha_fin    = db.Column(db.DateTime, nullable=True)
+    todo_el_dia  = db.Column(db.Boolean, default=False)
+    color        = db.Column(db.String(20), default='#3788d8')
+    creado_en    = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<EventoAdmin "{self.titulo}">'

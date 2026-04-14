@@ -27,7 +27,7 @@ from models import (
     PreferenciaAlimento, ValoracionComida,
     ComidaCompleta, PerfilNutricional, Alimento, RecomendacionDiaria,
     BloqueTaxonomia, CategoriaTaxonomia, SubcategoriaTaxonomia,
-    CaracteristicaTipo, CaracteristicaValor, EjercicioCompleto
+    CaracteristicaTipo, CaracteristicaValor, EjercicioCompleto, EventoAdmin
 )
 
 # Importar payment service
