@@ -21,14 +21,15 @@ function parseSerieStr(parte) {
 }
 
 /**
- * Genera opciones <option> para selector de carga (0–100 kg en pasos de 0.5).
+ * Genera opciones <option> para selector de carga (0–200 kg en pasos de 0.25).
  * @param {string|number} selected - valor actualmente seleccionado
  */
 function buildCargaOpts(selected) {
+    const selNum = parseFloat(selected);
     let html = '<option value="">— kg</option>';
-    for (let i = 0; i <= 200; i++) {
-        const v = i / 2;
-        const sel = String(selected) === String(v) ? 'selected' : '';
+    for (let i = 0; i <= 800; i++) {
+        const v = i / 4;
+        const sel = (!isNaN(selNum) && selNum === v) ? 'selected' : '';
         html += `<option value="${v}" ${sel}>${v} kg</option>`;
     }
     return html;

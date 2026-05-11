@@ -171,8 +171,8 @@
                 data-plan-carga="{{ s.carga or '' }}"
                 style="font-size:var(--text-xs);">
           <option value="">{{ s.carga or '—' }}</option>
-          {% for v in range(0, 101) %}
-          <option value="{{ v / 2 }}" {% if s.carga and (s.carga | string) == ((v / 2) | string) %}selected{% endif %}>{{ v / 2 }} kg</option>
+          {% for v in range(0, 801) %}
+          <option value="{{ v / 4 }}" {% if s.carga and (s.carga | float) == (v / 4) %}selected{% endif %}>{{ v / 4 }} kg</option>
           {% endfor %}
         </select>
         <button type="button" class="btn btn-sm" style="font-size:10px; padding:2px 6px; background:var(--color-primary-light); color:var(--color-primary); border:none; border-radius:var(--radius-sm);"
@@ -200,8 +200,8 @@
         <label class="form-label" style="font-size:var(--text-xs);">Carga Real</label>
         <select class="form-control" id="carga_real_{{ eid }}">
           <option value="">{{ ejercicio.carga or '—' }}</option>
-          {% for v in range(0, 101) %}
-          <option value="{{ v / 2 }}">{{ v / 2 }} kg</option>
+          {% for v in range(0, 801) %}
+          <option value="{{ v / 4 }}">{{ v / 4 }} kg</option>
           {% endfor %}
         </select>
       </div>
@@ -810,15 +810,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 // parseSerieStr() cargado desde static/js/utils_fitness.js
 
-function buildModalCargaOpts(selected) {
-    let html = '<option value="">— kg</option>';
-    for (let i = 0; i <= 100; i++) {
-        const v = i / 2;
-        const sel = String(selected) === String(v) ? 'selected' : '';
-        html += `<option value="${v}" ${sel}>${v} kg</option>`;
-    }
-    return html;
-}
+// buildModalCargaOpts → alias de buildCargaOpts (utils_fitness.js)
+const buildModalCargaOpts = buildCargaOpts;
 
 function serializarModalSeries() {
     const rows = document.querySelectorAll('.serie-row-modal');
