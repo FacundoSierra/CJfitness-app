@@ -15,7 +15,7 @@ def init_app(app):
     @login_required
     @handle_db_error
     def dashboard():
-        user = Usuario.query.get(session['user_id'])
+        user = db.session.get(Usuario, session['user_id'])
         if user:
             from datetime import date as _date
             tiene_rutina = Rutina.query.filter_by(usuario_id=user.id)\
@@ -31,7 +31,7 @@ def init_app(app):
     @handle_db_error
     def mis_rutinas():
         usuario_id = session['user_id']
-        usuario = Usuario.query.get(usuario_id)
+        usuario = db.session.get(Usuario, usuario_id)
 
         # Obtener parámetros de vista
         vista = request.args.get('vista', 'semanal')  # semanal, mensual, diaria
@@ -48,10 +48,15 @@ def init_app(app):
 
         datos_vista = None
 
-        # Pre-cargar material de ejercicios desde taxonomía nueva (lookup por nombre)
+        # Pre-cargar material y video_url desde taxonomía nueva (lookup por nombre)
+        ejercicios_completos = EjercicioCompleto.query.all()
         material_lookup = {
             e.nombre.lower(): e.material
-            for e in EjercicioCompleto.query.filter(EjercicioCompleto.material != None).all()
+            for e in ejercicios_completos if e.material
+        }
+        video_lookup = {
+            e.nombre.lower(): e.video_url
+            for e in ejercicios_completos if e.video_url
         }
 
         if vista == 'diaria':
@@ -129,7 +134,8 @@ def init_app(app):
             datos_vista=datos_vista,
             vista_actual=vista,
             fecha_actual=base,
-            material_lookup=material_lookup
+            material_lookup=material_lookup,
+            video_lookup=video_lookup,
         )
 
     @app.route('/exercises')
@@ -170,14 +176,14 @@ def init_app(app):
     @login_required
     @handle_db_error
     def sobre_mi():
-        user = Usuario.query.get(session['user_id'])
+        user = db.session.get(Usuario, session['user_id'])
         return render_template('usuario_sobre_mi.html', user=user)
 
     @app.route('/my_info')
     @login_required
     @handle_db_error
     def my_info():
-        user = Usuario.query.get(session['user_id'])
+        user = db.session.get(Usuario, session['user_id'])
         if user:
             return render_template('usuario_my_info.html', user=user)
         return redirect(url_for('dashboard'))
@@ -186,7 +192,7 @@ def init_app(app):
     @login_required
     @handle_db_error
     def update_info():
-        user = Usuario.query.get(session['user_id'])
+        user = db.session.get(Usuario, session['user_id'])
         if user:
             user.nombre = request.form.get('nombre', user.nombre)
             user.apellidos = request.form.get('apellidos', user.apellidos)
@@ -214,7 +220,7 @@ def init_app(app):
     @handle_db_error
     def change_password():
         if request.method == 'POST':
-            user = Usuario.query.get(session['user_id'])
+            user = db.session.get(Usuario, session['user_id'])
             if user:
                 current_password = request.form['current_password']
                 new_password = request.form['new_password']
@@ -246,14 +252,14 @@ def init_app(app):
 
             return redirect(url_for('login'))
 
-        user = Usuario.query.get(session['user_id'])
+        user = db.session.get(Usuario, session['user_id'])
         return render_template('usuario_change_password.html', user=user)
 
     @app.route('/soporte_usuario')
     @login_required
     @handle_db_error
     def soporte_usuario():
-        user = Usuario.query.get(session['user_id'])
+        user = db.session.get(Usuario, session['user_id'])
         return render_template('usuario_soporte.html', user=user)
 
     @app.route('/sobre_app')
@@ -280,7 +286,7 @@ def init_app(app):
     def pagos_usuario():
         """Página de historial de pagos del usuario"""
         try:
-            usuario = Usuario.query.get(session['user_id'])
+            usuario = db.session.get(Usuario, session['user_id'])
             pagos = Pago.query.filter_by(usuario_id=session['user_id']).order_by(Pago.fecha_pago.desc()).all()
             config_pago = ConfiguracionPagoMensual.query.filter_by(
                 usuario_id=session['user_id'], activo=True

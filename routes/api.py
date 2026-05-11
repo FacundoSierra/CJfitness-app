@@ -524,7 +524,7 @@ def init_app(app):
     @login_required
     def api_pagos_usuario(usuario_id):
         """API para obtener pagos de un usuario específico"""
-        if session.get('user_rol') != 'admin' and session.get('user_id') != usuario_id:
+        if session.get('role') != 'admin' and session.get('user_id') != usuario_id:
             return jsonify({'success': False, 'error': 'Acceso denegado'})
 
         pagos = payment_service.obtener_pagos_usuario(usuario_id)
@@ -574,12 +574,12 @@ def init_app(app):
             data = request.get_json()
 
             # Obtener el ejercicio asignado
-            ejercicio_asignado = EjercicioAsignado.query.get(ejercicio_asignado_id)
+            ejercicio_asignado = db.session.get(EjercicioAsignado, ejercicio_asignado_id)
             if not ejercicio_asignado:
                 return jsonify({'error': 'Ejercicio no encontrado'}), 404
 
             # Verificar que el ejercicio pertenece al usuario
-            rutina = Rutina.query.get(ejercicio_asignado.bloque.rutina_id)
+            rutina = db.session.get(Rutina, ejercicio_asignado.bloque.rutina_id)
             if not rutina:
                 return jsonify({'error': 'Rutina no encontrada'}), 404
             if rutina.usuario_id != usuario_id:
@@ -740,12 +740,12 @@ def init_app(app):
             fecha_str = request.args.get('fecha')
 
             # Obtener el ejercicio asignado
-            ejercicio_asignado = EjercicioAsignado.query.get(ejercicio_asignado_id)
+            ejercicio_asignado = db.session.get(EjercicioAsignado, ejercicio_asignado_id)
             if not ejercicio_asignado:
                 return jsonify({'error': 'Ejercicio no encontrado'}), 404
 
             # Verificar que el ejercicio pertenece al usuario
-            rutina = Rutina.query.get(ejercicio_asignado.bloque.rutina_id)
+            rutina = db.session.get(Rutina, ejercicio_asignado.bloque.rutina_id)
             if not rutina:
                 return jsonify({'error': 'Rutina no encontrada'}), 404
             if rutina.usuario_id != usuario_id:
@@ -822,7 +822,7 @@ def init_app(app):
         """Obtener el progreso de un usuario específico (solo admin)"""
         try:
             # Obtener usuario
-            usuario = Usuario.query.get(user_id)
+            usuario = db.session.get(Usuario, user_id)
             if not usuario:
                 return jsonify({'error': 'Usuario no encontrado'}), 404
 

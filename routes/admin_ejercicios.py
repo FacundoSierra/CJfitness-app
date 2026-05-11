@@ -243,6 +243,7 @@ def init_app(app):
         subcategoria_id = request.form.get('subcategoria_id', type=int) or None
         material      = request.form.get('material', '').strip() or None
         otras         = request.form.get('otras_caracteristicas', '').strip() or None
+        video_url     = request.form.get('video_url', '').strip() or None
 
         if not nombre or not bloque_id:
             flash('El nombre y el bloque son obligatorios.', 'danger')
@@ -264,6 +265,7 @@ def init_app(app):
             caracteristicas_json=caracteristicas or None,
             material=material,
             otras_caracteristicas=otras,
+            video_url=video_url,
         )
         db.session.add(ejercicio)
         db.session.commit()
@@ -350,8 +352,9 @@ def init_app(app):
         ejercicio.bloque_id       = bloque_id
         ejercicio.categoria_id    = request.form.get('categoria_id', type=int) or None
         ejercicio.subcategoria_id = request.form.get('subcategoria_id', type=int) or None
-        ejercicio.material        = request.form.get('material', '').strip() or None
+        ejercicio.material              = request.form.get('material', '').strip() or None
         ejercicio.otras_caracteristicas = request.form.get('otras_caracteristicas', '').strip() or None
+        ejercicio.video_url             = request.form.get('video_url', '').strip() or None
         ejercicio.caracteristicas_json  = caracteristicas or None
         db.session.commit()
         flash(f'Ejercicio "{nombre}" actualizado.', 'success')

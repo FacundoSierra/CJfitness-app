@@ -547,7 +547,7 @@ def init_app(app):
     @admin_required
     @handle_db_error
     def borrar_usuario(user_id):
-        user = Usuario.query.get_or_404(user_id)
+        user = db.get_or_404(Usuario, user_id)
         try:
             db.session.delete(user)
             db.session.commit()
@@ -561,7 +561,7 @@ def init_app(app):
     @admin_required
     @handle_db_error
     def editar_usuario(user_id):
-        user = Usuario.query.get_or_404(user_id)
+        user = db.get_or_404(Usuario, user_id)
         if request.method == 'POST':
             nombre = request.form.get('nombre', '').strip()
             apellidos = request.form.get('apellidos', '').strip()
@@ -601,7 +601,7 @@ def init_app(app):
                 return redirect(url_for('admin_pagos'))
 
             # Verificar que el usuario existe
-            usuario = Usuario.query.get(usuario_id)
+            usuario = db.session.get(Usuario, usuario_id)
             if not usuario:
                 flash('Usuario no encontrado', 'danger')
                 return redirect(url_for('admin_pagos'))
@@ -644,7 +644,7 @@ def init_app(app):
     @handle_db_error
     def admin_pagos_eliminar(pago_id):
         try:
-            pago = Pago.query.get_or_404(pago_id)
+            pago = db.get_or_404(Pago, pago_id)
 
             # Guardar información para el log
             info_pago = f"ID {pago_id}, Usuario: {pago.usuario.nombre}, Cantidad: €{pago.cantidad}, Estado: {pago.estado}"
@@ -670,7 +670,7 @@ def init_app(app):
     @handle_db_error
     def admin_pagos_editar(pago_id):
         try:
-            pago = Pago.query.get_or_404(pago_id)
+            pago = db.get_or_404(Pago, pago_id)
 
             # Obtener datos del formulario
             nuevo_estado = request.form['estado']
@@ -778,7 +778,7 @@ def init_app(app):
     @admin_required
     @handle_db_error
     def admin_ejercicios_eliminar(e_id):
-        ejercicio = Ejercicio.query.get_or_404(e_id)
+        ejercicio = db.get_or_404(Ejercicio, e_id)
         db.session.delete(ejercicio)
         db.session.commit()
         flash('Ejercicio eliminado', 'success')
@@ -788,7 +788,7 @@ def init_app(app):
     @admin_required
     @handle_db_error
     def admin_ejercicios_editar(e_id):
-        ejercicio = Ejercicio.query.get_or_404(e_id)
+        ejercicio = db.get_or_404(Ejercicio, e_id)
         ejercicio.nombre = request.form['nombre']
         ejercicio.categoria = request.form['categoria']
         ejercicio.subcategoria = request.form['subcategoria']
@@ -867,7 +867,7 @@ def init_app(app):
                     return redirect(url_for('admin_registrar_pago'))
 
                 # Verificar que el usuario existe
-                usuario = Usuario.query.get(usuario_id)
+                usuario = db.session.get(Usuario, usuario_id)
                 if not usuario:
                     flash('Usuario no encontrado', 'danger')
                     return redirect(url_for('admin_registrar_pago'))
@@ -998,7 +998,7 @@ def init_app(app):
                     return redirect(url_for('admin_configurar_pago_mensual'))
 
                 # Verificar que el usuario existe
-                usuario = Usuario.query.get(usuario_id)
+                usuario = db.session.get(Usuario, usuario_id)
                 if not usuario:
                     flash('Usuario no encontrado', 'danger')
                     return redirect(url_for('admin_configurar_pago_mensual'))
@@ -1068,7 +1068,7 @@ def init_app(app):
             resultado = payment_service.cancelar_pago_mensual(usuario_id)
 
             if resultado['success']:
-                usuario = Usuario.query.get(usuario_id)
+                usuario = db.session.get(Usuario, usuario_id)
                 log_activity(f"Pago mensual cancelado para {usuario.nombre}", session['user_id'])
                 return jsonify({
                     'success': True,
@@ -1124,7 +1124,7 @@ def init_app(app):
     @handle_db_error
     def admin_progresos_usuario(user_id):
         """Vista de progresos por usuario con modos: diaria, semanal, mensual."""
-        usuario = Usuario.query.get(user_id)
+        usuario = db.session.get(Usuario, user_id)
         if not usuario:
             flash('Usuario no encontrado', 'danger')
             return redirect(url_for('admin_progresos'))
@@ -1196,7 +1196,7 @@ def init_app(app):
     @handle_db_error
     def admin_eliminar_progreso(seg_id):
         try:
-            seg = SeguimientoEjercicio.query.get(seg_id)
+            seg = db.session.get(SeguimientoEjercicio, seg_id)
             if not seg:
                 flash('Seguimiento no encontrado', 'danger')
                 next_url = request.args.get('next') or request.form.get('next')
@@ -1216,7 +1216,7 @@ def init_app(app):
     @handle_db_error
     def admin_actualizar_progreso(seg_id):
         try:
-            seg = SeguimientoEjercicio.query.get(seg_id)
+            seg = db.session.get(SeguimientoEjercicio, seg_id)
             if not seg:
                 flash('Seguimiento no encontrado', 'danger')
                 next_url = request.args.get('next') or request.form.get('next')
@@ -1252,7 +1252,7 @@ def init_app(app):
             flash('reportlab no está instalado. Ejecuta: pip install reportlab', 'danger')
             return redirect(url_for('admin_progresos_usuario', user_id=user_id))
 
-        usuario = Usuario.query.get(user_id)
+        usuario = db.session.get(Usuario, user_id)
         if not usuario:
             flash('Usuario no encontrado', 'danger')
             return redirect(url_for('admin_progresos'))
@@ -1372,7 +1372,7 @@ def init_app(app):
     @admin_required
     def admin_responder_feedback(feedback_id):
         """El entrenador responde al feedback de un usuario."""
-        fb = FeedbackSesion.query.get_or_404(feedback_id)
+        fb = db.get_or_404(FeedbackSesion, feedback_id)
         data = request.get_json() or {}
         respuesta = (data.get('respuesta') or '').strip()
         if not respuesta:
@@ -1386,7 +1386,7 @@ def init_app(app):
     @admin_required
     def admin_feedbacks_usuario(user_id):
         """Lista de feedbacks de un usuario para el panel admin."""
-        usuario = Usuario.query.get_or_404(user_id)
+        usuario = db.get_or_404(Usuario, user_id)
         feedbacks = (
             FeedbackSesion.query
             .filter_by(usuario_id=user_id)
@@ -1598,7 +1598,7 @@ def init_app(app):
     @app.route('/admin/api/eventos/<int:evento_id>', methods=['PUT'])
     @admin_required
     def api_editar_evento_admin(evento_id):
-        evento = EventoAdmin.query.get_or_404(evento_id)
+        evento = db.get_or_404(EventoAdmin, evento_id)
         data   = request.get_json() or {}
         try:
             if 'titulo'      in data: evento.titulo      = data['titulo'].strip()
@@ -1618,7 +1618,7 @@ def init_app(app):
     @app.route('/admin/api/eventos/<int:evento_id>', methods=['DELETE'])
     @admin_required
     def api_borrar_evento_admin(evento_id):
-        evento = EventoAdmin.query.get_or_404(evento_id)
+        evento = db.get_or_404(EventoAdmin, evento_id)
         try:
             db.session.delete(evento)
             db.session.commit()

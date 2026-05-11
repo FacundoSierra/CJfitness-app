@@ -134,7 +134,7 @@ def init_app(app):
                 return redirect(url_for('forgot_password'))
             form = ResetPasswordForm()
             if form.validate_on_submit():
-                user = Usuario.query.get(reset.user_id)
+                user = db.session.get(Usuario, reset.user_id)
                 if user:
                     user.password = generate_password_hash(form.password.data, method='pbkdf2:sha256')
                     reset.used = True

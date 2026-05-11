@@ -97,7 +97,7 @@ class NutritionService:
 
     # ── Generación del menú (arquitectura dual + anti-monotonía) ────────────
 
-    def generar_menu(self, perfil, usuario, recomendacion_anterior=None) -> dict:
+    def generar_menu(self, perfil, usuario) -> dict:
         """
         Genera un menú diario usando ComidaCompleta con lógica anti-monotonía.
         Retorna dict con: menu_json, calorias_totales, macros_json
@@ -112,6 +112,14 @@ class NutritionService:
         # ── Cargar datos de personalización del usuario ───────────────────
         excluidos_raw     = PreferenciaAlimento.query.filter_by(usuario_id=usuario.id, tipo='no_me_gusta').all()
         nombres_excluidos = {p.nombre_alimento.lower() for p in excluidos_raw}
+
+        # Alergias documentadas → exclusión total (más severa que "no me gusta")
+        alergias_raw     = PreferenciaAlimento.query.filter_by(usuario_id=usuario.id, tipo='alergia').all()
+        nombres_alergias = {p.nombre_alimento.lower() for p in alergias_raw}
+        # También leer alergias del perfil nutricional (campo JSON)
+        if perfil.alergias:
+            for a in (perfil.alergias if isinstance(perfil.alergias, list) else []):
+                nombres_alergias.add(a.lower())
 
         valoraciones_raw  = ValoracionComida.query.filter_by(usuario_id=usuario.id).all()
         val_acum = defaultdict(list)
@@ -189,15 +197,19 @@ class NutritionService:
                 nombre_lower = c.nombre.lower()
                 desc_lower   = (c.descripcion or '').lower()
 
+                # Excluir por alergia (exclusión total)
+                if nombres_alergias and any(a in nombre_lower or a in desc_lower for a in nombres_alergias):
+                    sim = 0.0
+
                 # Excluir si contiene ingrediente que el usuario marcó como "no me gusta"
-                if nombres_excluidos and any(exc in nombre_lower or exc in desc_lower for exc in nombres_excluidos):
+                if sim > 0 and nombres_excluidos and any(exc in nombre_lower or exc in desc_lower for exc in nombres_excluidos):
                     sim = 0.0
 
                 if sim > 0:
                     if nombre_lower in nombres_3dias and penalizar_3dias:
-                        sim *= 0.0   # excluir de los últimos 3 días
+                        sim *= 0.05  # muy poco probable, no imposible
                     elif nombre_lower in nombres_7dias:
-                        sim *= 0.3   # penalizar si apareció en la semana
+                        sim *= 0.4   # penalizar si apareció en la semana
 
                     # Bonus diversidad de proteína en almuerzo
                     if franja == 'almuerzo' and proteina_ayer:

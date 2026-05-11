@@ -59,30 +59,6 @@
   /* Empty state */
   .empty-day { padding:var(--space-4) var(--space-5); color:var(--color-text-muted); font-size:var(--text-sm); font-style:italic; }
 
-  /* Tabla de series inline (planificado / realizado) */
-  .ej-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: var(--text-xs);
-  }
-  .ej-table th {
-    padding: 2px 6px;
-    text-align: left;
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    border-bottom: 1px solid var(--color-border);
-    background: var(--color-bg-alt);
-  }
-  .ej-table td {
-    padding: 3px 6px;
-    border-bottom: 1px solid var(--color-border);
-  }
-  .ej-table tbody tr:last-child td { border-bottom: none; }
-  .ej-table .serie-num { font-weight: 700; color: var(--color-primary); width: 32px; }
-
   /* Vista tabs */
   .vista-tabs { display:flex; gap:var(--space-1); background:var(--color-bg-alt); border-radius:var(--radius-lg); padding:4px; }
   .vista-tab { padding:var(--space-2) var(--space-4); border-radius:var(--radius-md); font-size:var(--text-sm); font-weight:500; text-decoration:none; color:var(--color-text-secondary); border:none; background:transparent; cursor:pointer; transition:all var(--transition-fast); white-space:nowrap; }
@@ -438,29 +414,6 @@ function irAFecha(fecha) {
   window.location.href = url.toString();
 }
 
-// ── Parsear "S1: 10r 80 kg RPE7" ─────────────────────────────────────────
-function parseSerieStr(parte) {
-  if (!parte || !parte.trim()) return { num: '?', reps: '', carga: '', rpe: '' };
-  const num   = parte.includes(':') ? parte.split(':')[0].trim() : '?';
-  const after = (parte.includes(':') ? parte.split(':')[1] : parte).trim();
-  const toks  = after.split(' ');
-  const reps  = (toks[0] || '').replace(/r$/i, '');
-  const kgIdx = toks.indexOf('kg');
-  const carga = kgIdx > 0 ? toks[kgIdx - 1] : '';
-  const rpeIdx = toks.findIndex(t => t.toUpperCase().startsWith('RPE'));
-  const rpe   = rpeIdx >= 0 ? toks[rpeIdx].replace(/^RPE/i, '') : '';
-  return { num, reps, carga, rpe };
-}
-
-function buildCargaOpts(selected) {
-  let html = '<option value="">— kg</option>';
-  for (let i = 0; i <= 100; i++) {
-    const v = i / 2;
-    const sel = String(selected) === String(v) ? 'selected' : '';
-    html += `<option value="${v}" ${sel}>${v} kg</option>`;
-  }
-  return html;
-}
 
 function abrirEditar(segId, planStr, realStr, completado, notas, ejNombre, cat, subcat) {
   // Header

@@ -45,7 +45,40 @@
     display: flex;
     align-items: center;
     gap: var(--space-2);
+    cursor: pointer;
+    user-select: none;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-alt);
+    border: 1px solid var(--color-border);
+    transition: background 0.15s;
 }
+.bloque-title:hover { background: var(--color-bg); }
+.bloque-chevron { margin-left: auto; transition: transform 0.2s ease; color: var(--color-text-muted); font-size: 0.9rem; }
+.bloque-section.collapsed .bloque-chevron { transform: rotate(-90deg); }
+.bloque-exercises {
+    overflow: hidden;
+    max-height: 9999px;
+    transition: max-height 0.3s ease, opacity 0.2s ease;
+    opacity: 1;
+}
+.bloque-section.collapsed .bloque-exercises {
+    max-height: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+/* Botón YouTube junto al nombre del ejercicio */
+.btn-yt {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-decoration: none;
+    opacity: 0.7;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+}
+.btn-yt:hover { opacity: 1; }
 
 .exercise-item {
     border: 1px solid var(--color-border);
@@ -63,34 +96,7 @@
 .exercise-name { font-weight: 600; margin-bottom: var(--space-2); }
 .exercise-details { font-size: var(--text-sm); color: var(--color-text-secondary); }
 .exercise-details i { margin-right: var(--space-1); color: var(--color-primary); }
-.ej-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: var(--space-2);
-    font-size: var(--text-sm);
-}
-.ej-table th {
-    padding: var(--space-1) var(--space-3);
-    text-align: left;
-    font-size: var(--text-xs);
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    border-bottom: 1px solid var(--color-border);
-    background: var(--color-bg-alt);
-}
-.ej-table td {
-    padding: var(--space-2) var(--space-3);
-    border-bottom: 1px solid var(--color-border);
-}
-.ej-table tbody tr:last-child td { border-bottom: none; }
-.ej-table tbody tr:hover td { background: var(--color-bg-alt); }
-.ej-table .serie-num {
-    font-weight: 700;
-    color: var(--color-primary);
-    width: 48px;
-}
+
 
 .seguimiento-form {
     background: var(--color-bg);
@@ -227,13 +233,21 @@
 {% macro ejercicio_item(ejercicio, fecha_str) %}
 {% set sdata = ejercicio.series_data_parsed %}
 {% set ej_nombre = (ejercicio.ejercicio.nombre if ejercicio.ejercicio else ejercicio.nombre_manual) or '' %}
-{% set material = material_lookup.get(ej_nombre.lower()) if material_lookup is defined else None %}
+{% set material   = material_lookup.get(ej_nombre.lower()) if material_lookup is defined else None %}
+{% set video_url  = video_lookup.get(ej_nombre.lower())   if video_lookup   is defined else None %}
 <div class="exercise-item"
      data-plan-series="{{ ejercicio.series_display }}"
      data-plan-rpe="{{ (sdata.rpe if sdata and not sdata.variar else ejercicio.rpe) or '' }}"
      data-plan-carga="{{ (sdata.carga if sdata and not sdata.variar else ejercicio.carga) or '' }}">
-    <div class="exercise-name">
-        {{ ej_nombre }}
+    <div class="exercise-name" style="display:flex; align-items:center; justify-content:space-between; gap:var(--space-2);">
+        <span>{{ ej_nombre }}</span>
+        {% if ej_nombre %}
+        <a href="{{ video_url if video_url else 'https://www.youtube.com/results?search_query=' + (ej_nombre | urlencode) + '+ejercicio+tutorial' }}"
+           target="_blank" rel="noopener noreferrer"
+           class="btn-yt" title="{{ 'Ver vídeo' if video_url else 'Buscar en YouTube' }}">
+            <i class="bi bi-youtube" style="color:#ff0000; font-size:1.15rem;"></i>
+        </a>
+        {% endif %}
     </div>
     <div style="display:flex; flex-wrap:wrap; gap:var(--space-1); margin-bottom:var(--space-2);">
         {% if ejercicio.categoria %}<span class="badge badge-info">{{ ejercicio.categoria }}</span>{% endif %}
@@ -305,20 +319,26 @@
 
 {% macro bloque_section(bloque, fecha_str) %}
 <div class="bloque-section">
-    <div class="bloque-title">
+    <div class="bloque-title" onclick="toggleBloque(this)">
         <i class="bi bi-collection" style="color:var(--color-primary);"></i>
         <strong>{{ bloque.nombre_bloque }}</strong>
         {% if bloque.categoria %}<span class="badge badge-info">{{ bloque.categoria }}</span>{% endif %}
+        <span style="font-size:var(--text-xs); color:var(--color-text-muted); font-weight:400;">
+            {{ bloque.ejercicios | length }} ejercicio{% if bloque.ejercicios | length != 1 %}s{% endif %}
+        </span>
+        <i class="bi bi-chevron-down bloque-chevron"></i>
     </div>
-    {% if bloque.ejercicios %}
-        {% for ejercicio in bloque.ejercicios %}
-            {{ ejercicio_item(ejercicio, fecha_str) }}
-        {% endfor %}
-    {% else %}
-        <p style="color:var(--color-text-secondary); font-size:var(--text-sm);">
-            No hay ejercicios asignados a este bloque.
-        </p>
-    {% endif %}
+    <div class="bloque-exercises" style="padding-top:var(--space-3);">
+        {% if bloque.ejercicios %}
+            {% for ejercicio in bloque.ejercicios %}
+                {{ ejercicio_item(ejercicio, fecha_str) }}
+            {% endfor %}
+        {% else %}
+            <p style="color:var(--color-text-secondary); font-size:var(--text-sm);">
+                No hay ejercicios asignados a este bloque.
+            </p>
+        {% endif %}
+    </div>
 </div>
 {% endmacro %}
 
@@ -623,6 +643,10 @@ function navegarPeriodo(delta) {
     cambiarFecha();
 }
 
+function toggleBloque(titleEl) {
+    titleEl.closest('.bloque-section').classList.toggle('collapsed');
+}
+
 function mostrarFormularioSeguimiento(btnOrEvent, ejercicioId, fecha) {
     const boton = (btnOrEvent && btnOrEvent.currentTarget) ? btnOrEvent.currentTarget : btnOrEvent;
     const exerciseItem = boton.closest('.exercise-item');
@@ -740,6 +764,7 @@ async function guardarSeguimiento(btn, ejercicioId, fecha) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
+        if (!response.ok) { alert(`Error del servidor (${response.status})`); return; }
         const result = await response.json();
 
         if (result.success) {
@@ -783,19 +808,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 });
 
-// ── Helpers para parsear "S1: 10r 80 kg RPE7" ────────────────────────────
-function parseSerieStr(parte) {
-    if (!parte || !parte.trim()) return { num: '?', reps: '', carga: '', rpe: '' };
-    const num   = parte.includes(':') ? parte.split(':')[0].trim() : '?';
-    const after = (parte.includes(':') ? parte.split(':')[1] : parte).trim();
-    const toks  = after.split(' ');
-    const reps  = (toks[0] || '').replace(/r$/i, '');
-    const kgIdx = toks.indexOf('kg');
-    const carga = kgIdx > 0 ? toks[kgIdx - 1] : '';
-    const rpeIdx = toks.findIndex(t => t.toUpperCase().startsWith('RPE'));
-    const rpe   = rpeIdx >= 0 ? toks[rpeIdx].replace(/^RPE/i, '') : '';
-    return { num, reps, carga, rpe };
-}
+// parseSerieStr() cargado desde static/js/utils_fitness.js
 
 function buildModalCargaOpts(selected) {
     let html = '<option value="">— kg</option>';
@@ -855,6 +868,7 @@ function copiarPlanRowModal(btn, reps, carga, rpe) {
 async function verHistorialEjercicio(ejercicioId) {
     try {
         const response = await fetch(`/api/ejercicio/${ejercicioId}/seguimiento`);
+        if (!response.ok) { alert(`Error del servidor (${response.status})`); return; }
         const data = await response.json();
 
         if (data.seguimientos && data.seguimientos.length > 0) {
@@ -966,6 +980,7 @@ async function verHistorialEjercicio(ejercicioId) {
 async function abrirModalActualizar(ejercicioId, fecha) {
     try {
         const resp = await fetch(`/api/ejercicio/${ejercicioId}/seguimiento?fecha=${fecha}`);
+        if (!resp.ok) { alert(`Error del servidor (${resp.status})`); return; }
         const data = await resp.json();
 
         const ej = data.ejercicio || {};
@@ -1039,7 +1054,7 @@ function marcarDiaCompletado(fecha) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ fecha })
         })
-        .then(r => r.json())
+        .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
         .then(data => {
             if (data.success) {
                 if (boton) {
@@ -1051,7 +1066,7 @@ function marcarDiaCompletado(fecha) {
                 alert('Error: ' + data.message);
             }
         })
-        .catch(() => alert('Error al marcar el día como completado'));
+        .catch(err => alert('Error al marcar el día como completado: ' + err));
     }
 }
 

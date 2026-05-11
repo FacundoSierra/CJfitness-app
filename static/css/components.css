@@ -715,3 +715,33 @@ textarea.form-control {
 .badge-dieta-veg { background: #dcfce7; color: #166534; }
 .badge-dieta-glu { background: #fef9c3; color: #854d0e; }
 .badge-dieta-lac { background: #f0f9ff; color: #0369a1; }
+
+/* ── TABLA DE SERIES (ej-table) — usada en rutinas, progresos y admin ── */
+.ej-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: var(--space-2);
+    font-size: var(--text-sm);
+}
+.ej-table th {
+    padding: var(--space-1) var(--space-3);
+    text-align: left;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg-alt);
+}
+.ej-table td {
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+}
+.ej-table tbody tr:last-child td { border-bottom: none; }
+.ej-table tbody tr:hover td { background: var(--color-bg-alt); }
+.ej-table .serie-num {
+    font-weight: 700;
+    color: var(--color-primary);
+    width: 48px;
+}

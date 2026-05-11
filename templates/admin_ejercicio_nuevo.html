@@ -108,11 +108,31 @@
                   rows="3" placeholder="Añade cualquier característica adicional del ejercicio…">{{ ejercicio.otras_caracteristicas or '' if ejercicio else '' }}</textarea>
       </div>
 
-      <!-- PASO 7: Nombre -->
+      <!-- PASO 7: URL del vídeo -->
+      <div class="form-group" style="margin-bottom:var(--space-5);">
+        <label class="form-label" for="video_url">
+          <span style="background:var(--color-primary); color:#fff; border-radius:999px; padding:1px 8px; font-size:var(--text-xs); margin-right:6px;">7</span>
+          URL del vídeo
+          <span style="font-size:var(--text-xs); color:var(--color-text-muted); font-weight:400; margin-left:4px;">(YouTube, Vimeo… opcional)</span>
+        </label>
+        <div style="display:flex; gap:var(--space-2); align-items:center;">
+          <input type="url" name="video_url" id="video_url" class="form-control"
+                 placeholder="https://www.youtube.com/watch?v=…"
+                 value="{{ ejercicio.video_url or '' if ejercicio else '' }}">
+          {% if ejercicio and ejercicio.video_url %}
+          <a href="{{ ejercicio.video_url }}" target="_blank" rel="noopener"
+             class="btn btn-secondary btn-sm" style="white-space:nowrap; flex-shrink:0;">
+            <i class="bi bi-play-circle me-1"></i>Ver
+          </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- PASO 8: Nombre -->
       <div class="form-group" style="margin-bottom:var(--space-6);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-2);">
           <label class="form-label" for="nombre" style="margin:0;">
-            <span style="background:var(--color-primary); color:#fff; border-radius:999px; padding:1px 8px; font-size:var(--text-xs); margin-right:6px;">7</span>
+            <span style="background:var(--color-primary); color:#fff; border-radius:999px; padding:1px 8px; font-size:var(--text-xs); margin-right:6px;">8</span>
             Nombre del ejercicio <span style="color:var(--color-danger);">*</span>
           </label>
           {% if not ejercicio %}

@@ -389,7 +389,8 @@ async function guardarEvento() {
 async function eliminarEvento() {
   const id = document.getElementById('eventoId').value;
   if (!id) return;
-  if (!confirm('¿Eliminar este evento?')) return;
+  const titulo = document.getElementById('eventoTitulo').value || 'este evento';
+  if (!confirm(`¿Eliminar "${titulo}"? Esta acción no se puede deshacer.`)) return;
 
   const resp = await fetch(`/admin/api/eventos/${id}`, { method: 'DELETE' });
   if (resp.ok) {

@@ -464,6 +464,7 @@ class EjercicioCompleto(db.Model):
     caracteristicas_json  = db.Column(db.JSON, nullable=True)
     material              = db.Column(db.String(200), nullable=True)
     otras_caracteristicas = db.Column(db.Text, nullable=True)
+    video_url             = db.Column(db.String(500), nullable=True)
     activo         = db.Column(db.Boolean, default=True)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
 

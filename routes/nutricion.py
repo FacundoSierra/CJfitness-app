@@ -17,7 +17,7 @@ def init_app(app):
     @login_required
     @handle_db_error
     def nutricion_dashboard():
-        usuario = Usuario.query.get(session['user_id'])
+        usuario = db.session.get(Usuario, session["user_id"])
         perfil  = PerfilNutricional.query.filter_by(usuario_id=session['user_id']).first()
 
         macros_objetivo = None
@@ -49,7 +49,7 @@ def init_app(app):
     @login_required
     @handle_db_error
     def nutricion_perfil():
-        usuario = Usuario.query.get(session['user_id'])
+        usuario = db.session.get(Usuario, session["user_id"])
         perfil  = PerfilNutricional.query.filter_by(usuario_id=session['user_id']).first()
 
         if request.method == 'POST':
@@ -95,7 +95,7 @@ def init_app(app):
     @login_required
     @handle_db_error
     def nutricion_recomendar():
-        usuario = Usuario.query.get(session['user_id'])
+        usuario = db.session.get(Usuario, session["user_id"])
         perfil  = PerfilNutricional.query.filter_by(usuario_id=session['user_id']).first()
 
         if not perfil:
@@ -119,14 +119,7 @@ def init_app(app):
                 calorias_objetivo=calorias_objetivo,
             )
 
-        # Buscar el menú del día anterior para rotar alimentos
-        from datetime import timedelta
-        ayer = hoy - timedelta(days=1)
-        rec_anterior = RecomendacionDiaria.query.filter_by(
-            usuario_id=session['user_id'], fecha=ayer
-        ).first()
-
-        resultado = nutrition_service.generar_menu(perfil, usuario, rec_anterior)
+        resultado = nutrition_service.generar_menu(perfil, usuario)
 
         if recomendacion:
             # Regenerar: actualizar el existente
@@ -192,7 +185,7 @@ def init_app(app):
     @login_required
     @handle_db_error
     def nutricion_historial():
-        usuario = Usuario.query.get(session['user_id'])
+        usuario = db.session.get(Usuario, session["user_id"])
         pagina  = request.args.get('pagina', 1, type=int)
 
         total = RecomendacionDiaria.query.filter_by(usuario_id=session['user_id']).count()
@@ -223,7 +216,7 @@ def init_app(app):
     @login_required
     @handle_db_error
     def nutricion_alimentos():
-        usuario = Usuario.query.get(session['user_id'])
+        usuario = db.session.get(Usuario, session["user_id"])
         return render_template('nutricion_alimentos.html', username=usuario.nombre)
 
     # ── API búsqueda de alimentos ─────────────────────────────────────────────
@@ -355,7 +348,7 @@ def init_app(app):
     @handle_db_error
     def nutricion_estadisticas():
         from sqlalchemy import func
-        usuario = Usuario.query.get(session['user_id'])
+        usuario = db.session.get(Usuario, session["user_id"])
 
         stats_comidas = (
             db.session.query(
