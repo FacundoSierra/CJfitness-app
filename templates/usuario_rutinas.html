@@ -136,8 +136,8 @@
       <input type="text" class="form-control form-control-sm" id="bulk-rpe-{{ eid }}" placeholder="RPE" style="width:52px;">
       <select class="form-select form-select-sm" id="bulk-carga-{{ eid }}" style="width:90px;">
         <option value="">Carga</option>
-        {% for v in range(0, 101) %}
-        <option value="{{ v / 2 }}">{{ v / 2 }} kg</option>
+        {% for v in range(0, 801) %}
+        <option value="{{ v / 4 }}">{{ v / 4 }} kg</option>
         {% endfor %}
       </select>
       <button type="button" class="btn btn-secondary btn-sm" onclick="aplicarBulk({{ eid }})">Aplicar</button>
