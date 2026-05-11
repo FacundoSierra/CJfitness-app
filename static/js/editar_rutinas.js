@@ -30,10 +30,11 @@ function buildRpeOptions(selected, placeholder) {
 }
 
 function buildCargaOptions(selected) {
+  const selNum = parseFloat(selected);
   let opts = '<option value="">Carga</option>';
-  for (let i = 0; i <= 100; i++) {
-    const val = i / 2;
-    const sel = String(selected) === String(val) ? 'selected' : '';
+  for (let i = 0; i <= 800; i++) {
+    const val = i / 4;
+    const sel = (!isNaN(selNum) && selNum === val) ? 'selected' : '';
     opts += `<option value="${val}" ${sel}>${val} kg</option>`;
   }
   return opts;

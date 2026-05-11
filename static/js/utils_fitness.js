@@ -29,8 +29,9 @@ function buildCargaOpts(selected) {
     let html = '<option value="">— kg</option>';
     for (let i = 0; i <= 800; i++) {
         const v = i / 4;
+        const vs = Number.isInteger(v) ? String(v) : String(v);
         const sel = (!isNaN(selNum) && selNum === v) ? 'selected' : '';
-        html += `<option value="${v}" ${sel}>${v} kg</option>`;
+        html += `<option value="${vs}" ${sel}>${vs} kg</option>`;
     }
     return html;
 }

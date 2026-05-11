@@ -132,12 +132,14 @@
       </label>
       <span style="color:var(--color-border);">|</span>
       <span style="color:var(--color-text-muted); white-space:nowrap;">Aplicar a marcadas:</span>
-      <input type="text" class="form-control form-control-sm" id="bulk-reps-{{ eid }}" placeholder="Reps" style="width:58px;">
-      <input type="text" class="form-control form-control-sm" id="bulk-rpe-{{ eid }}" placeholder="RPE" style="width:52px;">
-      <select class="form-select form-select-sm" id="bulk-carga-{{ eid }}" style="width:90px;">
+      <input type="text" class="form-control form-control-sm" id="bulk-reps-{{ eid }}" placeholder="Reps" style="width:58px; color:var(--color-text);">
+      <input type="text" class="form-control form-control-sm" id="bulk-rpe-{{ eid }}" placeholder="RPE" style="width:52px; color:var(--color-text);">
+      <select class="form-select form-select-sm" id="bulk-carga-{{ eid }}" style="width:90px; color:var(--color-text);">
         <option value="">Carga</option>
         {% for v in range(0, 801) %}
-        <option value="{{ v / 4 }}">{{ v / 4 }} kg</option>
+        {% set vf = v / 4 %}
+        {% set vs = vf | int | string if (vf == vf | int) else vf | string %}
+        <option value="{{ vs }}">{{ vs }} kg</option>
         {% endfor %}
       </select>
       <button type="button" class="btn btn-secondary btn-sm" onclick="aplicarBulk({{ eid }})">Aplicar</button>
@@ -162,17 +164,19 @@
         <input type="text" class="form-control form-control-sm serie-reps"
                placeholder="{{ s.reps or '?' }}"
                data-plan-reps="{{ s.reps or '' }}"
-               style="font-size:var(--text-xs);">
+               style="font-size:var(--text-xs); color:var(--color-text);">
         <input type="text" class="form-control form-control-sm serie-rpe"
                placeholder="{{ s.rpe or '—' }}"
                data-plan-rpe="{{ s.rpe or '' }}"
-               style="font-size:var(--text-xs);">
+               style="font-size:var(--text-xs); color:var(--color-text);">
         <select class="form-select form-select-sm serie-carga"
                 data-plan-carga="{{ s.carga or '' }}"
-                style="font-size:var(--text-xs);">
+                style="font-size:var(--text-xs); color:var(--color-text);">
           <option value="">{{ s.carga or '—' }}</option>
           {% for v in range(0, 801) %}
-          <option value="{{ v / 4 }}" {% if s.carga and (s.carga | float) == (v / 4) %}selected{% endif %}>{{ v / 4 }} kg</option>
+          {% set vf = v / 4 %}
+          {% set vs = vf | int | string if (vf == vf | int) else vf | string %}
+          <option value="{{ vs }}" {% if s.carga and (s.carga | float) == vf %}selected{% endif %}>{{ vs }} kg</option>
           {% endfor %}
         </select>
         <button type="button" class="btn btn-sm" style="font-size:10px; padding:2px 6px; background:var(--color-primary-light); color:var(--color-primary); border:none; border-radius:var(--radius-sm);"
@@ -198,10 +202,12 @@
       </div>
       <div class="form-group">
         <label class="form-label" style="font-size:var(--text-xs);">Carga Real</label>
-        <select class="form-control" id="carga_real_{{ eid }}">
+        <select class="form-control" id="carga_real_{{ eid }}" style="color:var(--color-text);">
           <option value="">{{ ejercicio.carga or '—' }}</option>
           {% for v in range(0, 801) %}
-          <option value="{{ v / 4 }}">{{ v / 4 }} kg</option>
+          {% set vf = v / 4 %}
+          {% set vs = vf | int | string if (vf == vf | int) else vf | string %}
+          <option value="{{ vs }}">{{ vs }} kg</option>
           {% endfor %}
         </select>
       </div>
@@ -680,12 +686,12 @@ function copiarPlanSerie(btn) {
     if (!row) return;
     row.querySelector('.serie-reps').value = row.querySelector('.serie-reps').dataset.planReps || '';
     row.querySelector('.serie-rpe').value  = row.querySelector('.serie-rpe').dataset.planRpe  || '';
-    const cargaEl  = row.querySelector('.serie-carga');
+    const cargaEl   = row.querySelector('.serie-carga');
     const planCarga = cargaEl.dataset.planCarga || '';
-    // Intentar seleccionar el valor numérico en el select
-    const numVal = parseFloat(planCarga);
+    const numVal    = parseFloat(planCarga);
     if (!isNaN(numVal)) {
-        cargaEl.value = numVal;
+        const strVal = Number.isInteger(numVal) ? String(numVal) : String(numVal);
+        cargaEl.value = strVal;
     } else {
         cargaEl.value = '';
     }
